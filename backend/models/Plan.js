@@ -25,6 +25,19 @@ const planSchema = new mongoose.Schema({
     enum: ['month', 'year'],
     default: 'month'
   },
+  intervalCount: {
+    type: Number,
+    default: 1,
+    min: 1
+  },
+  stripeProductId: {
+    type: String,
+    default: null
+  },
+  stripePriceId: {
+    month: { type: String, default: null },
+    year: { type: String, default: null }
+  },
   features: [String],
   limits: {
     campaigns: { type: Number, default: -1 },
@@ -41,6 +54,10 @@ const planSchema = new mongoose.Schema({
     color: { type: String, default: '#4F46E5' }
   },
   isActive: {
+    type: Boolean,
+    default: true
+  },
+  isPublic: {
     type: Boolean,
     default: true
   },

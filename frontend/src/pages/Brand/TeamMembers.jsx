@@ -20,7 +20,14 @@ import {
   Crown,
   Star,
   Settings as SettingsIcon,
-  AlertCircle
+  AlertCircle,
+  Activity,
+  ToggleLeft,
+  ToggleRight,
+  Plus,
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useBrandData } from '../../hooks/useBrandData';
 import Modal from '../../components/Common/Modal';
@@ -95,6 +102,20 @@ const TeamMembers = () => {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Activity log state
+  const [activities, setActivities] = useState([]);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityPagination, setActivityPagination] = useState({});
+  const [activityLoading, setActivityLoading] = useState(false);
+
+  // Role templates state
+  const [roleTemplates, setRoleTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
+  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templateData, setTemplateData] = useState({ name: '', description: '', permissions: [] });
 
   const [inviteData, setInviteData] = useState({
     email: '',
@@ -280,6 +301,123 @@ const TeamMembers = () => {
     }
   };
 
+  // ==================== TEAM MEMBER STATUS TOGGLE ====================
+  const handleToggleStatus = async (member) => {
+    const newStatus = member.status === 'active' ? 'inactive' : 'active';
+    try {
+      const res = await brandService.updateTeamMemberStatus(member._id, newStatus);
+      if (res?.success) {
+        toast.success(res.message || `Member ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
+        refreshData();
+      } else {
+        toast.error(res?.error || 'Failed to update status');
+      }
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
+  };
+
+  // ==================== ACTIVITY LOG ====================
+  const fetchActivity = async (page = 1) => {
+    setActivityLoading(true);
+    try {
+      const res = await brandService.getTeamActivity(30, page, 15);
+      if (res?.success) {
+        setActivities(res.activities || []);
+        setActivityPagination(res.pagination || {});
+        setActivityPage(page);
+      }
+    } catch (error) {
+      console.error('Activity fetch error:', error);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  // ==================== ROLE TEMPLATES ====================
+  const fetchRoleTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const res = await brandService.getRoleTemplates();
+      if (res?.success) {
+        setRoleTemplates(res.templates || []);
+      }
+    } catch (error) {
+      console.error('Templates fetch error:', error);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const handleCreateTemplate = async () => {
+    if (!templateData.name || templateData.permissions.length === 0) {
+      toast.error('Name and at least one permission are required');
+      return;
+    }
+    try {
+      setSaving(true);
+      const res = await brandService.createRoleTemplate(templateData);
+      if (res?.success) {
+        toast.success('Role template created');
+        setShowCreateTemplateModal(false);
+        setTemplateData({ name: '', description: '', permissions: [] });
+        fetchRoleTemplates();
+      } else {
+        toast.error(res?.error || 'Failed to create template');
+      }
+    } catch (error) {
+      toast.error('Failed to create template');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditTemplate = (template) => {
+    setSelectedTemplate(template);
+    setTemplateData({ name: template.name, description: template.description || '', permissions: template.permissions || [] });
+    setShowEditTemplateModal(true);
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!selectedTemplate) return;
+    try {
+      setSaving(true);
+      const res = await brandService.updateRoleTemplate(selectedTemplate._id, templateData);
+      if (res?.success) {
+        toast.success('Role template updated');
+        setShowEditTemplateModal(false);
+        fetchRoleTemplates();
+      } else {
+        toast.error(res?.error || 'Failed to update template');
+      }
+    } catch (error) {
+      toast.error('Failed to update template');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId) => {
+    if (!window.confirm('Delete this role template?')) return;
+    try {
+      const res = await brandService.deleteRoleTemplate(templateId);
+      if (res?.success) {
+        toast.success('Role template deleted');
+        fetchRoleTemplates();
+      } else {
+        toast.error(res?.error || 'Failed to delete template');
+      }
+    } catch (error) {
+      toast.error('Failed to delete template');
+    }
+  };
+
+  // Load tab data on tab switch
+  useEffect(() => {
+    if (activeTab === 'activity' && activities.length === 0) fetchActivity();
+    if (activeTab === 'templates' && roleTemplates.length === 0) fetchRoleTemplates();
+  }, [activeTab]);
+
   // ==================== GROUP PERMISSIONS BY CATEGORY ====================
   const groupPermissionsByCategory = (permissionsList) => {
     const groups = {};
@@ -414,6 +552,26 @@ const TeamMembers = () => {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('activity')}
+            className={`py-3 px-1 border-b-2 text-sm font-medium ${
+              activeTab === 'activity'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Activity Log
+          </button>
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`py-3 px-1 border-b-2 text-sm font-medium ${
+              activeTab === 'templates'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Role Templates
+          </button>
         </nav>
       </div>
 
@@ -496,6 +654,13 @@ const TeamMembers = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleToggleStatus(member)}
+                              className={`${member.status === 'active' ? 'text-green-500 hover:text-red-500' : 'text-gray-400 hover:text-green-500'}`}
+                              title={member.status === 'active' ? 'Deactivate' : 'Activate'}
+                            >
+                              {member.status === 'active' ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                            </button>
                             <button
                               onClick={() => openEditModal(member)}
                               className="text-gray-400 hover:text-indigo-600"
@@ -591,6 +756,94 @@ const TeamMembers = () => {
               <Button variant="primary" size="sm" onClick={() => setShowInviteModal(true)}>
                 Send Invitation
               </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Activity Log Tab */}
+      {activeTab === 'activity' && (
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {activityLoading ? (
+            <div className="p-12 text-center"><Loader className="w-8 h-8 animate-spin text-indigo-600 mx-auto" /></div>
+          ) : activities.length > 0 ? (
+            <>
+              <div className="divide-y divide-gray-200">
+                {activities.map((act, idx) => (
+                  <div key={idx} className="p-4 flex items-start gap-3 hover:bg-gray-50">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Activity className="w-4 h-4 text-indigo-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900">
+                        <span className="font-medium">{act.user?.fullName || act.user || 'System'}</span>{' '}
+                        {act.description || act.action || 'performed an action'}
+                      </p>
+                      {act.details && <p className="text-xs text-gray-500 mt-0.5">{act.details}</p>}
+                      <p className="text-xs text-gray-400 mt-1">{act.date ? timeAgo(act.date) : act.timestamp ? timeAgo(act.timestamp) : ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Pagination */}
+              {activityPagination.pages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-500">Page {activityPage} of {activityPagination.pages}</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => fetchActivity(activityPage - 1)} disabled={activityPage <= 1} icon={ChevronLeft}>Prev</Button>
+                    <Button variant="outline" size="sm" onClick={() => fetchActivity(activityPage + 1)} disabled={activityPage >= activityPagination.pages} icon={ChevronRight}>Next</Button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="p-12 text-center text-gray-500">
+              <Activity className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-lg font-medium text-gray-900 mb-2">No activity yet</p>
+              <p className="text-sm">Team activity will appear here as members take actions</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Role Templates Tab */}
+      {activeTab === 'templates' && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <Button variant="primary" icon={Plus} size="sm" onClick={() => { setTemplateData({ name: '', description: '', permissions: [] }); setShowCreateTemplateModal(true); }}>
+              Create Custom Role
+            </Button>
+          </div>
+          {templatesLoading ? (
+            <div className="p-12 text-center"><Loader className="w-8 h-8 animate-spin text-indigo-600 mx-auto" /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {roleTemplates.map((tmpl) => (
+                <div key={tmpl._id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-indigo-300 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-indigo-600" />
+                      <h3 className="font-semibold text-gray-900">{tmpl.name}</h3>
+                      {tmpl.isBuiltIn && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Built-in</span>}
+                    </div>
+                    {!tmpl.isBuiltIn && (
+                      <div className="flex gap-1">
+                        <button onClick={() => handleEditTemplate(tmpl)} className="text-gray-400 hover:text-indigo-600" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteTemplate(tmpl._id)} className="text-gray-400 hover:text-red-600" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    )}
+                  </div>
+                  {tmpl.description && <p className="text-sm text-gray-500 mb-3">{tmpl.description}</p>}
+                  <div className="flex flex-wrap gap-1">
+                    {(tmpl.permissions || []).slice(0, 6).map(p => (
+                      <span key={p} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">{p.replace(/_/g, ' ')}</span>
+                    ))}
+                    {(tmpl.permissions || []).length > 6 && (
+                      <span className="text-xs text-gray-400">+{tmpl.permissions.length - 6} more</span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -758,6 +1011,72 @@ const TeamMembers = () => {
           <Button variant="primary" onClick={handleUpdateMember} loading={saving}>
             Save Changes
           </Button>
+        </div>
+      </Modal>
+
+      {/* Create Role Template Modal */}
+      <Modal isOpen={showCreateTemplateModal} onClose={() => setShowCreateTemplateModal(false)} title="Create Custom Role" size="lg">
+        <div className="space-y-4">
+          <Input label="Template Name" value={templateData.name} onChange={(e) => setTemplateData({ ...templateData, name: e.target.value })} placeholder="e.g., Campaign Manager" required />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <input type="text" value={templateData.description} onChange={(e) => setTemplateData({ ...templateData, description: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Brief description of this role" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+            <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3 space-y-4">
+              {Object.entries(permissionGroups).map(([category, perms]) => (
+                <div key={category}>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">{category}</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {perms.map((perm) => (
+                      <label key={perm.id} className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" checked={templateData.permissions.includes(perm.id)} onChange={() => togglePermission(perm.id, templateData.permissions, (p) => setTemplateData({ ...templateData, permissions: p }))} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        {perm.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="secondary" onClick={() => setShowCreateTemplateModal(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleCreateTemplate} loading={saving}>Create Template</Button>
+        </div>
+      </Modal>
+
+      {/* Edit Role Template Modal */}
+      <Modal isOpen={showEditTemplateModal} onClose={() => setShowEditTemplateModal(false)} title="Edit Role Template" size="lg">
+        <div className="space-y-4">
+          <Input label="Template Name" value={templateData.name} onChange={(e) => setTemplateData({ ...templateData, name: e.target.value })} placeholder="e.g., Campaign Manager" required />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <input type="text" value={templateData.description} onChange={(e) => setTemplateData({ ...templateData, description: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Brief description of this role" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+            <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3 space-y-4">
+              {Object.entries(permissionGroups).map(([category, perms]) => (
+                <div key={category}>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">{category}</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {perms.map((perm) => (
+                      <label key={perm.id} className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" checked={templateData.permissions.includes(perm.id)} onChange={() => togglePermission(perm.id, templateData.permissions, (p) => setTemplateData({ ...templateData, permissions: p }))} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        {perm.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="secondary" onClick={() => setShowEditTemplateModal(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleUpdateTemplate} loading={saving}>Save Changes</Button>
         </div>
       </Modal>
     </div>

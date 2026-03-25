@@ -33,6 +33,8 @@ router.delete('/methods/:methodId', paymentController.deletePaymentMethod);
 
 // ==================== ESCROW ====================
 router.post('/escrow', paymentController.createEscrow);
+router.post('/escrow/checkout-intent', paymentController.createEscrowCheckoutIntent);
+router.post('/escrow/:paymentId/confirm', paymentController.confirmEscrowCheckout);
 
 // ==================== PERFORMANCE PAYMENTS (CPE/CPA/CPM) ====================
 // ✅ FIX: These routes were completely missing

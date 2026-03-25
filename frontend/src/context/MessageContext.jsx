@@ -15,6 +15,7 @@ export const useMessage = () => {
 export const MessageProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected, sendMessage: sendSocketMessage } = useSocket();
+  const isMessagingUser = isAuthenticated && ['brand', 'creator'].includes(user?.userType);
 
   const [conversations, setConversations] = useState([]);
   const [currentConversation, setCurrentConversation] = useState(null);
@@ -103,8 +104,9 @@ export const MessageProvider = ({ children }) => {
   }, [user, isConnected, sendSocketMessage, addToOfflineQueue]);
 
   // ================= FETCH CONVERSATIONS =================
-  const fetchConversations = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchConversations = useCallback(async (options = {}) => {
+    const { silent = false } = options;
+    if (!isMessagingUser) return;
 
     setLoading(true);
     setError(null);
@@ -118,11 +120,11 @@ export const MessageProvider = ({ children }) => {
     } catch (err) {
       const msg = err.response?.data?.error || 'Failed to load conversations';
       setError(msg);
-      toast.error(msg);
+      if (!silent) toast.error(msg);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isMessagingUser]);
 
   // ================= FETCH MESSAGES =================
   const fetchMessages = useCallback(async (conversationId) => {
@@ -467,10 +469,10 @@ export const MessageProvider = ({ children }) => {
 
   // ================= INITIAL FETCH =================
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchConversations();
+    if (isMessagingUser) {
+      fetchConversations({ silent: true });
     }
-  }, [isAuthenticated, fetchConversations]);
+  }, [isMessagingUser, fetchConversations]);
 
   const value = {
     conversations,

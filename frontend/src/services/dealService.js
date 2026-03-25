@@ -19,6 +19,41 @@ class DealService {
     }
   }
 
+  // ==================== CREATE PERFORMANCE DEAL ====================
+
+  /**
+   * Create a performance-based deal (CPE/CPA/CPM/Revenue Share/Hybrid)
+   * @param {Object} dealData - { campaignId, creatorId, paymentType, performanceMetrics, deliverables, deadline, message }
+   * @returns {Promise<Object>}
+   */
+  async createPerformanceDeal(dealData) {
+    try {
+      const response = await api.post('/deals/performance', dealData);
+      return response.data;
+    } catch (error) {
+      console.error('Create performance deal error:', error);
+      return this._handleError(error, 'Failed to create performance deal');
+    }
+  }
+
+  // ==================== UPDATE DEAL ====================
+
+  /**
+   * Update deal terms (budget, deadline, deliverables, requirements)
+   * @param {string} dealId - Deal ID
+   * @param {Object} updateData - Fields to update
+   * @returns {Promise<Object>}
+   */
+  async updateDeal(dealId, updateData) {
+    try {
+      const response = await api.put(`/deals/${dealId}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Update deal error:', error);
+      return this._handleError(error, 'Failed to update deal');
+    }
+  }
+
   // ==================== GET DEALS (BRAND) ====================
 
   /**

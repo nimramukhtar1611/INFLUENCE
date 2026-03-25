@@ -636,6 +636,336 @@ exports.acceptInvitation = catchAsync(async (req, res) => {
   res.json({ success: true, message: 'Invitation accepted' });
 });
 
+// ==================== TEAM ACTIVITY ====================
+
+/**
+ * @desc    Get team activity log
+ * @route   GET /api/brands/team/activity
+ * @access  Private/Brand
+ */
+exports.getTeamActivity = catchAsync(async (req, res) => {
+  const { days = 30, page = 1, limit = 20 } = req.query;
+
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  const activities = await brand.getTeamActivityLog(parseInt(days));
+
+  // Paginate results
+  const startIndex = (parseInt(page) - 1) * parseInt(limit);
+  const endIndex = startIndex + parseInt(limit);
+  const paginatedActivities = activities.slice(startIndex, endIndex);
+
+  res.json({
+    success: true,
+    activities: paginatedActivities,
+    pagination: {
+      total: activities.length,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(activities.length / parseInt(limit)),
+    },
+  });
+});
+
+/**
+ * @desc    Get permissions summary for current user
+ * @route   GET /api/brands/team/permissions/summary
+ * @access  Private/Brand
+ */
+exports.getPermissionsSummary = catchAsync(async (req, res) => {
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  // Brand owner has all permissions
+  const allPermissions = [
+    'view_campaigns', 'create_campaigns', 'edit_campaigns', 'delete_campaigns',
+    'view_deals', 'create_deals', 'edit_deals', 'approve_deals',
+    'view_payments', 'process_payments', 'view_analytics', 'manage_team',
+    'manage_settings', 'view_creators', 'invite_creators', 'contact_creators',
+  ];
+
+  // Check if the user is the brand owner (primary account)
+  const isOwner = brand._id.toString() === req.user._id.toString();
+
+  if (isOwner) {
+    return res.json({
+      success: true,
+      role: 'owner',
+      permissions: allPermissions,
+      isOwner: true,
+    });
+  }
+
+  // Otherwise, find user in team members
+  const member = brand.teamMembers.find(
+    m => m.userId.toString() === req.user._id.toString() && m.status === 'active'
+  );
+
+  if (!member) {
+    return res.status(403).json({ success: false, error: 'You are not an active team member of this brand' });
+  }
+
+  res.json({
+    success: true,
+    role: member.role,
+    permissions: member.role === 'admin' ? allPermissions : member.permissions,
+    isOwner: false,
+  });
+});
+
+/**
+ * @desc    Check if user has a specific permission
+ * @route   POST /api/brands/team/check-permission
+ * @access  Private/Brand
+ */
+exports.checkUserPermission = catchAsync(async (req, res) => {
+  const { permission, userId } = req.body;
+
+  if (!permission) {
+    return res.status(400).json({ success: false, error: 'Permission name is required' });
+  }
+
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  // Check the target user (default to the requesting user)
+  const targetUserId = userId || req.user._id;
+
+  // Brand owner always has permission
+  const isOwner = brand._id.toString() === targetUserId.toString();
+  if (isOwner) {
+    return res.json({ success: true, hasPermission: true, role: 'owner' });
+  }
+
+  const hasPermission = brand.userHasPermission(targetUserId, permission);
+  const member = brand.teamMembers.find(
+    m => m.userId.toString() === targetUserId.toString() && m.status === 'active'
+  );
+
+  res.json({
+    success: true,
+    hasPermission,
+    role: member?.role || null,
+    permission,
+  });
+});
+
+// ==================== ROLE TEMPLATES ====================
+
+/**
+ * @desc    Get role templates
+ * @route   GET /api/brands/team/role-templates
+ * @access  Private/Brand
+ */
+exports.getRoleTemplates = catchAsync(async (req, res) => {
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  // Include built-in defaults alongside custom templates
+  const builtInTemplates = [
+    {
+      _id: 'admin',
+      name: 'Admin',
+      description: 'Full access to all features',
+      permissions: brand.getDefaultPermissionsForRole('admin'),
+      isDefault: true,
+      isBuiltIn: true,
+    },
+    {
+      _id: 'manager',
+      name: 'Manager',
+      description: 'Can manage campaigns, deals, and view analytics',
+      permissions: brand.getDefaultPermissionsForRole('manager'),
+      isDefault: true,
+      isBuiltIn: true,
+    },
+    {
+      _id: 'member',
+      name: 'Member',
+      description: 'Can create and edit campaigns and deals',
+      permissions: brand.getDefaultPermissionsForRole('member'),
+      isDefault: true,
+      isBuiltIn: true,
+    },
+    {
+      _id: 'viewer',
+      name: 'Viewer',
+      description: 'Read-only access to campaigns, deals, and analytics',
+      permissions: brand.getDefaultPermissionsForRole('viewer'),
+      isDefault: true,
+      isBuiltIn: true,
+    },
+  ];
+
+  res.json({
+    success: true,
+    templates: [...builtInTemplates, ...brand.roleTemplates],
+  });
+});
+
+/**
+ * @desc    Create a custom role template
+ * @route   POST /api/brands/team/role-templates
+ * @access  Private/Brand
+ */
+exports.createRoleTemplate = catchAsync(async (req, res) => {
+  const { name, description, permissions } = req.body;
+
+  if (!name || !permissions || !Array.isArray(permissions) || permissions.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'Name and at least one permission are required',
+    });
+  }
+
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  // Check for duplicate name
+  const duplicateName = brand.roleTemplates.find(
+    t => t.name.toLowerCase() === name.toLowerCase()
+  );
+  if (duplicateName) {
+    return res.status(400).json({ success: false, error: 'A role template with this name already exists' });
+  }
+
+  brand.roleTemplates.push({
+    name,
+    description: description || '',
+    permissions,
+    isDefault: false,
+  });
+
+  await brand.save();
+
+  const newTemplate = brand.roleTemplates[brand.roleTemplates.length - 1];
+
+  res.status(201).json({
+    success: true,
+    message: 'Role template created',
+    template: newTemplate,
+  });
+});
+
+/**
+ * @desc    Update a custom role template
+ * @route   PUT /api/brands/team/role-templates/:templateId
+ * @access  Private/Brand
+ */
+exports.updateRoleTemplate = catchAsync(async (req, res) => {
+  const { templateId } = req.params;
+  const { name, description, permissions } = req.body;
+
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  const template = brand.roleTemplates.id(templateId);
+  if (!template) {
+    return res.status(404).json({ success: false, error: 'Role template not found' });
+  }
+
+  if (template.isDefault) {
+    return res.status(400).json({ success: false, error: 'Cannot modify a built-in role template' });
+  }
+
+  // Check for duplicate name (excluding current template)
+  if (name) {
+    const duplicate = brand.roleTemplates.find(
+      t => t.name.toLowerCase() === name.toLowerCase() && t._id.toString() !== templateId
+    );
+    if (duplicate) {
+      return res.status(400).json({ success: false, error: 'A role template with this name already exists' });
+    }
+    template.name = name;
+  }
+
+  if (description !== undefined) template.description = description;
+  if (permissions && Array.isArray(permissions)) template.permissions = permissions;
+
+  await brand.save();
+
+  res.json({
+    success: true,
+    message: 'Role template updated',
+    template,
+  });
+});
+
+/**
+ * @desc    Delete a custom role template
+ * @route   DELETE /api/brands/team/role-templates/:templateId
+ * @access  Private/Brand
+ */
+exports.deleteRoleTemplate = catchAsync(async (req, res) => {
+  const { templateId } = req.params;
+
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  const template = brand.roleTemplates.id(templateId);
+  if (!template) {
+    return res.status(404).json({ success: false, error: 'Role template not found' });
+  }
+
+  if (template.isDefault) {
+    return res.status(400).json({ success: false, error: 'Cannot delete a built-in role template' });
+  }
+
+  brand.roleTemplates.pull(templateId);
+  await brand.save();
+
+  res.json({ success: true, message: 'Role template deleted' });
+});
+
+// ==================== TEAM MEMBER STATUS ====================
+
+/**
+ * @desc    Update team member status (activate/deactivate)
+ * @route   PUT /api/brands/team/:memberId/status
+ * @access  Private/Brand
+ */
+exports.updateTeamMemberStatus = catchAsync(async (req, res) => {
+  const { memberId } = req.params;
+  const { status } = req.body;
+
+  if (!status || !['active', 'inactive'].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Status must be "active" or "inactive"',
+    });
+  }
+
+  const brand = await Brand.findById(req.user._id);
+  if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+  const member = brand.teamMembers.id(memberId);
+  if (!member) {
+    return res.status(404).json({ success: false, error: 'Team member not found' });
+  }
+
+  if (member.status === 'removed') {
+    return res.status(400).json({ success: false, error: 'Cannot change status of a removed member' });
+  }
+
+  const previousStatus = member.status;
+  member.status = status;
+  if (status === 'active') member.lastActive = new Date();
+
+  await brand.save();
+
+  // Populate the member user info for the response
+  await brand.populate('teamMembers.userId', 'fullName email');
+  const updatedMember = brand.teamMembers.id(memberId);
+
+  res.json({
+    success: true,
+    message: `Team member ${status === 'active' ? 'activated' : 'deactivated'} successfully`,
+    member: updatedMember,
+    previousStatus,
+  });
+});
+
 // ==================== PAYMENT METHODS ====================
 
 /**

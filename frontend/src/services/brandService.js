@@ -238,6 +238,139 @@ class BrandService {
     }
   }
 
+  // ==================== TEAM ACTIVITY ====================
+
+  /**
+   * Get team activity log
+   * @param {number} days - Number of days to look back
+   * @param {number} page - Page number
+   * @param {number} limit - Items per page
+   * @returns {Promise<Object>}
+   */
+  async getTeamActivity(days = 30, page = 1, limit = 20) {
+    try {
+      const response = await api.get('/brands/team/activity', { params: { days, page, limit } });
+      return response.data;
+    } catch (error) {
+      console.error('Get team activity error:', error);
+      return this._handleError(error, 'Failed to load team activity');
+    }
+  }
+
+  // ==================== PERMISSIONS ====================
+
+  /**
+   * Get permissions summary for current user
+   * @returns {Promise<Object>}
+   */
+  async getPermissionsSummary() {
+    try {
+      const response = await api.get('/brands/team/permissions/summary');
+      return response.data;
+    } catch (error) {
+      console.error('Get permissions summary error:', error);
+      return this._handleError(error, 'Failed to load permissions');
+    }
+  }
+
+  /**
+   * Check if a user has a specific permission
+   * @param {string} permission - Permission to check
+   * @param {string} userId - Optional user ID (defaults to current user)
+   * @returns {Promise<Object>}
+   */
+  async checkUserPermission(permission, userId = null) {
+    try {
+      const body = { permission };
+      if (userId) body.userId = userId;
+      const response = await api.post('/brands/team/check-permission', body);
+      return response.data;
+    } catch (error) {
+      console.error('Check permission error:', error);
+      return this._handleError(error, 'Failed to check permission');
+    }
+  }
+
+  // ==================== ROLE TEMPLATES ====================
+
+  /**
+   * Get all role templates (built-in + custom)
+   * @returns {Promise<Object>}
+   */
+  async getRoleTemplates() {
+    try {
+      const response = await api.get('/brands/team/role-templates');
+      return response.data;
+    } catch (error) {
+      console.error('Get role templates error:', error);
+      return this._handleError(error, 'Failed to load role templates');
+    }
+  }
+
+  /**
+   * Create a custom role template
+   * @param {Object} templateData - { name, description, permissions[] }
+   * @returns {Promise<Object>}
+   */
+  async createRoleTemplate(templateData) {
+    try {
+      const response = await api.post('/brands/team/role-templates', templateData);
+      return response.data;
+    } catch (error) {
+      console.error('Create role template error:', error);
+      return this._handleError(error, 'Failed to create role template');
+    }
+  }
+
+  /**
+   * Update a custom role template
+   * @param {string} templateId - Template ID
+   * @param {Object} templateData - { name, description, permissions[] }
+   * @returns {Promise<Object>}
+   */
+  async updateRoleTemplate(templateId, templateData) {
+    try {
+      const response = await api.put(`/brands/team/role-templates/${templateId}`, templateData);
+      return response.data;
+    } catch (error) {
+      console.error('Update role template error:', error);
+      return this._handleError(error, 'Failed to update role template');
+    }
+  }
+
+  /**
+   * Delete a custom role template
+   * @param {string} templateId - Template ID
+   * @returns {Promise<Object>}
+   */
+  async deleteRoleTemplate(templateId) {
+    try {
+      const response = await api.delete(`/brands/team/role-templates/${templateId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete role template error:', error);
+      return this._handleError(error, 'Failed to delete role template');
+    }
+  }
+
+  // ==================== TEAM MEMBER STATUS ====================
+
+  /**
+   * Update team member status (activate/deactivate)
+   * @param {string} memberId - Team member ID
+   * @param {string} status - 'active' or 'inactive'
+   * @returns {Promise<Object>}
+   */
+  async updateTeamMemberStatus(memberId, status) {
+    try {
+      const response = await api.put(`/brands/team/${memberId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error('Update member status error:', error);
+      return this._handleError(error, 'Failed to update member status');
+    }
+  }
+
   // ==================== PAYMENT METHODS ====================
 
   /**

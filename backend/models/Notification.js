@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['deal', 'message', 'payment', 'campaign', 'reminder', 'system', 'alert'],
+    enum: ['deal', 'message', 'payment', 'campaign', 'reminder', 'system', 'alert', 'security'],
     required: true
   },
   title: {

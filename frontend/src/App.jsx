@@ -11,6 +11,7 @@ import { DealProvider } from './context/DealContext';
 import { MessageProvider } from './context/MessageContext';
 import { PaymentProvider } from './context/PaymentContext';
 import { SearchProvider } from './context/SearchContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 
 // Layout Components
 import Layout from './components/Layout/Layout';
@@ -73,8 +74,11 @@ import Contracts from './components/Common/Contracts';
 import Pricing from './pages/Pricing';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import SubscriptionManager from './pages/Common/SubscriptionManager';
 
 function App() {
+  const isCypressRun = typeof window !== 'undefined' && Boolean(window.Cypress);
+
   return (
     <AuthProvider>
       <ThemeProvider>
@@ -84,31 +88,34 @@ function App() {
               <DealProvider>
                 <MessageProvider>
                   <PaymentProvider>
+                    <SubscriptionProvider>
                     <SearchProvider>
-                        <Toaster
-                          position="top-right"
-                          toastOptions={{
-                            duration: 4000,
-                            style: {
-                              background: '#363636',
-                              color: '#fff',
-                            },
-                            success: {
-                              duration: 3000,
-                              iconTheme: {
-                                primary: '#10b981',
-                                secondary: '#fff',
-                              },
-                            },
-                            error: {
+                        {!isCypressRun && (
+                          <Toaster
+                            position="top-right"
+                            toastOptions={{
                               duration: 4000,
-                              iconTheme: {
-                                primary: '#ef4444',
-                                secondary: '#fff',
+                              style: {
+                                background: '#363636',
+                                color: '#fff',
                               },
-                            },
-                          }}
-                        />
+                              success: {
+                                duration: 3000,
+                                iconTheme: {
+                                  primary: '#10b981',
+                                  secondary: '#fff',
+                                },
+                              },
+                              error: {
+                                duration: 4000,
+                                iconTheme: {
+                                  primary: '#ef4444',
+                                  secondary: '#fff',
+                                },
+                              },
+                            }}
+                          />
+                        )}
 
                         <Routes>
                           {/* Public Routes */}
@@ -144,6 +151,7 @@ function App() {
                             <Route path="profile" element={<BrandProfile />} />
                             <Route path="team" element={<BrandTeamMembers />} />
                             <Route path="settings" element={<BrandSettings />} />
+                            <Route path="subscription" element={<SubscriptionManager />} />
                              <Route path="campaigns/:id/edit" element={<BrandCampaignEdit />} />
                             <Route path="inbox" element={<BrandInbox />} />
                             <Route path="notifications" element={<Notifications />} />
@@ -167,6 +175,7 @@ function App() {
                             <Route path="earnings" element={<CreatorEarnings />} />
                             <Route path="withdrawals" element={<CreatorWithdrawals />} />
                             <Route path="settings" element={<CreatorSettings />} />
+                            <Route path="subscription" element={<SubscriptionManager />} />
                             <Route path="inbox" element={<CreatorInbox />} />
                             <Route path="notifications" element={<Notifications />} />
                             <Route path="disputes" element={<Disputes />} />
@@ -197,6 +206,7 @@ function App() {
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                      </SearchProvider>
+                    </SubscriptionProvider>
                   </PaymentProvider>
                 </MessageProvider>
               </DealProvider>

@@ -127,8 +127,10 @@ exports.generateReport = async (req, res) => {
  * @param {string} reportId - Report ID
  */
 async function generateReportInBackground(reportId) {
+  let report = null;
+
   try {
-    const report = await Report.findById(reportId);
+    report = await Report.findById(reportId);
     
     if (!report) {
       throw new Error('Report not found');
@@ -236,15 +238,19 @@ async function generateReportInBackground(reportId) {
     });
 
     // Log error
-    await AuditLog.create({
-      adminId: req?.user?._id,
-      action: 'report_generation_failed',
-      targetResource: {
-        type: 'report',
-        id: reportId
-      },
-      metadata: { error: error.message }
-    });
+    try {
+      await AuditLog.create({
+        adminId: report?.userId || null,
+        action: 'report_generation_failed',
+        targetResource: {
+          type: 'report',
+          id: reportId
+        },
+        metadata: { error: error.message }
+      });
+    } catch (auditError) {
+      console.error('Failed to write report failure audit log:', auditError.message);
+    }
   }
 }
 

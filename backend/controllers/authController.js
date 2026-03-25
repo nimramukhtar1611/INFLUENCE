@@ -7,7 +7,7 @@ const TempOTP = require('../models/TempOTP');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
-const smsService = require('../services/smsService');
+const smsService = require('../services/SMSService');
 const { setTwoFASession, getTwoFASession, incrementAttempts, resetAttempts, MAX_ATTEMPTS } = require('../utils/twoFASessionStore');
 const { generateToken, generateRefreshToken, hashToken } = require('../utils/jwtUtils');
 const { isValidEmail, isValidPhone, isValidPassword } = require('../utils/validators');
@@ -54,6 +54,7 @@ const normalizeUserResponse = (user) => {
 
 // ==================== REGISTER ====================
 exports.register = catchAsync(async (req, res) => {
+  console.log('📝 Register request body:', JSON.stringify(req.body));
   const {
     email,
     password,

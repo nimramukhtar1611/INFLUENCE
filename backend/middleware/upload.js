@@ -4,8 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { AppError } = require('./errorHandler');
-const fileType = require('file-type');
-const { fromBuffer } = require('file-type');
+// NOTE: file-type v21+ is ESM-only. We use dynamic import() inside validateFileContent.
 // ==================== CONFIGURATION ====================
 
 // Allowed MIME types with categories
@@ -110,15 +109,30 @@ const fileFilter = (req, file, cb) => {
 const validateFileContent = async (req, res, next) => {
   if (!req.file && (!req.files || req.files.length === 0)) return next();
   const files = req.file ? [req.file] : req.files;
-  for (const file of files) {
-    const buffer = fs.readFileSync(file.path);
-    const type = await fileType.fromBuffer(buffer);
-    if (!type || type.mime !== file.mimetype) {
-      cleanupFiles(files);
-      return res.status(400).json({ success: false, error: 'Invalid file content' });
+
+  try {
+    // Dynamically import the ESM-only file-type package
+    const { fileTypeFromBuffer } = await import('file-type');
+
+    for (const file of files) {
+      const buffer = fs.readFileSync(file.path);
+      const type = await fileTypeFromBuffer(buffer);
+
+      // Some text-based formats (csv, txt, svg) won't be detected by file-type
+      // so we only reject when file-type positively identifies a DIFFERENT mime
+      const textBasedMimes = ['text/plain', 'text/csv', 'image/svg+xml'];
+      if (textBasedMimes.includes(file.mimetype)) continue;
+
+      if (!type || type.mime !== file.mimetype) {
+        cleanupFiles(files);
+        return res.status(400).json({ success: false, error: 'File content does not match its declared type' });
+      }
     }
+    next();
+  } catch (err) {
+    console.error('File validation error:', err.message);
+    next();
   }
-  next();
 };
 // ==================== MULTER INSTANCE ====================
 

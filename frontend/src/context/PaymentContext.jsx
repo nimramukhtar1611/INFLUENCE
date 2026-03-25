@@ -15,6 +15,11 @@ export const usePayment = () => {
 
 export const PaymentProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const isBillingUser = isAuthenticated && ['brand', 'creator'].includes(user?.userType);
+
+  const getErrorMessage = (err, fallback) => {
+    return err?.response?.data?.error || err?.error || err?.message || fallback;
+  };
 
   const [balance, setBalance] = useState(0);
   const [pendingBalance, setPendingBalance] = useState(0);
@@ -31,8 +36,9 @@ export const PaymentProvider = ({ children }) => {
   });
 
   // ==================== FETCH BALANCE ====================
-  const fetchBalance = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchBalance = useCallback(async (options = {}) => {
+    const { silent = false } = options;
+    if (!isBillingUser) return;
 
     try {
       const response = await api.get('/payments/balance');
@@ -42,18 +48,19 @@ export const PaymentProvider = ({ children }) => {
       } else {
         const msg = response.data?.error || 'Failed to fetch balance';
         setError(msg);
-        toast.error(msg);
+        if (!silent) toast.error(msg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Failed to fetch balance';
+      const msg = getErrorMessage(err, 'Failed to fetch balance');
       setError(msg);
-      toast.error(msg);
+      if (!silent) toast.error(msg);
     }
-  }, [isAuthenticated]);
+  }, [isBillingUser]);
 
   // ==================== FETCH TRANSACTIONS ====================
-  const fetchTransactions = useCallback(async (page = 1) => {
-    if (!isAuthenticated) return;
+  const fetchTransactions = useCallback(async (page = 1, options = {}) => {
+    const { silent = false } = options;
+    if (!isBillingUser) return;
 
     try {
       setLoading(true);
@@ -76,20 +83,21 @@ export const PaymentProvider = ({ children }) => {
       } else {
         const msg = response.data?.error || 'Failed to load transactions';
         setError(msg);
-        toast.error(msg);
+        if (!silent) toast.error(msg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Failed to load transactions';
+      const msg = getErrorMessage(err, 'Failed to load transactions');
       setError(msg);
-      toast.error(msg);
+      if (!silent) toast.error(msg);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isBillingUser]);
 
   // ==================== FETCH PAYMENT METHODS ====================
-  const fetchPaymentMethods = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchPaymentMethods = useCallback(async (options = {}) => {
+    const { silent = false } = options;
+    if (!isBillingUser) return;
 
     try {
       const response = await api.get('/payments/methods');
@@ -98,18 +106,19 @@ export const PaymentProvider = ({ children }) => {
       } else {
         const msg = response.data?.error || 'Failed to load payment methods';
         setError(msg);
-        toast.error(msg);
+        if (!silent) toast.error(msg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Failed to load payment methods';
+      const msg = getErrorMessage(err, 'Failed to load payment methods');
       setError(msg);
-      toast.error(msg);
+      if (!silent) toast.error(msg);
     }
-  }, [isAuthenticated]);
+  }, [isBillingUser]);
 
   // ==================== FETCH WITHDRAWALS ====================
-  const fetchWithdrawals = useCallback(async (page = 1) => {
-    if (!isAuthenticated) return;
+  const fetchWithdrawals = useCallback(async (page = 1, options = {}) => {
+    const { silent = false } = options;
+    if (!isBillingUser) return;
 
     try {
       const response = await api.get('/payments/withdrawals', {
@@ -130,18 +139,19 @@ export const PaymentProvider = ({ children }) => {
       } else {
         const msg = response.data?.error || 'Failed to load withdrawals';
         setError(msg);
-        toast.error(msg);
+        if (!silent) toast.error(msg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Failed to load withdrawals';
+      const msg = getErrorMessage(err, 'Failed to load withdrawals');
       setError(msg);
-      toast.error(msg);
+      if (!silent) toast.error(msg);
     }
-  }, [isAuthenticated]);
+  }, [isBillingUser]);
 
   // ==================== FETCH INVOICES ====================
-  const fetchInvoices = useCallback(async (page = 1) => {
-    if (!isAuthenticated) return;
+  const fetchInvoices = useCallback(async (page = 1, options = {}) => {
+    const { silent = false } = options;
+    if (!isBillingUser) return;
 
     try {
       const response = await api.get('/payments/invoices', {
@@ -162,14 +172,14 @@ export const PaymentProvider = ({ children }) => {
       } else {
         const msg = response.data?.error || 'Failed to load invoices';
         setError(msg);
-        toast.error(msg);
+        if (!silent) toast.error(msg);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Failed to load invoices';
+      const msg = getErrorMessage(err, 'Failed to load invoices');
       setError(msg);
-      toast.error(msg);
+      if (!silent) toast.error(msg);
     }
-  }, [isAuthenticated]);
+  }, [isBillingUser]);
 
   // ==================== ADD PAYMENT METHOD ====================
   const addPaymentMethod = useCallback(async (methodData) => {
@@ -508,15 +518,15 @@ export const PaymentProvider = ({ children }) => {
 
   // ==================== INITIAL FETCH ====================
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchBalance();
-      fetchTransactions();
-      fetchPaymentMethods();
-      fetchWithdrawals();
-      fetchInvoices();
+    if (isBillingUser) {
+      fetchBalance({ silent: true });
+      fetchTransactions(1, { silent: true });
+      fetchPaymentMethods({ silent: true });
+      fetchWithdrawals(1, { silent: true });
+      fetchInvoices(1, { silent: true });
     }
   }, [
-    isAuthenticated,
+    isBillingUser,
     fetchBalance,
     fetchTransactions,
     fetchPaymentMethods,

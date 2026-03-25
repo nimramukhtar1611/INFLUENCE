@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const Deal = require('../models/Deal');
 const Notification = require('../models/Notification');
 const Report = require('../models/Report');
+const Invitation = require('../models/Invitation');
+const Payment = require('../models/Payment');
 const { sendEmail } = require('../services/emailService');
 const analyticsService = require('../services/analyticsService');
 

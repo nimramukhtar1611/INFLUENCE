@@ -1,4 +1,7 @@
 // server.js - FULL FIXED VERSION
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first');
+require('node:dns/promises').setServers(['8.8.8.8', '8.8.4.4']);
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -15,36 +18,42 @@ console.log('🔍 DEBUG: MONGODB_URI exists?', process.env.MONGODB_URI ? '✅ YE
 
 // ─── IMPORTS ──────────────────────────────────────────────────────────────────
 
-const authRoutes         = require('./routes/authRoutes');
-const brandRoutes        = require('./routes/brandRoutes');
-const creatorRoutes      = require('./routes/creatorRoutes');
-const campaignRoutes     = require('./routes/campaignRoutes');
-const dealRoutes         = require('./routes/dealRoutes');
-const paymentRoutes      = require('./routes/paymentRoutes');
-const adminRoutes        = require('./routes/adminRoutes');
+const authRoutes = require('./routes/authRoutes');
+const brandRoutes = require('./routes/brandRoutes');
+const creatorRoutes = require('./routes/creatorRoutes');
+const campaignRoutes = require('./routes/campaignRoutes');
+const dealRoutes = require('./routes/dealRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const messageRoutes      = require('./routes/messageRoutes');
-const searchRoutes       = require('./routes/searchRoutes');
-const uploadRoutes       = require('./routes/uploadRoutes');
-const disputeRoutes      = require('./routes/disputeRoutes');
-const reviewRoutes       = require('./routes/reviewRoutes');
-const contractRoutes     = require('./routes/contractRoutes');
-const complianceRoutes   = require('./routes/complianceRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const searchRoutes = require('./routes/searchRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const disputeRoutes = require('./routes/disputeRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const contractRoutes = require('./routes/contractRoutes');
+const complianceRoutes = require('./routes/complianceRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
-const featuredRoutes     = require('./routes/featuredRoutes');
-const affiliateRoutes    = require('./routes/affiliateRoutes');
-const twoFARoutes        = require('./routes/twoFARoutes');
-const adminTwoFARoutes   = require('./routes/adminTwoFARoutes');
+const featuredRoutes = require('./routes/featuredRoutes');
+const affiliateRoutes = require('./routes/affiliateRoutes');
+const socialOAuthRoutes = require('./routes/socialOAuthRoutes');
+const twoFARoutes = require('./routes/twoFARoutes');
+const adminTwoFARoutes = require('./routes/adminTwoFARoutes');
 
-const { initializeSocket }    = require('./socket/chatSocket');
-const cronJobManager          = require('./utils/cronJobs');
+const { initializeSocket } = require('./socket/chatSocket');
+const cronJobManager = require('./utils/cronJobs');
 const { connectRedis, cache } = require('./config/redis');
+const { initializeSentry, captureException } = require('./utils/sentry');
 
 // ─── APP SETUP ────────────────────────────────────────────────────────────────
 
-const app       = express();
-const server    = http.createServer(app);
+const app = express();
+const server = http.createServer(app);
 const isTestEnv = process.env.NODE_ENV === 'test';
+
+if (!isTestEnv) {
+  initializeSentry();
+}
 
 // ─── PROCESS ERROR HANDLERS ───────────────────────────────────────────────────
 
@@ -134,11 +143,11 @@ app.use((req, res, next) => {
 
 app.get('/health', (req, res) => {
   res.json({
-    success:     true,
-    status:      'ok',
-    timestamp:   new Date(),
+    success: true,
+    status: 'ok',
+    timestamp: new Date(),
     environment: process.env.NODE_ENV || 'development',
-    db:          mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
@@ -146,35 +155,36 @@ app.get('/health', (req, res) => {
 // ✅ FIX: Routes registered BEFORE DB connect — Express queues requests,
 //    controllers handle DB errors individually if DB is not ready yet.
 
-app.use('/api/auth/2fa',      twoFARoutes);
-app.use('/api/auth',          authRoutes);
+app.use('/api/auth/2fa', twoFARoutes);
+app.use('/api/auth', authRoutes);
 
-app.use('/api/admin/2fa',     adminTwoFARoutes);
-app.use('/api/admin',         adminRoutes);
+app.use('/api/admin/2fa', adminTwoFARoutes);
+app.use('/api/admin', adminRoutes);
 
-app.use('/api/brands',        brandRoutes);
-app.use('/api/creators',      creatorRoutes);
-app.use('/api/campaigns',     campaignRoutes);
-app.use('/api/deals',         dealRoutes);
-app.use('/api/payments',      paymentRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/creators', creatorRoutes);
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/deals', dealRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/messages',      messageRoutes);
-app.use('/api/search',        searchRoutes);
-app.use('/api/upload',        uploadRoutes);
-app.use('/api/disputes',      disputeRoutes);
-app.use('/api/reviews',       reviewRoutes);
-app.use('/api/contracts',     contractRoutes);
-app.use('/api/compliance',    complianceRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/disputes', disputeRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/contracts', contractRoutes);
+app.use('/api/compliance', complianceRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/featured',      featuredRoutes);
-app.use('/api/affiliate',     affiliateRoutes);
+app.use('/api/featured', featuredRoutes);
+app.use('/api/affiliate', affiliateRoutes);
+app.use('/api/social-oauth', socialOAuthRoutes);
 
 // ─── 404 HANDLER ──────────────────────────────────────────────────────────────
 
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    error:   `Route ${req.method} ${req.path} not found`
+    error: `Route ${req.method} ${req.path} not found`
   });
 });
 
@@ -183,11 +193,24 @@ app.use((req, res) => {
 // ✅ Must have 4 params for Express to treat it as error handler
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  captureException(err, {
+    tags: {
+      method: req.method,
+      path: req.path
+    },
+    extra: {
+      body: req.body,
+      params: req.params,
+      query: req.query,
+      userId: req.user?._id
+    }
+  });
+
   console.error('🔥 Error:', err.message);
   console.error(err.stack);
   res.status(err.status || 500).json({
     success: false,
-    error:   process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
 

@@ -6,6 +6,7 @@ const Notification = require('../models/Notification');
 const ContractService = require('../services/contractService');
 const asyncHandler = require('express-async-handler');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 // @desc    Get contract for deal
 // @route   GET /api/contracts/deal/:dealId

@@ -7,6 +7,31 @@ const subscriptionPlans = require('../config/subscriptionPlans');
 const asyncHandler = require('express-async-handler');
 const mongoose = require('mongoose');
 
+const normalizePlanFeatures = (features = []) => {
+  if (!Array.isArray(features)) return [];
+  return features
+    .map(feature => (typeof feature === 'string' ? feature : feature?.name))
+    .filter(Boolean);
+};
+
+const resolveStripePriceId = (plan, interval) => {
+  if (!plan?.stripePriceId) return null;
+
+  if (typeof plan.stripePriceId === 'string') {
+    return plan.stripePriceId;
+  }
+
+  if (plan.stripePriceId?.[interval]) {
+    return plan.stripePriceId[interval];
+  }
+
+  if (plan.interval && plan.stripePriceId?.[plan.interval]) {
+    return plan.stripePriceId[plan.interval];
+  }
+
+  return plan.stripePriceId?.month || plan.stripePriceId?.year || null;
+};
+
 // ============================================================
 // PUBLIC ROUTES
 // ============================================================
@@ -194,6 +219,42 @@ const subscribe = asyncHandler(async (req, res) => {
     });
   }
 
+  const normalizedFeatures = normalizePlanFeatures(plan.features);
+
+  // Free plans are activated locally and do not require Stripe subscription setup.
+  if (Number(plan.price) <= 0) {
+    const billingStart = new Date();
+    const billingEnd = new Date(billingStart);
+    if (interval === 'year') {
+      billingEnd.setFullYear(billingEnd.getFullYear() + 1);
+    } else {
+      billingEnd.setMonth(billingEnd.getMonth() + 1);
+    }
+
+    const freeSubscription = await Subscription.create({
+      userId: req.user._id,
+      planId: plan.planId,
+      status: 'active',
+      planDetails: {
+        name: plan.name,
+        price: plan.price,
+        currency: plan.currency,
+        interval,
+        intervalCount: plan.intervalCount,
+        features: normalizedFeatures,
+        limits: plan.limits
+      },
+      billingPeriod: { start: billingStart, end: billingEnd },
+      cancelAtPeriodEnd: false
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Free plan activated successfully',
+      subscription: freeSubscription
+    });
+  }
+
   let stripeCustomerId = req.user.stripeCustomerId;
 
   if (!stripeCustomerId) {
@@ -213,10 +274,10 @@ const subscribe = asyncHandler(async (req, res) => {
     });
   }
 
-  const stripePriceId = plan.stripePriceId?.[interval];
+  const stripePriceId = resolveStripePriceId(plan, interval);
   if (!stripePriceId) {
     res.status(500);
-    throw new Error('Payment configuration error');
+    throw new Error(`Payment configuration error: missing Stripe price for plan ${plan.planId}`);
   }
 
   const stripeSubscription = await stripe.subscriptions.create({
@@ -228,29 +289,27 @@ const subscribe = asyncHandler(async (req, res) => {
     metadata: { userId: req.user._id.toString(), planId: plan.planId }
   });
   const paymentIntent = stripeSubscription.latest_invoice?.payment_intent;
-if (paymentIntent && paymentIntent.status === 'requires_action') {
-  // Return client secret for 3DS
-  return res.json({
-    success: true,
-    requiresAction: true,
-    clientSecret: paymentIntent.client_secret,
-    subscriptionId: stripeSubscription.id
-  });
-}
-// If payment_intent already succeeded, create subscription record with 'active' status
-if (paymentIntent && paymentIntent.status === 'succeeded') {
-  subscription.status = 'active';
-} else {
-  subscription.status = 'incomplete';
-}
+  if (paymentIntent && paymentIntent.status === 'requires_action') {
+    // Return client secret for 3DS
+    return res.json({
+      success: true,
+      requiresAction: true,
+      clientSecret: paymentIntent.client_secret,
+      subscriptionId: stripeSubscription.id
+    });
+  }
+
+  const initialSubscriptionStatus = paymentIntent && paymentIntent.status === 'succeeded'
+    ? 'active'
+    : (stripeSubscription.status || 'incomplete');
 
   const currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
   const currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
 
   const subscription = await Subscription.create({
     userId: req.user._id,
-    planId: plan._id,
-    status: stripeSubscription.status,
+    planId: plan.planId,
+    status: initialSubscriptionStatus,
     stripeCustomerId,
     stripeSubscriptionId: stripeSubscription.id,
     stripePriceId,
@@ -260,7 +319,7 @@ if (paymentIntent && paymentIntent.status === 'succeeded') {
       currency: plan.currency,
       interval: plan.interval,
       intervalCount: plan.intervalCount,
-      features: plan.features.map(f => f.name),
+      features: normalizedFeatures,
       limits: plan.limits
     },
     billingPeriod: { start: currentPeriodStart, end: currentPeriodEnd },
@@ -344,10 +403,10 @@ const changePlan = asyncHandler(async (req, res) => {
     throw new Error('No active subscription found');
   }
 
-  const stripePriceId = newPlan.stripePriceId?.[interval];
+  const stripePriceId = resolveStripePriceId(newPlan, interval);
   if (!stripePriceId) {
     res.status(500);
-    throw new Error('Payment configuration error');
+    throw new Error(`Payment configuration error: missing Stripe price for plan ${newPlan.planId}`);
   }
 
   const stripeSubscription = await stripe.subscriptions.retrieve(
@@ -366,12 +425,12 @@ const changePlan = asyncHandler(async (req, res) => {
   if (!currentSubscription.upgradeHistory) currentSubscription.upgradeHistory = [];
   currentSubscription.upgradeHistory.push({
     fromPlan: currentSubscription.planId,
-    toPlan: newPlan._id,
+    toPlan: newPlan.planId,
     date: new Date(),
     type: newPlan.price > currentSubscription.planDetails.price ? 'upgrade' : 'downgrade'
   });
 
-  currentSubscription.planId = newPlan._id;
+  currentSubscription.planId = newPlan.planId;
   currentSubscription.stripePriceId = stripePriceId;
   currentSubscription.planDetails = {
     name: newPlan.name,
@@ -379,7 +438,7 @@ const changePlan = asyncHandler(async (req, res) => {
     currency: newPlan.currency,
     interval: newPlan.interval,
     intervalCount: newPlan.intervalCount,
-    features: newPlan.features.map(f => f.name),
+    features: normalizePlanFeatures(newPlan.features),
     limits: newPlan.limits
   };
   currentSubscription.billingPeriod = {
@@ -414,10 +473,10 @@ const previewPlanChange = asyncHandler(async (req, res) => {
     throw new Error('No active subscription found');
   }
 
-  const stripePriceId = newPlan.stripePriceId?.[interval];
+  const stripePriceId = resolveStripePriceId(newPlan, interval);
   if (!stripePriceId) {
     res.status(500);
-    throw new Error('Payment configuration error');
+    throw new Error(`Payment configuration error: missing Stripe price for plan ${newPlan.planId}`);
   }
 
   const stripeSubscription = await stripe.subscriptions.retrieve(
@@ -1020,14 +1079,14 @@ const adminUpdateSubscription = asyncHandler(async (req, res) => {
   if (planId) {
     const newPlan = await Plan.findOne({ planId });
     if (newPlan) {
-      subscription.planId = newPlan._id;
+      subscription.planId = newPlan.planId;
       subscription.planDetails = {
         name: newPlan.name,
         price: newPlan.price,
         currency: newPlan.currency,
         interval: newPlan.interval,
         intervalCount: newPlan.intervalCount,
-        features: newPlan.features.map(f => f.name),
+        features: normalizePlanFeatures(newPlan.features),
         limits: newPlan.limits
       };
     }
@@ -1266,7 +1325,7 @@ const adminDeletePlan = asyncHandler(async (req, res) => {
 
   // Check if any active subscriptions use this plan
   const activeSubscriptions = await Subscription.countDocuments({
-    planId: plan._id,
+    planId: plan.planId,
     status: { $in: ['active', 'trialing'] }
   });
 

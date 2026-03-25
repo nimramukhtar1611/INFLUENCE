@@ -21,27 +21,41 @@ export const SocketProvider = ({ children }) => {
   const [newMessage, setNewMessage] = useState(null);
 
   const socketRef = useRef(null);
+  const connectErrorShownRef = useRef(false);
+  const isCypressRun = typeof window !== 'undefined' && Boolean(window.Cypress);
 
   useEffect(() => {
-    if (!user || !token) {
+    const disableSocket = isCypressRun || (typeof window !== 'undefined' && window.localStorage.getItem('disableSocket') === 'true');
+
+    if (!user || !token || disableSocket) {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      setIsConnected(false);
       return;
     }
 
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     socketRef.current = io(SOCKET_URL, {
-      auth: { token },
+      auth: { token, userId: user?._id },
+      query: { userId: user?._id },
       transports: ['websocket', 'polling']
     });
 
     const socket = socketRef.current;
 
-    socket.on('connect', () => setIsConnected(true));
+    socket.on('connect', () => {
+      setIsConnected(true);
+      connectErrorShownRef.current = false;
+    });
     socket.on('disconnect', () => setIsConnected(false));
-    socket.on('connect_error', () => toast.error('Cannot connect to chat server'));
+    socket.on('connect_error', () => {
+      if (!connectErrorShownRef.current && !isCypressRun) {
+        toast.error('Cannot connect to chat server');
+        connectErrorShownRef.current = true;
+      }
+    });
 
     // User presence
     socket.on('user:online', ({ userId }) => {
@@ -101,7 +115,7 @@ export const SocketProvider = ({ children }) => {
       socket.removeAllListeners();
       socket.disconnect();
     };
-  }, [user, token]);
+  }, [user, token, isCypressRun]);
 
   const joinConversation = useCallback((conversationId) => {
     socketRef.current?.emit('join_conversation', { conversationId });

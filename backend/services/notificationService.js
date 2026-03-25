@@ -389,7 +389,7 @@ class NotificationService {
       const user = await User.findById(userId).select('phone');
       if (!user?.phone) return { success: false, message: 'User phone not found' };
 
-      const smsService = require('./smsService');
+      const smsService = require('./SMSService');
       await smsService.sendSMS({ to: user.phone, message });
       return { success: true };
     } catch (error) {

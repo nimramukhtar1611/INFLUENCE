@@ -13,8 +13,11 @@ class PaymentService {
   }
 
   // ==================== TRANSACTIONS ====================
-  async getTransactions(params = {}) {
+  async getTransactions(pageOrParams = 1, limit = 10, extraParams = {}) {
     try {
+      const params = typeof pageOrParams === 'object'
+        ? pageOrParams
+        : { page: pageOrParams, limit, ...extraParams };
       const response = await api.get('/payments/transactions', { params });
       return response.data;
     } catch (error) {
@@ -63,7 +66,7 @@ async setDefaultMethod(methodId) {
   // ==================== WITHDRAWALS ====================
 async getWithdrawals(params = {}) {
     // This might be through transactions or separate endpoint. We'll use transactions with type filter.
-    return this.getTransactions({ ...params, type: 'withdrawal' });
+  return this.getTransactions({ ...params, type: 'withdrawal' });
   }
 
  async requestWithdrawal(amount, methodId) {
@@ -82,7 +85,7 @@ async getWithdrawals(params = {}) {
       
       return {
         success: true,
-        message: response.message || 'Withdrawal cancelled'
+        message: response.data?.message || 'Withdrawal cancelled'
       };
     } catch (error) {
       console.error('Cancel withdrawal error:', error);
@@ -100,11 +103,12 @@ async getWithdrawals(params = {}) {
       const response = await api.get('/payments/invoices', {
         params: { page, limit }
       });
+      const data = response.data || {};
       
       return {
-        success: true,
-        invoices: response.invoices || [],
-        pagination: response.pagination || {
+        success: data.success !== false,
+        invoices: data.invoices || [],
+        pagination: data.pagination || {
           page: 1,
           limit: 10,
           total: 0,

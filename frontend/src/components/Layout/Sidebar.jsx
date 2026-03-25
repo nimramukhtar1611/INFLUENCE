@@ -61,6 +61,7 @@ import { useTheme } from '../../hooks/useTheme';
       { to: '/brand/deals', icon: Handshake, label: 'Deals' },
       { to: '/brand/analytics', icon: BarChart3, label: 'Analytics' },
       { to: '/brand/payments', icon: Wallet, label: 'Payments' },
+      { to: '/brand/subscription', icon: DollarSign, label: 'Subscription' },
       { to: '/brand/inbox', icon: MessageSquare, label: 'Inbox' },
       { to: '/brand/notifications', icon: Bell, label: 'Notifications' },
       { to: '/brand/team', icon: Users, label: 'Team' },
@@ -73,6 +74,7 @@ import { useTheme } from '../../hooks/useTheme';
       { to: '/creator/deals', icon: Handshake, label: 'My Deals' },
       { to: '/creator/analytics', icon: BarChart3, label: 'Analytics' },
       { to: '/creator/earnings', icon: Wallet, label: 'Earnings' },
+      { to: '/creator/subscription', icon: DollarSign, label: 'Subscription' },
       { to: '/creator/inbox', icon: MessageSquare, label: 'Inbox' },
       { to: '/creator/notifications', icon: Bell, label: 'Notifications' },
       { to: '/creator/settings', icon: Settings, label: 'Settings' }

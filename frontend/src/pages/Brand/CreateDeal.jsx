@@ -5,6 +5,8 @@ import { useCampaign } from '../../hooks/useCampaign';
 import { useDeal } from '../../hooks/useDeal';
 import Button from '../../components/UI/Button';
 import Input from '../../components/UI/Input';
+import { DollarSign, BarChart3 } from 'lucide-react';
+import dealService from '../../services/dealService';
 import toast from 'react-hot-toast';
 
 const CreateDeal = () => {
@@ -25,6 +27,22 @@ const CreateDeal = () => {
     deliverables: [{ type: 'post', platform: 'instagram', description: '', quantity: 1 }],
     message: ''
   });
+
+  // Performance deal state
+  const [dealType, setDealType] = useState('fixed'); // 'fixed' or 'performance'
+  const [paymentType, setPaymentType] = useState('cpe');
+  const [perfMetrics, setPerfMetrics] = useState({
+    targetEngagements: '',
+    baseRate: '',
+    bonusRate: '',
+    targetConversions: '',
+    commissionRate: '',
+    targetImpressions: '',
+    ratePerThousand: '',
+    revenueSharePercent: '',
+    minimumGuarantee: ''
+  });
+  const [perfSubmitting, setPerfSubmitting] = useState(false);
 
   const [errors, setErrors] = useState({});
 
@@ -68,7 +86,20 @@ const CreateDeal = () => {
   const validate = () => {
     const newErrors = {};
     if (!formData.campaignId) newErrors.campaignId = 'Please select a campaign';
-    if (!formData.budget || formData.budget < 10) newErrors.budget = 'Budget must be at least $10';
+
+    // Budget is only required for fixed deals
+    if (dealType === 'fixed') {
+      if (!formData.budget || formData.budget < 10) newErrors.budget = 'Budget must be at least $10';
+    }
+
+    // Performance metrics validation
+    if (dealType === 'performance') {
+      if (paymentType === 'cpe' && !perfMetrics.targetEngagements) newErrors.perfMetrics = 'Target engagements required';
+      if (paymentType === 'cpa' && !perfMetrics.targetConversions) newErrors.perfMetrics = 'Target conversions required';
+      if (paymentType === 'cpm' && !perfMetrics.targetImpressions) newErrors.perfMetrics = 'Target impressions required';
+      if (paymentType === 'revenue_share' && !perfMetrics.revenueSharePercent) newErrors.perfMetrics = 'Revenue share % required';
+    }
+
     if (!formData.deadline) newErrors.deadline = 'Deadline is required';
     else if (new Date(formData.deadline) <= new Date()) newErrors.deadline = 'Deadline must be in the future';
 
@@ -77,6 +108,7 @@ const CreateDeal = () => {
     });
 
     setErrors(newErrors);
+    if (newErrors.perfMetrics) toast.error(newErrors.perfMetrics);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -98,6 +130,55 @@ const CreateDeal = () => {
       message: formData.message
     };
 
+    if (dealType === 'performance') {
+      // Build performance deal payload
+      const perfData = {
+        ...dealData,
+        paymentType,
+        performanceMetrics: {}
+      };
+
+      if (paymentType === 'cpe') {
+        perfData.performanceMetrics = {
+          targetEngagements: parseInt(perfMetrics.targetEngagements) || 0,
+          baseRate: parseFloat(perfMetrics.baseRate) || 0,
+          bonusRate: parseFloat(perfMetrics.bonusRate) || 0
+        };
+      } else if (paymentType === 'cpa') {
+        perfData.performanceMetrics = {
+          targetConversions: parseInt(perfMetrics.targetConversions) || 0,
+          commissionRate: parseFloat(perfMetrics.commissionRate) || 0
+        };
+      } else if (paymentType === 'cpm') {
+        perfData.performanceMetrics = {
+          targetImpressions: parseInt(perfMetrics.targetImpressions) || 0,
+          ratePerThousand: parseFloat(perfMetrics.ratePerThousand) || 0
+        };
+      } else if (paymentType === 'revenue_share') {
+        perfData.performanceMetrics = {
+          revenueSharePercent: parseFloat(perfMetrics.revenueSharePercent) || 0,
+          minimumGuarantee: parseFloat(perfMetrics.minimumGuarantee) || 0
+        };
+      }
+
+      try {
+        setPerfSubmitting(true);
+        const result = await dealService.createPerformanceDeal(perfData);
+        if (result?.success) {
+          toast.success('Performance deal created successfully');
+          navigate(`/brand/deals/${result.deal?._id || ''}`);
+        } else {
+          toast.error(result?.error || 'Failed to create performance deal');
+        }
+      } catch (error) {
+        toast.error('Failed to create performance deal');
+      } finally {
+        setPerfSubmitting(false);
+      }
+      return;
+    }
+
+    // Fixed payment deal (original flow)
     const result = await createDeal(dealData);
     if (result) {
       toast.success('Deal offer sent successfully');
@@ -110,6 +191,15 @@ const CreateDeal = () => {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Deal</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Deal Type Toggle */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
+          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+            <button type="button" onClick={() => setDealType('fixed')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${dealType === 'fixed' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}><DollarSign className="w-4 h-4" /> Fixed Payment</button>
+            <button type="button" onClick={() => setDealType('performance')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${dealType === 'performance' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}><BarChart3 className="w-4 h-4" /> Performance Based</button>
+          </div>
+        </div>
+
         {/* Campaign Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -133,18 +223,92 @@ const CreateDeal = () => {
           {errors.campaignId && <p className="mt-1 text-sm text-red-600">{errors.campaignId}</p>}
         </div>
 
-        {/* Budget */}
-        <Input
-          label="Budget ($)"
-          name="budget"
-          type="number"
-          value={formData.budget}
-          onChange={handleChange}
-          placeholder="e.g., 500"
-          error={errors.budget}
-          min="10"
-          required
-        />
+        {/* Budget (only for fixed) */}
+        {dealType === 'fixed' && (
+          <Input
+            label="Budget ($)"
+            name="budget"
+            type="number"
+            value={formData.budget}
+            onChange={handleChange}
+            placeholder="e.g., 500"
+            error={errors.budget}
+            min="10"
+            required
+          />
+        )}
+
+        {/* Performance Metrics (only for performance) */}
+        {dealType === 'performance' && (
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-xl space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Performance Metrics</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+              <select value={paymentType} onChange={(e) => setPaymentType(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="cpe">CPE — Cost Per Engagement</option>
+                <option value="cpa">CPA — Cost Per Acquisition</option>
+                <option value="cpm">CPM — Cost Per Mille (1000 Impressions)</option>
+                <option value="revenue_share">Revenue Share</option>
+              </select>
+            </div>
+
+            {paymentType === 'cpe' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Target Engagements</label>
+                  <input type="number" value={perfMetrics.targetEngagements} onChange={(e) => setPerfMetrics({ ...perfMetrics, targetEngagements: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 5000" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Rate ($)</label>
+                  <input type="number" step="0.01" value={perfMetrics.baseRate} onChange={(e) => setPerfMetrics({ ...perfMetrics, baseRate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 0.05" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Bonus Rate ($)</label>
+                  <input type="number" step="0.01" value={perfMetrics.bonusRate} onChange={(e) => setPerfMetrics({ ...perfMetrics, bonusRate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 0.10" />
+                </div>
+              </div>
+            )}
+
+            {paymentType === 'cpa' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Target Conversions</label>
+                  <input type="number" value={perfMetrics.targetConversions} onChange={(e) => setPerfMetrics({ ...perfMetrics, targetConversions: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 100" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%)</label>
+                  <input type="number" step="0.1" value={perfMetrics.commissionRate} onChange={(e) => setPerfMetrics({ ...perfMetrics, commissionRate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 15" />
+                </div>
+              </div>
+            )}
+
+            {paymentType === 'cpm' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Target Impressions</label>
+                  <input type="number" value={perfMetrics.targetImpressions} onChange={(e) => setPerfMetrics({ ...perfMetrics, targetImpressions: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 100000" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rate per 1000 ($)</label>
+                  <input type="number" step="0.01" value={perfMetrics.ratePerThousand} onChange={(e) => setPerfMetrics({ ...perfMetrics, ratePerThousand: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 5.00" />
+                </div>
+              </div>
+            )}
+
+            {paymentType === 'revenue_share' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Revenue Share (%)</label>
+                  <input type="number" step="0.1" value={perfMetrics.revenueSharePercent} onChange={(e) => setPerfMetrics({ ...perfMetrics, revenueSharePercent: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 20" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Guarantee ($)</label>
+                  <input type="number" step="0.01" value={perfMetrics.minimumGuarantee} onChange={(e) => setPerfMetrics({ ...perfMetrics, minimumGuarantee: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 200" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Deadline */}
         <div>
@@ -260,8 +424,8 @@ const CreateDeal = () => {
           <Button variant="secondary" onClick={() => navigate('/brand/search')}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" loading={dealLoading}>
-            Send Deal Offer
+          <Button type="submit" variant="primary" loading={dealLoading || perfSubmitting}>
+            {dealType === 'performance' ? 'Create Performance Deal' : 'Send Deal Offer'}
           </Button>
         </div>
       </form>

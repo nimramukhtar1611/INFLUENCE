@@ -47,15 +47,8 @@ router.get('/status', protect, catchAsync(async (req, res) => {
   const result = await TwoFactorService.getStatus(req.user._id);
   res.json({ success: true, data: result });
 }));
-const rateLimit = require('express-rate-limit');
-const twoFALoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  skipSuccessfulRequests: true,
-  message: { success: false, error: 'Too many 2FA attempts, please try again later.' }
-});
 
-router.post('/verify-login', twoFALoginLimiter, validateUserId, validateToken, catchAsync(async (req, res) => {
+router.post('/verify-login', validateUserId, validateToken, catchAsync(async (req, res) => {
   const { userId, token } = req.body;
 
   // ✅ FIX: Session check PEHLE — expired session pe attempts count nahi hogi

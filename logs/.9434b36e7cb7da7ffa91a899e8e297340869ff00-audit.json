@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 7
+    },
+    "auditLog": "C:\\Users\\Battl\\Desktop\\Influence\\INFLUENCE\\logs\\.9434b36e7cb7da7ffa91a899e8e297340869ff00-audit.json",
+    "files": [
+        {
+            "date": 1774442415142,
+            "name": "C:\\Users\\Battl\\Desktop\\Influence\\INFLUENCE\\logs\\http-2026-03-25.log",
+            "hash": "18e9458d3c2fa8b75e7b976dd9cb46c3a7151a741cd0ed63bab3ae28ba04325d"
+        }
+    ],
+    "hashType": "sha256"
+}

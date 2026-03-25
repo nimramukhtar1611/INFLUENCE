@@ -235,6 +235,131 @@ exports.createEscrow = catchAsync(async (req, res) => {
   res.json({ success: true, message: 'Escrow created', payment });
 });
 
+// ==================== CREATE ESCROW CHECKOUT INTENT ====================
+exports.createEscrowCheckoutIntent = catchAsync(async (req, res) => {
+  const { dealId, currency } = req.body;
+
+  if (!dealId || !isValidObjectId(dealId)) {
+    return res.status(400).json({ success: false, error: 'Valid dealId is required' });
+  }
+
+  const deal = await Deal.findOne({ _id: dealId, brandId: req.user._id });
+  if (!deal) {
+    return res.status(404).json({ success: false, error: 'Deal not found or not owned by you' });
+  }
+
+  const existingPayment = await Payment.findOne({ dealId, type: 'escrow' });
+  if (existingPayment) {
+    return res.status(400).json({ success: false, error: 'Payment already exists for this deal' });
+  }
+
+  const fees = await PaymentCalculator.calculateFees(deal.budget, req.user.userType);
+  const normalizedCurrency = (currency || deal.currency || 'USD').toUpperCase();
+
+  const payment = new Payment({
+    transactionId: `ESC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    type: 'escrow',
+    status: 'pending',
+    amount: deal.budget,
+    currency: normalizedCurrency,
+    fee: fees.total,
+    netAmount: deal.budget - fees.total,
+    from: { userId: req.user._id, accountType: 'brand' },
+    to: { userId: deal.creatorId, accountType: 'creator' },
+    dealId: deal._id,
+    campaignId: deal.campaignId,
+    description: `Escrow payment for deal ${deal._id}`,
+    metadata: { fees, gateway: 'stripe', checkoutStatus: 'created' }
+  });
+
+  let checkout = null;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(deal.budget * 100),
+    currency: normalizedCurrency.toLowerCase(),
+    automatic_payment_methods: { enabled: true },
+    capture_method: 'manual',
+    metadata: {
+      dealId: deal._id.toString(),
+      brandId: req.user._id.toString(),
+      creatorId: deal.creatorId.toString()
+    }
+  });
+
+  payment.stripePaymentIntentId = paymentIntent.id;
+  checkout = {
+    provider: 'stripe',
+    paymentIntentId: paymentIntent.id,
+    clientSecret: paymentIntent.client_secret,
+    status: paymentIntent.status
+  };
+
+  await payment.save();
+  deal.paymentStatus = 'pending';
+  deal.paymentId = payment._id;
+  await deal.save();
+
+  res.status(201).json({
+    success: true,
+    message: 'Escrow checkout intent created',
+    payment,
+    checkout
+  });
+});
+
+// ==================== CONFIRM ESCROW CHECKOUT ====================
+exports.confirmEscrowCheckout = catchAsync(async (req, res) => {
+  const { paymentId } = req.params;
+
+  if (!isValidObjectId(paymentId)) {
+    return res.status(400).json({ success: false, error: 'Valid paymentId is required' });
+  }
+
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    type: 'escrow',
+    'from.userId': req.user._id
+  });
+
+  if (!payment) {
+    return res.status(404).json({ success: false, error: 'Escrow payment not found' });
+  }
+
+  if (payment.status === 'in-escrow' || payment.status === 'completed') {
+    return res.json({ success: true, message: 'Payment already confirmed', payment });
+  }
+
+  if (!payment.stripePaymentIntentId) {
+    return res.status(400).json({ success: false, error: 'Missing Stripe payment intent id' });
+  }
+
+  let intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
+  if (intent.status === 'requires_capture') {
+    intent = await stripe.paymentIntents.capture(payment.stripePaymentIntentId);
+  }
+
+  if (!['succeeded', 'processing'].includes(intent.status)) {
+    return res.status(400).json({
+      success: false,
+      error: `Stripe payment is not confirmable yet (status: ${intent.status})`
+    });
+  }
+
+  payment.metadata = { ...payment.metadata, processorStatus: intent.status };
+
+  payment.status = 'in-escrow';
+  payment.paidAt = new Date();
+  payment.metadata = { ...payment.metadata, checkoutStatus: 'confirmed' };
+  await payment.save();
+
+  await Deal.findByIdAndUpdate(payment.dealId, {
+    paymentStatus: 'in-escrow',
+    paymentId: payment._id
+  });
+
+  res.json({ success: true, message: 'Escrow payment confirmed', payment });
+});
+
 // ==================== CREATE PERFORMANCE PAYMENT ====================
 exports.createPerformancePayment = catchAsync(async (req, res) => {
   const { dealId, paymentType, metrics } = req.body;
@@ -560,7 +685,6 @@ exports.handleStripeWebhook = async (req, res) => {
     res.json({ received: true });
   } catch (err) {
     console.error('Webhook handler error:', err.message);
-    // Still return 200 to avoid retries
-    res.json({ received: true, warning: 'Handler error' });
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 };

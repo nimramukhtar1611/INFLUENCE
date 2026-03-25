@@ -68,12 +68,12 @@ const Analytics = () => {
 
   // ── Top-level stat cards ──────────────────────────────────────────────────
   const metrics = [
-    { label: 'Total Campaigns',  value: analytics?.summary?.totalCampaigns  || 0,                         icon: TrendingUp },
-    { label: 'Active Campaigns', value: analytics?.summary?.activeCampaigns || 0,                         icon: Eye        },
-    { label: 'Total Spent',      value: formatCurrency(analytics?.summary?.totalSpent || 0),              icon: DollarSign },
-    { label: 'Avg. ROI',         value: `${(analytics?.summary?.avgROI || 0).toFixed(1)}x`,               icon: TrendingUp },
-    { label: 'Total Deals',      value: analytics?.summary?.totalDeals      || 0,                         icon: Activity   },
-    { label: 'Completed',        value: analytics?.summary?.completedDeals  || 0,                         icon: Award      },
+    { title: 'Total Campaigns',  value: analytics?.summary?.totalCampaigns  || 0,                         icon: TrendingUp },
+    { title: 'Active Campaigns', value: analytics?.summary?.activeCampaigns || 0,                         icon: Eye        },
+    { title: 'Total Spent',      value: formatCurrency(analytics?.summary?.totalSpent || 0),              icon: DollarSign },
+    { title: 'Avg. ROI',         value: `${(analytics?.summary?.avgROI || 0).toFixed(1)}x`,               icon: TrendingUp },
+    { title: 'Total Deals',      value: analytics?.summary?.totalDeals      || 0,                         icon: Activity   },
+    { title: 'Completed',        value: analytics?.summary?.completedDeals  || 0,                         icon: Award      },
   ];
 
   // ── KPI helper — compute from analytics.summary ───────────────────────────

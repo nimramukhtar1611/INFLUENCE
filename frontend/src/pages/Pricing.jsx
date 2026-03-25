@@ -19,10 +19,23 @@ import {
 import { motion } from 'framer-motion';
 import Button from '../components/UI/Button';
 import Footer from '../components/Layout/Footer';
+import { useAuth } from '../hooks/useAuth';
 
 const Pricing = () => {
+  const { user, isAuthenticated } = useAuth();
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
+
+  const resolvePlanLink = (planId) => {
+    if (planId === 'enterprise') return '/contact';
+
+    if (isAuthenticated && ['brand', 'creator'].includes(user?.userType)) {
+      const interval = billingCycle === 'yearly' ? 'year' : 'month';
+      return `/${user.userType}/subscription?plan=${planId}&interval=${interval}`;
+    }
+
+    return '/signup';
+  };
 
   const plans = [
     {
@@ -348,7 +361,7 @@ const Pricing = () => {
                         ${billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly}
                       </span>
                       <span className="text-gray-500 ml-2">
-                        /{billingCycle === 'monthly' ? 'mo' : 'mo'}
+                        /{billingCycle === 'monthly' ? 'mo' : 'yr'}
                       </span>
                     </div>
 
@@ -359,7 +372,7 @@ const Pricing = () => {
                     )}
 
                     <Link
-                      to={plan.id === 'enterprise' ? '/contact' : '/signup'}
+                      to={resolvePlanLink(plan.id)}
                       onClick={(e) => {
                         if (plan.id === 'enterprise') {
                           e.preventDefault();

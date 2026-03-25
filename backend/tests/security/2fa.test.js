@@ -33,7 +33,7 @@ describe('Two-Factor Authentication (2FA) Tests', () => {
 
     const loginRes = await request(app)
       .post('/api/auth/login')
-      .send({ email: '2fa-test@example.com', password: 'TestPass123!' });
+      .send({ email: '2fa-test@example.com', password: 'TestPass123!', userType: 'brand' });
 
     authToken = loginRes.body.token || loginRes.body.accessToken;
     if (!authToken) console.error('❌ Login failed:', loginRes.body);
@@ -106,7 +106,7 @@ describe('Two-Factor Authentication (2FA) Tests', () => {
     test('Should require 2FA token after enabling', async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: '2fa-test@example.com', password: 'TestPass123!' });
+        .send({ email: '2fa-test@example.com', password: 'TestPass123!', userType: 'brand' });
 
       expect(loginRes.status).toBe(200);
       expect(loginRes.body.require2FA).toBe(true);
@@ -117,7 +117,7 @@ describe('Two-Factor Authentication (2FA) Tests', () => {
     test('Should complete login with valid 2FA token', async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: '2fa-test@example.com', password: 'TestPass123!' });
+        .send({ email: '2fa-test@example.com', password: 'TestPass123!', userType: 'brand' });
 
       const userId = loginRes.body.userId;
       getTwoFAR().setTwoFASession(userId);
@@ -136,7 +136,7 @@ describe('Two-Factor Authentication (2FA) Tests', () => {
     test('Should reject invalid 2FA token during login', async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: '2fa-test@example.com', password: 'TestPass123!' });
+        .send({ email: '2fa-test@example.com', password: 'TestPass123!', userType: 'brand' });
 
       const userId = loginRes.body.userId;
       getTwoFAR().resetAttempts(userId);
@@ -166,7 +166,7 @@ describe('Two-Factor Authentication (2FA) Tests', () => {
     test('Should login with backup code', async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: '2fa-test@example.com', password: 'TestPass123!' });
+        .send({ email: '2fa-test@example.com', password: 'TestPass123!', userType: 'brand' });
 
       const userId = loginRes.body.userId;
       getTwoFAR().resetAttempts(userId);
@@ -186,7 +186,7 @@ describe('Two-Factor Authentication (2FA) Tests', () => {
     test('Should not allow reusing backup code', async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: '2fa-test@example.com', password: 'TestPass123!' });
+        .send({ email: '2fa-test@example.com', password: 'TestPass123!', userType: 'brand' });
 
       const userId = loginRes.body.userId;
       getTwoFAR().resetAttempts(userId);

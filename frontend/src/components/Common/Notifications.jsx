@@ -244,9 +244,11 @@ const Notifications = () => {
     }
   };
 
-  const filteredNotifications = filter === 'all' 
-    ? notifications 
-    : notifications.filter(n => n.type === filter);
+  const filteredNotifications = filter === 'all'
+    ? notifications
+    : filter === 'unread'
+      ? notifications.filter(n => !n.read)
+      : notifications.filter(n => n.type === filter);
 
   if (loading && notifications.length === 0) {
     return (

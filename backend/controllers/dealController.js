@@ -943,3 +943,318 @@ exports.getDealStats = catchAsync(async (req, res) => {
     },
   });
 });
+
+// ==================== CREATE PERFORMANCE DEAL ====================
+exports.createPerformanceDeal = catchAsync(async (req, res) => {
+  const {
+    campaignId,
+    creatorId,
+    budget,
+    deadline,
+    deliverables,
+    terms,
+    paymentType,
+    performanceMetrics,
+    requirements,
+  } = req.body;
+
+  // Validate required fields
+  if (!campaignId || !creatorId || !budget || !deadline || !paymentType) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing required fields: campaignId, creatorId, budget, deadline, paymentType',
+    });
+  }
+
+  // Validate paymentType is a performance type
+  const performanceTypes = ['cpe', 'cpa', 'cpm', 'revenue_share', 'hybrid'];
+  if (!performanceTypes.includes(paymentType)) {
+    return res.status(400).json({
+      success: false,
+      error: `Invalid performance payment type. Must be one of: ${performanceTypes.join(', ')}`,
+    });
+  }
+
+  // Validate IDs
+  if (!isValidObjectId(campaignId) || !isValidObjectId(creatorId)) {
+    return res.status(400).json({ success: false, error: 'Invalid campaign or creator ID' });
+  }
+
+  // Validate budget
+  if (!isValidBudget(budget)) {
+    return res.status(400).json({ success: false, error: 'Budget must be between $10 and $1,000,000' });
+  }
+
+  // Validate deadline
+  if (!isValidFutureDate(deadline)) {
+    return res.status(400).json({ success: false, error: 'Deadline must be in the future' });
+  }
+
+  // Check campaign exists and belongs to brand
+  const campaign = await Campaign.findOne({ _id: campaignId, brandId: req.user._id });
+  if (!campaign) {
+    return res.status(404).json({ success: false, error: 'Campaign not found or not owned by you' });
+  }
+
+  // Check creator exists
+  const creator = await Creator.findById(creatorId);
+  if (!creator) {
+    return res.status(404).json({ success: false, error: 'Creator not found' });
+  }
+
+  // Check for existing active deal
+  const existingDeal = await Deal.findOne({
+    campaignId,
+    creatorId,
+    brandId: req.user._id,
+    status: { $in: ['pending', 'accepted', 'in-progress'] },
+  });
+  if (existingDeal) {
+    return res.status(400).json({ success: false, error: 'An active deal already exists with this creator for this campaign' });
+  }
+
+  // Build performance metrics based on type
+  const perfMetrics = {};
+  if (performanceMetrics) {
+    if (paymentType === 'cpe' && performanceMetrics.cpe) {
+      perfMetrics.cpe = {
+        targetLikes: performanceMetrics.cpe.targetLikes || 0,
+        targetComments: performanceMetrics.cpe.targetComments || 0,
+        targetShares: performanceMetrics.cpe.targetShares || 0,
+        targetSaves: performanceMetrics.cpe.targetSaves || 0,
+        bonusRate: performanceMetrics.cpe.bonusRate || 0.5,
+        baseRate: performanceMetrics.cpe.baseRate || budget,
+      };
+    } else if (paymentType === 'cpa' && performanceMetrics.cpa) {
+      perfMetrics.cpa = {
+        targetConversions: performanceMetrics.cpa.targetConversions || 0,
+        commissionRate: performanceMetrics.cpa.commissionRate || 0.1,
+        baseRate: performanceMetrics.cpa.baseRate || budget,
+      };
+    } else if (paymentType === 'cpm' && performanceMetrics.cpm) {
+      perfMetrics.cpm = {
+        targetImpressions: performanceMetrics.cpm.targetImpressions || 0,
+        cpmRate: performanceMetrics.cpm.cpmRate || 10,
+        baseRate: performanceMetrics.cpm.baseRate || budget,
+      };
+    } else if (paymentType === 'revenue_share' && performanceMetrics.revenueShare) {
+      perfMetrics.revenueShare = {
+        sharePercentage: performanceMetrics.revenueShare.sharePercentage || 20,
+        minimumGuarantee: performanceMetrics.revenueShare.minimumGuarantee || 0,
+      };
+    } else if (paymentType === 'hybrid' && performanceMetrics.hybrid) {
+      perfMetrics.hybrid = {
+        basePortion: performanceMetrics.hybrid.basePortion || budget * 0.5,
+        performancePortion: performanceMetrics.hybrid.performancePortion || budget * 0.5,
+        performanceWeight: performanceMetrics.hybrid.performanceWeight || 0.5,
+      };
+    }
+  }
+
+  // Create performance deal
+  const deal = new Deal({
+    campaignId,
+    brandId: req.user._id,
+    creatorId,
+    budget,
+    deadline,
+    deliverables: deliverables || [],
+    terms,
+    paymentTerms: 'performance',
+    paymentType,
+    type: 'performance',
+    performanceMetrics: perfMetrics,
+    requirements: requirements || [],
+    status: 'pending',
+    createdBy: req.user._id,
+  });
+
+  addTimelineEvent(
+    deal,
+    'Performance Deal Created',
+    `Performance-based deal (${paymentType.toUpperCase()}) sent to ${creator.displayName}`,
+    req.user._id,
+    { paymentType, budget }
+  );
+
+  await deal.save();
+
+  // Create conversation for deal
+  const conversation = new Conversation({
+    type: 'deal',
+    dealId: deal._id,
+    participants: [
+      { user_id: deal.brandId, user_type: 'brand' },
+      { user_id: deal.creatorId, user_type: 'creator' },
+    ],
+    created_by: { user_id: deal.brandId, user_type: 'brand' },
+  });
+  await conversation.save();
+
+  // System message
+  await Message.create({
+    conversationId: conversation._id,
+    senderId: null,
+    content: `A new performance-based deal (${paymentType.toUpperCase()}) has been created. Base budget: $${budget}, Deadline: ${new Date(deadline).toLocaleDateString()}`,
+    contentType: 'system',
+  });
+
+  deal.conversationId = conversation._id;
+  await deal.save();
+
+  // Update campaign
+  await Campaign.findByIdAndUpdate(campaignId, {
+    $push: {
+      invitedCreators: {
+        creatorId,
+        status: 'pending',
+        invitedAt: new Date(),
+      },
+    },
+  });
+
+  // Notify creator
+  await Notification.create({
+    userId: creatorId,
+    type: 'deal',
+    title: 'New Performance Deal Offer',
+    message: `You've received a performance-based (${paymentType.toUpperCase()}) deal offer for "${campaign.title}" worth $${budget}`,
+    data: { dealId: deal._id, url: `/creator/deals/${deal._id}` },
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Performance deal offer sent',
+    deal,
+  });
+});
+
+// ==================== UPDATE DEAL ====================
+exports.updateDeal = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const {
+    budget,
+    deadline,
+    deliverables,
+    terms,
+    requirements,
+    paymentTerms,
+    paymentType,
+    performanceMetrics,
+  } = req.body;
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ success: false, error: 'Invalid deal ID' });
+  }
+
+  const deal = await Deal.findById(id)
+    .populate('creatorId', 'displayName handle profilePicture')
+    .populate('campaignId', 'title');
+
+  if (!deal) {
+    return res.status(404).json({ success: false, error: 'Deal not found' });
+  }
+
+  // Only the brand who owns the deal can update it
+  if (!canUserAct(deal, req.user._id, 'brand')) {
+    return res.status(403).json({ success: false, error: 'Only the deal owner (brand) can update this deal' });
+  }
+
+  // Only allow updates on certain statuses
+  const updatableStatuses = ['pending', 'negotiating', 'accepted'];
+  if (!updatableStatuses.includes(deal.status)) {
+    return res.status(400).json({
+      success: false,
+      error: `Deal cannot be updated in "${deal.status}" status. Allowed statuses: ${updatableStatuses.join(', ')}`,
+    });
+  }
+
+  // Track changes for the timeline
+  const changes = [];
+
+  if (budget !== undefined) {
+    if (!isValidBudget(budget)) {
+      return res.status(400).json({ success: false, error: 'Budget must be between $10 and $1,000,000' });
+    }
+    if (deal.budget !== budget) {
+      changes.push(`Budget: $${deal.budget} → $${budget}`);
+      deal.budget = budget;
+    }
+  }
+
+  if (deadline !== undefined) {
+    if (!isValidFutureDate(deadline)) {
+      return res.status(400).json({ success: false, error: 'Deadline must be in the future' });
+    }
+    const oldDeadline = deal.deadline ? deal.deadline.toLocaleDateString() : 'none';
+    const newDeadline = new Date(deadline).toLocaleDateString();
+    if (oldDeadline !== newDeadline) {
+      changes.push(`Deadline: ${oldDeadline} → ${newDeadline}`);
+      deal.deadline = deadline;
+    }
+  }
+
+  if (deliverables !== undefined && Array.isArray(deliverables)) {
+    changes.push(`Deliverables updated (${deliverables.length} items)`);
+    deal.deliverables = deliverables;
+  }
+
+  if (terms !== undefined) {
+    changes.push('Terms updated');
+    deal.terms = terms;
+  }
+
+  if (requirements !== undefined && Array.isArray(requirements)) {
+    changes.push('Requirements updated');
+    deal.requirements = requirements;
+  }
+
+  if (paymentTerms !== undefined) {
+    deal.paymentTerms = paymentTerms;
+    changes.push(`Payment terms: ${paymentTerms}`);
+  }
+
+  if (paymentType !== undefined) {
+    deal.paymentType = paymentType;
+    changes.push(`Payment type: ${paymentType}`);
+  }
+
+  if (performanceMetrics !== undefined) {
+    deal.performanceMetrics = { ...deal.performanceMetrics, ...performanceMetrics };
+    changes.push('Performance metrics updated');
+  }
+
+  if (changes.length === 0) {
+    return res.status(400).json({ success: false, error: 'No changes provided' });
+  }
+
+  // Log the update
+  addTimelineEvent(
+    deal,
+    'Deal Updated',
+    `Deal terms updated: ${changes.join(', ')}`,
+    req.user._id,
+    { changes }
+  );
+
+  await deal.save();
+
+  // Notify the creator about the update
+  if (deal.creatorId) {
+    const creatorUserId = deal.creatorId._id || deal.creatorId;
+    await Notification.create({
+      userId: creatorUserId,
+      type: 'deal',
+      title: 'Deal Updated',
+      message: `The deal for "${deal.campaignId?.title || 'a campaign'}" has been updated: ${changes.join(', ')}`,
+      data: { dealId: deal._id, url: `/creator/deals/${deal._id}` },
+    });
+  }
+
+  res.json({
+    success: true,
+    message: 'Deal updated successfully',
+    deal,
+    changes,
+  });
+});

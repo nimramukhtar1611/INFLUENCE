@@ -131,13 +131,18 @@ const adminProtect = async (req, res, next) => {
  * Super admin protection - only super_admin role allowed
  */
 const superAdminProtect = async (req, res, next) => {
-  await adminProtect(req, res, async () => {
-    const role = req.user?.role || req.user?.userType;
-    if (role !== 'super_admin') {
-      return res.status(403).json({ success: false, error: 'Super admin access required' });
-    }
-    next();
-  });
+  await adminProtect(req, res, () => {});
+
+  if (res.headersSent) {
+    return;
+  }
+
+  const role = req.user?.role || req.user?.userType;
+  if (role !== 'super_admin') {
+    return res.status(403).json({ success: false, error: 'Super admin access required' });
+  }
+
+  next();
 };
 
 /**

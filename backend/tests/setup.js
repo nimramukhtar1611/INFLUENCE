@@ -19,8 +19,11 @@ jest.mock('../config/redis', () => ({
 
 // Mock external services
 jest.mock('../services/emailService', () => ({
+  isInitialized: jest.fn().mockReturnValue(true),
+  initialize: jest.fn(),
   sendEmail: jest.fn().mockResolvedValue({ success: true }),
   sendWelcome: jest.fn().mockResolvedValue({ success: true }),
+  sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true }),
   sendVerification: jest.fn().mockResolvedValue({ success: true }),
   sendPasswordReset: jest.fn().mockResolvedValue({ success: true }),
   sendOTP: jest.fn().mockResolvedValue({ success: true })
