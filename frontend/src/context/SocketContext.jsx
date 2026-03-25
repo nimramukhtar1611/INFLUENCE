@@ -1,0 +1,181 @@
+// context/SocketContext.jsx
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import io from 'socket.io-client';
+import toast from 'react-hot-toast';
+import { getStorage } from '../utils/storage';
+
+const SocketContext = createContext();
+export const useSocket = () => {
+  const context = useContext(SocketContext);
+  if (!context) throw new Error('useSocket must be used within a SocketProvider');
+  return context;
+};
+
+export const SocketProvider = ({ children }) => {
+  const { user, token } = useAuth();
+  const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [typingUsers, setTypingUsers] = useState({});
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [newMessage, setNewMessage] = useState(null);
+
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    if (!user || !token) {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      return;
+    }
+
+    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    socketRef.current = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    const socket = socketRef.current;
+
+    socket.on('connect', () => setIsConnected(true));
+    socket.on('disconnect', () => setIsConnected(false));
+    socket.on('connect_error', () => toast.error('Cannot connect to chat server'));
+
+    // User presence
+    socket.on('user:online', ({ userId }) => {
+      setOnlineUsers(prev => new Set([...prev, userId]));
+    });
+    socket.on('user:offline', ({ userId }) => {
+      setOnlineUsers(prev => {
+        const s = new Set(prev);
+        s.delete(userId);
+        return s;
+      });
+    });
+
+    // Messages – using underscore events (backend)
+    socket.on('new_message', (msg) => {
+      setNewMessage(msg);
+      setUnreadCount(prev => prev + 1);
+      const settings = getStorage('notificationSettings', {});
+      if (settings.sound !== false && document.hidden && msg.senderId?._id !== user?._id) {
+        new Audio('/sounds/message.mp3').play().catch(() => {});
+      }
+    });
+    socket.on('messages_delivered', () => {});
+    socket.on('messages_read', () => {});
+    socket.on('message_reaction', () => {});
+    socket.on('message_edited', () => {});
+    socket.on('message_deleted', () => {});
+
+    // Typing
+    socket.on('typing:update', ({ userId, isTyping, conversationId }) => {
+      setTypingUsers(prev => {
+        const updated = { ...prev };
+        if (isTyping) updated[conversationId] = { userId, isTyping: true };
+        else delete updated[conversationId];
+        return updated;
+      });
+    });
+
+    // Notifications (colon style – backend uses 'notification:new')
+    socket.on('notification:new', (notif) => {
+      toast(notif.message, {
+        icon: notif.priority === 'high' || notif.priority === 'urgent' ? '🔔' : '📬',
+        duration: 4000
+      });
+      setUnreadCount(prev => prev + 1);
+    });
+
+    // Deal & payment events
+    socket.on('deal:created', () => toast.success('New deal offer received! 💰'));
+    socket.on('deal:updated', ({ status }) => toast(`Deal updated: ${status} 📝`));
+    socket.on('deal:accepted', () => toast.success('Deal accepted! ✅'));
+    socket.on('deal:completed', () => toast.success('Deal completed! 🎉'));
+    socket.on('payment:received', ({ amount }) => toast.success(`Payment $${amount} received! 💰`));
+    socket.on('payment:released', ({ amount }) => toast.success(`Payment $${amount} released! 💵`));
+
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
+  }, [user, token]);
+
+  const joinConversation = useCallback((conversationId) => {
+    socketRef.current?.emit('join_conversation', { conversationId });
+  }, []);
+
+  const leaveConversation = useCallback((conversationId) => {
+    socketRef.current?.emit('leave_conversation', { conversationId });
+  }, []);
+
+  const sendMessage = useCallback((data) => {
+    if (!socketRef.current || !isConnected) return false;
+    socketRef.current.emit('send_message', { ...data, senderId: user?._id });
+    return true;
+  }, [user, isConnected]);
+
+  const startTyping = useCallback((conversationId) => {
+    socketRef.current?.emit('typing:start', { conversationId });
+  }, []);
+
+  const stopTyping = useCallback((conversationId) => {
+    socketRef.current?.emit('typing:stop', { conversationId });
+  }, []);
+
+  const markAsRead = useCallback((conversationId, messageIds) => {
+    socketRef.current?.emit('mark_read', { conversationId, messageIds });
+  }, []);
+
+  const addReaction = useCallback((messageId, reaction) => {
+    socketRef.current?.emit('add_reaction', { messageId, reaction });
+  }, []);
+
+  const deleteMessage = useCallback((messageId) => {
+    socketRef.current?.emit('delete_message', { messageId });
+  }, []);
+
+  const editMessage = useCallback((messageId, content) => {
+    socketRef.current?.emit('edit_message', { messageId, content });
+  }, []);
+
+  const reconnect = useCallback(() => {
+    socketRef.current?.connect();
+  }, []);
+
+  const isUserOnline = useCallback((userId) => onlineUsers.has(userId), [onlineUsers]);
+
+  const getTypingUsers = useCallback((conversationId) => typingUsers[conversationId], [typingUsers]);
+
+  const resetNewMessage = useCallback(() => setNewMessage(null), []);
+
+  return (
+    <SocketContext.Provider value={{
+      socket: socketRef.current,
+      isConnected,
+      onlineUsers,
+      typingUsers,
+      unreadCount,
+      newMessage,
+      joinConversation,
+      leaveConversation,
+      sendMessage,
+      startTyping,
+      stopTyping,
+      markAsRead,
+      addReaction,
+      deleteMessage,
+      editMessage,
+      reconnect,
+      isUserOnline,
+      getTypingUsers,
+      resetNewMessage
+    }}>
+      {children}
+    </SocketContext.Provider>
+  );
+};
+
+export default SocketContext;
