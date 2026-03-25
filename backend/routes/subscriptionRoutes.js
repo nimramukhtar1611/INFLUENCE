@@ -389,37 +389,6 @@ router.get('/admin/revenue', adminGetRevenue);
  */
 router.get('/admin/export', adminExportData);
 
-// ==================== WEBHOOK (STRIPE) - PUBLIC ====================
-
-/**
- * @route   POST /api/subscriptions/webhook
- * @desc    Stripe webhook endpoint
- * @access  Public
- */
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  try {
-    const stripe = require('../config/stripe');
-    const webhookService = require('../services/webhookService');
-    
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err) {
-      console.error(`Webhook signature verification failed.`, err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    await webhookService.handleStripeWebhook(event);
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // ==================== HEALTH CHECK ====================
 router.get('/health', (req, res) => {
   res.json({
