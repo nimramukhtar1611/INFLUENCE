@@ -2797,3 +2797,8 @@
 {"timestamp":"2026-03-26 23:11:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
 {"timestamp":"2026-03-26 23:11:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
 {"timestamp":"2026-03-26 23:11:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 23:12:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:12:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:12:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:12:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:12:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 139ms"}
