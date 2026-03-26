@@ -292,7 +292,10 @@ paymentSchema.pre('save', async function(next) {
         $lt: new Date(year, month, 1)
       }
     });
-    this.invoiceNumber = `INV-${year}${month}-${String(count + 1).padStart(4, '0')}`;
+
+    // Use a combination of count and a slice of transactionId for entropy
+    const suffix = this.transactionId.split('-').pop();
+    this.invoiceNumber = `INV-${year}${month}-${String(count + 1).padStart(4, '0')}-${suffix}`;
   }
   
   next();

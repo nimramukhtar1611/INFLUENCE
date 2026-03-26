@@ -21,6 +21,7 @@ router.use(protect);
 
 // ==================== BALANCE ====================
 router.get('/balance', paymentController.getBalance);
+router.post('/deposit/checkout-session', paymentController.createDepositCheckoutSession);
 
 // ==================== TRANSACTIONS ====================
 router.get('/transactions', paymentController.getTransactions);
@@ -44,6 +45,8 @@ router.get('/performance/summary', paymentController.getPerformanceSummary);
 
 // ==================== RELEASE / WITHDRAWAL ====================
 router.post('/release/:dealId', paymentController.releasePayment);
+router.get('/payout-account/status', paymentController.getPayoutAccountStatus);
+router.post('/payout-account/onboarding-link', paymentController.createPayoutOnboardingLink);
 router.post('/withdraw', paymentController.requestWithdrawal);
 // ==================== WITHDRAWALS ====================
 router.get('/withdrawals', protect, paymentController.getWithdrawals);

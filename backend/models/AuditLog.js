@@ -11,11 +11,17 @@ const auditLogSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      'user_suspended', 'user_activated', 'user_verified', 'user_deleted',
-      'campaign_approved', 'campaign_rejected', 'campaign_featured',
-      'deal_intervened', 'dispute_resolved',
-      'settings_updated', 'fee_updated', 'plan_updated',
-      'content_moderated', 'review_deleted'
+      'user_suspended', 'user_activated', 'user_verified', 'user_deleted', 'user_updated',
+      'campaign_approved', 'campaign_rejected', 'campaign_featured', 'campaign_status_updated', 'campaigns_bulk_updated', 'campaign_deleted',
+      'deal_intervened', 'dispute_resolved', 'dispute_assigned', 'dispute_escalated',
+      'settings_updated', 'fee_updated', 'plan_updated', 'cache_cleared',
+      'content_moderated', 'review_deleted',
+      'withdrawal_approved', 'withdrawal_rejected', 'withdrawal_processed',
+      'admin_login', '2fa_generate', '2fa_enable', '2fa_disable', '2fa_regenerate_codes',
+      'admin_assigned', 'report_generation_started', 'report_generation_completed', 'report_generation_failed',
+      'report_deleted', 'report_downloaded', 'report_scheduled',
+      'backup_created', 'backup_restored',
+      'account_deletion', 'privacy_update', 'consent_withdrawal', 'data_correction_request', 'processing_restriction', 'processing_objection', 'permanent_deletion'
     ]
   },
   targetUser: {
@@ -25,7 +31,7 @@ const auditLogSchema = new mongoose.Schema({
   targetResource: {
     type: {
       type: String,
-      enum: ['campaign', 'deal', 'dispute', 'review']
+      enum: ['campaign', 'deal', 'dispute', 'review', 'withdrawal', 'report', 'setting']
     },
     id: mongoose.Schema.Types.ObjectId
   },

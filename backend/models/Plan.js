@@ -30,6 +30,11 @@ const planSchema = new mongoose.Schema({
     default: 1,
     min: 1
   },
+  userType: {
+    type: String,
+    enum: ['brand', 'creator', 'both'],
+    default: 'both'
+  },
   stripeProductId: {
     type: String,
     default: null
@@ -81,6 +86,7 @@ planSchema.statics.initializeDefaults = async function() {
         planId: 'free',
         name: 'Free',
         price: 0,
+        userType: 'both',
         description: 'Perfect for getting started',
         features: [
           'Up to 3 campaigns',
@@ -109,6 +115,7 @@ planSchema.statics.initializeDefaults = async function() {
         planId: 'starter',
         name: 'Starter',
         price: 49,
+        userType: 'both',
         description: 'For growing brands',
         features: [
           'Up to 10 campaigns',
@@ -138,6 +145,7 @@ planSchema.statics.initializeDefaults = async function() {
         planId: 'professional',
         name: 'Professional',
         price: 149,
+        userType: 'both',
         description: 'For serious marketers',
         features: [
           'Unlimited campaigns',
@@ -168,6 +176,7 @@ planSchema.statics.initializeDefaults = async function() {
         planId: 'enterprise',
         name: 'Enterprise',
         price: 499,
+        userType: 'both',
         description: 'For large organizations',
         features: [
           'Everything in Professional',

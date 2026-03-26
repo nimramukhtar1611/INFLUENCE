@@ -4,6 +4,7 @@ const Brand = require('../models/Brand');
 const Deal = require('../models/Deal');
 const Notification = require('../models/Notification');
 const Creator = require('../models/Creator');
+const { getBrandFinancials } = require('./paymentController');
 // ==================== CREATE CAMPAIGN ====================
 exports.createCampaign = async (req, res) => {
   try {
@@ -15,6 +16,15 @@ exports.createCampaign = async (req, res) => {
       createdBy: req.user._id,
       status: 'draft'
     };
+
+    // Check brand balance
+    const financials = await getBrandFinancials(req.user._id);
+    if (campaignData.budget > financials.available) {
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient balance. Available: $${financials.available.toFixed(2)}. Requested budget: $${campaignData.budget.toFixed(2)}.`
+      });
+    }
 
     const campaign = new Campaign(campaignData);
     await campaign.save();
@@ -446,6 +456,25 @@ exports.getCampaign = async (req, res) => {
 exports.updateCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // If budget is being updated, check balance
+    if (req.body.budget) {
+      const currentCampaign = await Campaign.findById(id);
+      if (!currentCampaign) {
+        return res.status(404).json({ success: false, error: 'Campaign not found' });
+      }
+
+      const budgetDifference = req.body.budget - currentCampaign.budget;
+      if (budgetDifference > 0) {
+        const financials = await getBrandFinancials(req.user._id);
+        if (budgetDifference > financials.available) {
+          return res.status(400).json({
+            success: false,
+            error: `Insufficient balance to increase budget. Additional required: $${budgetDifference.toFixed(2)}, Available: $${financials.available.toFixed(2)}.`
+          });
+        }
+      }
+    }
 
     const campaign = await Campaign.findOneAndUpdate(
       { _id: id, brandId: req.user._id },

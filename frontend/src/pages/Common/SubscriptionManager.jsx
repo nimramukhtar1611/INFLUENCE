@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { CheckCircle, CreditCard, History, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { CheckCircle, History, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../context/SubscriptionContext';
 
@@ -26,7 +27,6 @@ const SubscriptionManager = () => {
   const {
     plans,
     currentSubscription,
-    paymentMethods,
     invoices,
     upcomingInvoice,
     limits,
@@ -35,36 +35,37 @@ const SubscriptionManager = () => {
     busy,
     isSubscriptionUser,
     refreshAll,
-    subscribe,
-    changePlan,
-    previewPlanChange,
-    cancelSubscription,
-    reactivateSubscription,
-    addPaymentMethod,
-    setDefaultPaymentMethod,
-    deletePaymentMethod,
-    applyCoupon,
+    startCheckout,
+    startPlanChange,
+    openBillingPortal,
     downloadInvoice
   } = useSubscription();
 
   const [interval, setInterval] = useState('month');
   const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [paymentMethodId, setPaymentMethodId] = useState('');
-  const [couponCode, setCouponCode] = useState('');
-  const [newPaymentMethodId, setNewPaymentMethodId] = useState('');
-  const [changePreview, setChangePreview] = useState(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const requestedPlan = params.get('plan');
     const requestedInterval = params.get('interval');
+    const checkoutStatus = params.get('checkout');
 
     if (requestedPlan) setSelectedPlanId(requestedPlan);
     if (requestedInterval === 'year' || requestedInterval === 'month') {
       setInterval(requestedInterval);
     }
-  }, [location.search]);
+
+    if (checkoutStatus === 'success') {
+      toast.success('Stripe checkout completed. Refreshing subscription status...');
+      refreshAll();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    if (checkoutStatus === 'cancel') {
+      toast('Stripe checkout was canceled.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [location.search, refreshAll]);
 
   useEffect(() => {
     if (!selectedPlanId && plans.length > 0) {
@@ -72,40 +73,49 @@ const SubscriptionManager = () => {
     }
   }, [plans, selectedPlanId]);
 
-  const activePlanId = currentSubscription?.planId;
-  const defaultMethod = useMemo(
-    () => paymentMethods.find((method) => method.isDefault) || null,
-    [paymentMethods]
-  );
-
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) || null,
     [plans, selectedPlanId]
   );
 
+  const activePlanId = useMemo(() => {
+    if (!currentSubscription) return null;
+
+    if (currentSubscription.planDetails?.planId) {
+      return String(currentSubscription.planDetails.planId);
+    }
+
+    if (typeof currentSubscription.planId === 'string') {
+      return currentSubscription.planId;
+    }
+
+    if (currentSubscription.planId?.planId) {
+      return String(currentSubscription.planId.planId);
+    }
+
+    return null;
+  }, [currentSubscription]);
+
   const handleSubscribeOrChange = async () => {
     if (!selectedPlan) return;
 
-    if (currentSubscription?.status === 'active' || currentSubscription?.status === 'trialing') {
-      await changePlan({ newPlanId: selectedPlan.id, interval });
+    if (currentSubscription?.status === 'active' || currentSubscription?.status === 'trialing' || currentSubscription?.status === 'past_due') {
+      if (selectedPlan.id !== activePlanId) {
+        await startPlanChange({
+          planId: selectedPlan.id,
+          interval
+        });
+        return;
+      }
+
+      await openBillingPortal();
       return;
     }
 
-    const chosenPaymentMethod = paymentMethodId || defaultMethod?.id || undefined;
-    await subscribe({
+    await startCheckout({
       planId: selectedPlan.id,
-      interval,
-      paymentMethodId: chosenPaymentMethod
+      interval
     });
-  };
-
-  const handlePreview = async () => {
-    if (!selectedPlanId || !currentSubscription) return;
-
-    setPreviewLoading(true);
-    const response = await previewPlanChange({ newPlanId: selectedPlanId, interval });
-    setChangePreview(response.success ? response.preview : null);
-    setPreviewLoading(false);
   };
 
   if (!isSubscriptionUser) {
@@ -122,17 +132,29 @@ const SubscriptionManager = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Subscription & Billing</h1>
-          <p className="text-gray-600">Manage plan, invoices, payment methods, and usage limits.</p>
+          <p className="text-gray-600">Manage plans, invoices, and billing through Stripe Checkout.</p>
         </div>
-        <button
-          type="button"
-          onClick={refreshAll}
-          disabled={loading || busy}
-          className="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={refreshAll}
+            disabled={loading || busy}
+            className="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          {currentSubscription ? (
+            <button
+              type="button"
+              onClick={openBillingPortal}
+              disabled={busy}
+              className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black disabled:opacity-60"
+            >
+              Manage Billing
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <section className="bg-white rounded-xl border border-gray-200 p-5">
@@ -163,19 +185,11 @@ const SubscriptionManager = () => {
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => cancelSubscription({ cancelAtPeriodEnd: true })}
+            onClick={openBillingPortal}
             disabled={!currentSubscription || busy}
-            className="px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50"
+            className="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
           >
-            Cancel At Period End
-          </button>
-          <button
-            type="button"
-            onClick={reactivateSubscription}
-            disabled={!currentSubscription?.cancelAtPeriodEnd || busy}
-            className="px-4 py-2 rounded-lg border border-green-200 text-green-700 hover:bg-green-50 disabled:opacity-50"
-          >
-            Reactivate
+            Manage Billing in Stripe
           </button>
         </div>
       </section>
@@ -206,6 +220,9 @@ const SubscriptionManager = () => {
             const isSelected = selectedPlanId === plan.id;
             const isActive = activePlanId === plan.id;
             const displayPrice = interval === 'year' ? Number(plan.price || 0) * 12 : Number(plan.price || 0);
+            const planFeatures = Array.isArray(plan.features)
+              ? plan.features.slice(0, 4)
+              : (typeof plan.features === 'string' && plan.features ? [plan.features] : []);
 
             return (
               <button
@@ -224,7 +241,7 @@ const SubscriptionManager = () => {
                 <p className="mt-3 text-xl font-bold text-gray-900">{formatCurrency(displayPrice, plan.currency)}</p>
                 <p className="text-xs text-gray-500">per {interval}</p>
                 <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                  {(plan.features || []).slice(0, 4).map((feature) => (
+                  {planFeatures.map((feature) => (
                     <li key={String(feature)} className="flex items-start">
                       <ShieldCheck className="w-4 h-4 text-indigo-600 mr-2 mt-0.5" />
                       <span>{typeof feature === 'string' ? feature : feature?.name || 'Feature'}</span>
@@ -236,44 +253,6 @@ const SubscriptionManager = () => {
           })}
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-            <select
-              value={paymentMethodId}
-              onChange={(e) => setPaymentMethodId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="">Use default payment method</option>
-              {paymentMethods.map((method) => (
-                <option key={method.id} value={method.id}>
-                  {String(method.brand || '').toUpperCase()} ****{method.last4} {method.isDefault ? '(default)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="Enter coupon code"
-              />
-              <button
-                type="button"
-                onClick={() => applyCoupon(couponCode)}
-                disabled={!couponCode || busy}
-                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
@@ -282,94 +261,18 @@ const SubscriptionManager = () => {
             className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
           >
             {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            {currentSubscription ? 'Change Plan' : 'Subscribe'}
-          </button>
-          <button
-            type="button"
-            onClick={handlePreview}
-            disabled={!currentSubscription || !selectedPlanId || previewLoading}
-            className="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-          >
-            {previewLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Preview Change
+            {currentSubscription
+              ? (selectedPlan?.id !== activePlanId ? 'Change Plan in Stripe' : 'Manage Billing in Stripe')
+              : 'Subscribe via Stripe'}
           </button>
         </div>
 
-        {changePreview ? (
-          <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm">
-            <p className="font-semibold text-amber-900">Proration Preview</p>
-            <p className="text-amber-800 mt-1">Amount due: {formatCurrency(changePreview.amountDue, changePreview.currency)}</p>
-          </div>
-        ) : null}
+        <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-900">
+          Stripe Checkout handles all billing details and payment methods securely. No card information is collected in-app.
+        </div>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <CreditCard className="w-5 h-5 mr-2" />
-            Payment Methods
-          </h2>
-
-          <div className="mt-3 flex gap-2">
-            <input
-              type="text"
-              value={newPaymentMethodId}
-              onChange={(e) => setNewPaymentMethodId(e.target.value)}
-              placeholder="Stripe payment method ID (pm_...)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                addPaymentMethod(newPaymentMethodId, paymentMethods.length === 0);
-                setNewPaymentMethodId('');
-              }}
-              disabled={!newPaymentMethodId || busy}
-              className="px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-black disabled:opacity-50"
-            >
-              Add
-            </button>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {paymentMethods.length === 0 ? (
-              <p className="text-sm text-gray-500">No payment methods found.</p>
-            ) : (
-              paymentMethods.map((method) => (
-                <div key={method.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {String(method.brand || '').toUpperCase()} ****{method.last4}
-                    </p>
-                    <p className="text-xs text-gray-500">Exp {method.expiryMonth}/{method.expiryYear}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!method.isDefault ? (
-                      <button
-                        type="button"
-                        onClick={() => setDefaultPaymentMethod(method.id)}
-                        className="text-xs px-2 py-1 rounded border border-gray-300 text-gray-700"
-                      >
-                        Set Default
-                      </button>
-                    ) : (
-                      <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">Default</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => deletePaymentMethod(method.id)}
-                      className="text-xs px-2 py-1 rounded border border-red-200 text-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <section className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
             <History className="w-5 h-5 mr-2" />
             Invoices
@@ -380,14 +283,14 @@ const SubscriptionManager = () => {
               <p className="text-sm text-gray-500">No invoices available.</p>
             ) : (
               invoices.map((invoice) => (
-                <div key={invoice.id} className="p-3 rounded-lg bg-gray-50 flex items-center justify-between">
+                <div key={invoice.id || invoice._id} className="p-3 rounded-lg bg-gray-50 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{invoice.number || invoice.id}</p>
-                    <p className="text-xs text-gray-500">{formatDate(invoice.date)} - {formatCurrency(invoice.amount, invoice.currency)}</p>
+                    <p className="text-sm font-medium text-gray-900">{invoice.number || invoice.id || invoice._id}</p>
+                    <p className="text-xs text-gray-500">{formatDate(invoice.date || invoice.createdAt)} - {formatCurrency(invoice.amount, invoice.currency)}</p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => downloadInvoice(invoice.id)}
+                    onClick={() => downloadInvoice(invoice.id || invoice._id)}
                     className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     Download
@@ -396,7 +299,6 @@ const SubscriptionManager = () => {
               ))
             )}
           </div>
-        </div>
       </section>
 
       <section className="bg-white rounded-xl border border-gray-200 p-5">

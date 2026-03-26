@@ -18,6 +18,7 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected } = useSocket();
+  const isNotificationUser = isAuthenticated && ['brand', 'creator'].includes(user?.userType);
   
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -82,6 +83,10 @@ export const NotificationProvider = ({ children }) => {
 
   // ==================== REQUEST PUSH PERMISSION ====================
   const requestPushPermission = useCallback(async () => {
+    if (!isNotificationUser) {
+      return false;
+    }
+
     if (!pushSupported) {
       toast.error('Push notifications are not supported in your browser');
       return false;
@@ -103,10 +108,14 @@ export const NotificationProvider = ({ children }) => {
       toast.error('Failed to request notification permission');
       return false;
     }
-  }, [pushSupported]);
+  }, [pushSupported, isNotificationUser]);
 
   // ==================== SUBSCRIBE TO PUSH ====================
   const subscribeToPush = useCallback(async () => {
+    if (!isNotificationUser) {
+      return null;
+    }
+
     try {
       const registration = await navigator.serviceWorker.ready;
       
@@ -137,10 +146,14 @@ export const NotificationProvider = ({ children }) => {
       toast.error('Failed to enable push notifications');
       return null;
     }
-  }, []);
+  }, [isNotificationUser]);
 
   // ==================== UNSUBSCRIBE FROM PUSH ====================
   const unsubscribeFromPush = useCallback(async () => {
+    if (!isNotificationUser) {
+      return;
+    }
+
     try {
       if (pushSubscription) {
         await pushSubscription.unsubscribe();
@@ -156,11 +169,11 @@ export const NotificationProvider = ({ children }) => {
       console.error('Error unsubscribing from push:', error);
       toast.error('Failed to disable push notifications');
     }
-  }, [pushSubscription]);
+  }, [pushSubscription, isNotificationUser]);
 
   // ==================== FETCH NOTIFICATIONS ====================
   const fetchNotifications = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isNotificationUser) return;
 
     try {
       setLoading(true);
@@ -175,11 +188,11 @@ export const NotificationProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isNotificationUser]);
 
   // ==================== FETCH SETTINGS ====================
   const fetchSettings = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isNotificationUser) return;
 
     try {
       const response = await api.get('/notifications/settings');
@@ -190,7 +203,7 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching notification settings:', error);
     }
-  }, [isAuthenticated]);
+  }, [isNotificationUser]);
 
   // ==================== UPDATE SETTINGS ====================
   const updateSettings = useCallback(async (newSettings) => {
@@ -342,7 +355,7 @@ export const NotificationProvider = ({ children }) => {
 
   // ==================== SOCKET EVENT LISTENER ====================
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!socket || !isConnected || !isNotificationUser) return;
 
     socket.on('notification:new', handleNewNotification);
     socket.on('notification:read', ({ notificationId }) => {
@@ -365,15 +378,21 @@ export const NotificationProvider = ({ children }) => {
       socket.off('notifications:all-read');
       socket.off('notification:deleted');
     };
-  }, [socket, isConnected, handleNewNotification]);
+  }, [socket, isConnected, handleNewNotification, isNotificationUser]);
+
+  useEffect(() => {
+    if (isNotificationUser) return;
+    setNotifications([]);
+    setUnreadCount(0);
+  }, [isNotificationUser]);
 
   // ==================== INITIAL FETCH ====================
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isNotificationUser) {
       fetchNotifications();
       fetchSettings();
     }
-  }, [isAuthenticated, fetchNotifications, fetchSettings]);
+  }, [isNotificationUser, fetchNotifications, fetchSettings]);
 
   const value = {
     notifications,

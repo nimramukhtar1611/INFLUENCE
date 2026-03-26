@@ -1,4 +1,7 @@
 // server/seeders/adminSeeder.js
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first');
+require('node:dns/promises').setServers(['8.8.8.8', '8.8.4.4']);
 const mongoose = require('mongoose');
 const Admin = require('../models/Admin');
 require('dotenv').config();

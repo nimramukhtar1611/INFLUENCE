@@ -63,6 +63,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { email, password, userType, captchaToken });
+      // Check for 2FA requirement FIRST before completing login
+      if (res.data?.require2FA) {
+        return { success: true, require2FA: true, userId: res.data.userId };
+      }
       if (res.data?.success) {
         const { token: newToken, refreshToken: newRefresh, user: userData } = res.data;
         const normalized = normalizeUser(userData);
@@ -75,9 +79,6 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         toast.success('Login successful!');
         return { success: true, user: normalized };
-      }
-      if (res.data?.require2FA) {
-        return { success: true, require2FA: true, userId: res.data.userId };
       }
       return { success: false, error: res.data?.error || 'Login failed' };
     } catch (error) {
@@ -257,6 +258,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const completeLogin = (userData, newToken, newRefreshToken) => {
+    const normalized = normalizeUser(userData);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('refreshToken', newRefreshToken);
+    localStorage.setItem('user', JSON.stringify(normalized));
+    setToken(newToken);
+    setRefreshToken(newRefreshToken);
+    setUser(normalized);
+    setIsAuthenticated(true);
+  };
+
   const updateUser = (newData) => {
     setUser(prev => {
       const updated = { ...prev, ...newData };
@@ -274,7 +286,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user, loading, isAuthenticated, token, refreshToken,
     isAdmin, isBrand, isCreator,
-    updateUser, signup, login, refreshUser, deleteAccount, changePassword,
+    updateUser, completeLogin, signup, login, refreshUser, deleteAccount, changePassword,
     loginAdmin, logout,
     sendEmailOTP, verifyEmailOTP, sendPhoneOTP, verifyPhoneOTP,
   };

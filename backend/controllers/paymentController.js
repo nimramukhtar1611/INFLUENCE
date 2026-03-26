@@ -3,6 +3,8 @@ const Payment = require('../models/Payment');
 const Deal = require('../models/Deal');
 const Brand = require('../models/Brand');
 const Creator = require('../models/Creator');
+const User = require('../models/User');
+const Campaign = require('../models/Campaign');
 const PerformancePayment = require('../models/PerformancePayment');
 const PaymentCalculator = require('../services/paymentCalculator');
 const stripeService = require('../services/stripeService');
@@ -11,6 +13,203 @@ const mongoose = require('mongoose');
 const { catchAsync } = require('../utils/catchAsync');
 const { isValidObjectId, isValidBudget } = require('../utils/validators');
 
+const CREATOR_WITHDRAWAL_STATUSES = ['pending', 'processing', 'completed'];
+const CREATOR_EXCLUDED_EARNING_TYPES = ['withdrawal', 'refund', 'fee', 'penalty'];
+
+const getFrontendBaseUrl = () => process.env.FRONTEND_URL || 'http://localhost:5173';
+
+const getPaymentsPathByUserType = (userType) => {
+  if (userType === 'brand') return '/brand/payments';
+  if (userType === 'creator') return '/creator/earnings';
+  return '/';
+};
+
+const getCreatorWithdrawalsPath = () => '/creator/withdrawals';
+
+const getStripeConnectStatus = (account) => {
+  if (account?.payouts_enabled && account?.details_submitted) {
+    return 'active';
+  }
+  if (account?.details_submitted || account?.charges_enabled) {
+    return 'pending';
+  }
+  return 'inactive';
+};
+
+const getBrandFinancials = async (userId) => {
+  const [completedInflows, completedOutflows, reservedOutflows, campaignBudgetsRes, spentInActiveRes] = await Promise.all([
+    Payment.aggregate([
+      {
+        $match: {
+          'to.userId': userId,
+          status: 'completed'
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$netAmount' } } }
+    ]),
+    Payment.aggregate([
+      {
+        $match: {
+          'from.userId': userId,
+          status: 'completed',
+          type: { $nin: ['refund'] }
+        }
+      },
+      {
+        $match: {
+          $expr: { $ne: ['$from.userId', '$to.userId'] }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    Payment.aggregate([
+      {
+        $match: {
+          'from.userId': userId,
+          status: { $in: ['pending', 'processing', 'in-escrow'] },
+          type: { $nin: ['refund'] }
+        }
+      },
+      {
+        $match: {
+          $expr: { $ne: ['$from.userId', '$to.userId'] }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    Campaign.aggregate([
+      {
+        $match: {
+          brandId: userId,
+          status: { $in: ['draft', 'pending', 'active', 'paused'] }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$budget' } } }
+    ]),
+    Payment.aggregate([
+      {
+        $match: {
+          'from.userId': userId,
+          status: { $in: ['completed', 'pending', 'processing', 'in-escrow'] },
+          campaignId: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignId',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      { $unwind: '$campaign' },
+      {
+        $match: {
+          'campaign.status': { $in: ['draft', 'pending', 'active', 'paused'] }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ])
+  ]);
+
+  const inflows = completedInflows[0]?.total || 0;
+  const outflows = completedOutflows[0]?.total || 0;
+  const reserved = reservedOutflows[0]?.total || 0;
+  const totalCampaignBudgets = campaignBudgetsRes[0]?.total || 0;
+  const alreadySpentOrReservedInActive = spentInActiveRes[0]?.total || 0;
+  
+  // Remaining commitment for non-completed campaigns
+  const remainingCommitment = Math.max(totalCampaignBudgets - alreadySpentOrReservedInActive, 0);
+  
+  // Available balance = Cash (Inflows - Outflows - Reserved) - Remaining Commitment
+  const available = Math.max(inflows - outflows - reserved - remainingCommitment, 0);
+
+  return {
+    inflows,
+    outflows,
+    reserved,
+    totalCampaignBudgets,
+    remainingCommitment,
+    available
+  };
+};
+exports.getBrandFinancials = getBrandFinancials;
+
+const getCreatorFinancials = async (userId) => {
+  const [completedEarnings, pendingEscrow, reservedWithdrawals, completedReleasedDeals] = await Promise.all([
+    Payment.aggregate([
+      {
+        $match: {
+          'to.userId': userId,
+          status: { $in: ['completed', 'available'] },
+          type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES }
+        }
+      },
+      {
+        $match: {
+          $expr: { $ne: ['$from.userId', '$to.userId'] }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$netAmount' } } },
+    ]),
+    Payment.aggregate([
+      {
+        $match: {
+          'to.userId': userId,
+          status: { $in: ['pending', 'in-escrow'] },
+          type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES }
+        }
+      },
+      {
+        $match: {
+          $expr: { $ne: ['$from.userId', '$to.userId'] }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$netAmount' } } },
+    ]),
+    Payment.aggregate([
+      {
+        $match: {
+          'from.userId': userId,
+          type: 'withdrawal',
+          status: { $in: CREATOR_WITHDRAWAL_STATUSES }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+    Deal.aggregate([
+      {
+        $match: {
+          creatorId: userId,
+          status: 'completed',
+          paymentStatus: 'released'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $ifNull: ['$netAmount', '$budget'] } }
+        }
+      }
+    ])
+  ]);
+
+  const earningsFromPayments = completedEarnings[0]?.total || 0;
+  const releasedDealTotal = completedReleasedDeals[0]?.total || 0;
+  const earningsTotal = earningsFromPayments > 0 ? earningsFromPayments : releasedDealTotal;
+  const pendingTotal = pendingEscrow[0]?.total || 0;
+  const reservedTotal = reservedWithdrawals[0]?.total || 0;
+  const withdrawable = Math.max(earningsTotal - reservedTotal, 0);
+
+  return {
+    earningsTotal,
+    pendingTotal,
+    reservedTotal,
+    withdrawable,
+  };
+};
+exports.getCreatorFinancials = getCreatorFinancials;
+
 // ==================== GET BALANCE ====================
 exports.getBalance = catchAsync(async (req, res) => {
   let balance = 0;
@@ -18,32 +217,16 @@ exports.getBalance = catchAsync(async (req, res) => {
   let available = 0;
 
   if (req.user.userType === 'brand') {
-    // For brands: amount in escrow or pending
-    const payments = await Payment.aggregate([
-      { $match: { 'from.userId': req.user._id, status: { $in: ['in-escrow', 'pending'] } } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
-    ]);
-    balance = payments[0]?.total || 0;
+    const brandFinancials = await getBrandFinancials(req.user._id);
+    balance = brandFinancials.available;
+    pending = brandFinancials.reserved;
+    available = brandFinancials.available;
   } else if (req.user.userType === 'creator') {
-    // For creators: completed earnings, pending in escrow, available balance
-    const [earnings, pendingEarnings, availableEarnings] = await Promise.all([
-      Payment.aggregate([
-        { $match: { 'to.userId': req.user._id, status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$netAmount' } } },
-      ]),
-      Payment.aggregate([
-        { $match: { 'to.userId': req.user._id, status: 'in-escrow' } },
-        { $group: { _id: null, total: { $sum: '$netAmount' } } },
-      ]),
-      Payment.aggregate([
-        { $match: { 'to.userId': req.user._id, status: 'available' } },
-        { $group: { _id: null, total: { $sum: '$netAmount' } } },
-      ]),
-    ]);
-
-    balance = earnings[0]?.total || 0;
-    pending = pendingEarnings[0]?.total || 0;
-    available = availableEarnings[0]?.total || 0;
+    // For creators: withdrawable = completed earnings - requested/completed withdrawals.
+    const creatorFinancials = await getCreatorFinancials(req.user._id);
+    balance = creatorFinancials.withdrawable;
+    pending = creatorFinancials.pendingTotal;
+    available = creatorFinancials.withdrawable;
   }
 
   res.json({ success: true, balance, pending, available });
@@ -505,24 +688,150 @@ exports.releasePayment = catchAsync(async (req, res) => {
 });
 
 // ==================== REQUEST WITHDRAWAL ====================
-exports.requestWithdrawal = catchAsync(async (req, res) => {
-  const { amount, methodId } = req.body;
+exports.getPayoutAccountStatus = catchAsync(async (req, res) => {
+  if (req.user.userType !== 'creator') {
+    return res.status(403).json({ success: false, error: 'Only creators can access payout account status' });
+  }
 
-  if (!amount || !methodId) {
-    return res.status(400).json({ success: false, error: 'Amount and methodId are required' });
+  const creatorUser = await User.findById(req.user._id).select('stripeAccountId stripeAccountStatus');
+  if (!creatorUser) {
+    return res.status(404).json({ success: false, error: 'User not found' });
+  }
+
+  if (!creatorUser.stripeAccountId) {
+    return res.json({
+      success: true,
+      connected: false,
+      status: 'not_connected',
+      stripeAccountId: null,
+      payoutsEnabled: false,
+      detailsSubmitted: false,
+      currentlyDue: []
+    });
+  }
+
+  let account;
+  try {
+    account = await stripe.accounts.retrieve(creatorUser.stripeAccountId);
+  } catch (error) {
+    if (error?.code === 'resource_missing') {
+      creatorUser.stripeAccountId = undefined;
+      creatorUser.stripeAccountStatus = 'pending';
+      await creatorUser.save();
+
+      return res.json({
+        success: true,
+        connected: false,
+        status: 'not_connected',
+        stripeAccountId: null,
+        payoutsEnabled: false,
+        detailsSubmitted: false,
+        currentlyDue: []
+      });
+    }
+
+    throw error;
+  }
+
+  const derivedStatus = getStripeConnectStatus(account);
+  if (creatorUser.stripeAccountStatus !== derivedStatus) {
+    creatorUser.stripeAccountStatus = derivedStatus;
+    await creatorUser.save();
+  }
+
+  res.json({
+    success: true,
+    connected: Boolean(account.payouts_enabled && account.details_submitted),
+    status: derivedStatus,
+    stripeAccountId: creatorUser.stripeAccountId,
+    payoutsEnabled: Boolean(account.payouts_enabled),
+    detailsSubmitted: Boolean(account.details_submitted),
+    currentlyDue: account.requirements?.currently_due || []
+  });
+});
+
+exports.createPayoutOnboardingLink = catchAsync(async (req, res) => {
+  if (req.user.userType !== 'creator') {
+    return res.status(403).json({ success: false, error: 'Only creators can connect a payout account' });
+  }
+
+  const creatorUser = await User.findById(req.user._id).select('email fullName stripeAccountId stripeAccountStatus userType');
+  if (!creatorUser) {
+    return res.status(404).json({ success: false, error: 'User not found' });
+  }
+
+  let stripeAccountId = creatorUser.stripeAccountId;
+  if (stripeAccountId) {
+    try {
+      await stripe.accounts.retrieve(stripeAccountId);
+    } catch (error) {
+      if (error?.code === 'resource_missing') {
+        stripeAccountId = null;
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  if (!stripeAccountId) {
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: (process.env.STRIPE_CONNECT_COUNTRY || 'US').toUpperCase(),
+      email: creatorUser.email,
+      business_type: 'individual',
+      metadata: {
+        userId: creatorUser._id.toString(),
+        userType: creatorUser.userType
+      }
+    });
+
+    stripeAccountId = account.id;
+    creatorUser.stripeAccountId = stripeAccountId;
+    creatorUser.stripeAccountStatus = 'pending';
+    await creatorUser.save();
+  }
+
+  const requestedReturnPath = typeof req.body?.returnPath === 'string' ? req.body.returnPath.trim() : '';
+  const allowedReturnPaths = new Set(['/creator/withdrawals', '/creator/earnings']);
+  const returnPath = allowedReturnPaths.has(requestedReturnPath)
+    ? requestedReturnPath
+    : getCreatorWithdrawalsPath();
+
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const returnUrl = `${frontendBaseUrl}${returnPath}?stripe_connect=return`;
+  const refreshUrl = `${frontendBaseUrl}${returnPath}?stripe_connect=refresh`;
+
+  const accountLink = await stripe.accountLinks.create({
+    account: stripeAccountId,
+    refresh_url: refreshUrl,
+    return_url: returnUrl,
+    type: 'account_onboarding'
+  });
+
+  res.json({
+    success: true,
+    url: accountLink.url,
+    stripeAccountId
+  });
+});
+
+exports.requestWithdrawal = catchAsync(async (req, res) => {
+  const { amount } = req.body;
+
+  if (!amount) {
+    return res.status(400).json({ success: false, error: 'Amount is required' });
+  }
+
+  if (req.user.userType !== 'creator') {
+    return res.status(403).json({ success: false, error: 'Only creators can request withdrawals' });
   }
 
   if (!isValidBudget(amount) || amount < 50) {
     return res.status(400).json({ success: false, error: 'Minimum withdrawal amount is $50' });
   }
 
-  // Get available balance
-  const available = await Payment.aggregate([
-    { $match: { 'to.userId': req.user._id, status: 'completed' } },
-    { $group: { _id: null, total: { $sum: '$netAmount' } } },
-  ]);
-
-  const availableBalance = available[0]?.total || 0;
+  const creatorFinancials = await getCreatorFinancials(req.user._id);
+  const availableBalance = creatorFinancials.withdrawable;
   if (amount > availableBalance) {
     return res.status(400).json({
       success: false,
@@ -530,21 +839,10 @@ exports.requestWithdrawal = catchAsync(async (req, res) => {
     });
   }
 
-  // Get payment method details
-  let paymentMethod;
-  if (req.user.userType === 'brand') {
-    const brand = await Brand.findById(req.user._id);
-    paymentMethod = brand?.paymentMethods?.id(methodId);
-  } else {
-    const creator = await Creator.findById(req.user._id);
-    paymentMethod = creator?.paymentMethods?.id(methodId);
-  }
+  const creatorUser = await User.findById(req.user._id).select('stripeAccountId stripeAccountStatus');
+  const destinationAccount = creatorUser?.stripeAccountId || null;
 
-  if (!paymentMethod) {
-    return res.status(404).json({ success: false, error: 'Payment method not found' });
-  }
-
-  const fees = await PaymentCalculator.calculateWithdrawalFees(amount, paymentMethod.type);
+  const fees = await PaymentCalculator.calculateWithdrawalFees(amount, 'stripe');
 
   const withdrawal = new Payment({
     transactionId: `WTH-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -556,17 +854,30 @@ exports.requestWithdrawal = catchAsync(async (req, res) => {
     from: { userId: req.user._id, accountType: req.user.userType },
     to: { userId: req.user._id, accountType: req.user.userType },
     paymentMethod: {
-      type: paymentMethod.type,
-      last4: paymentMethod.last4,
-      details: paymentMethod,
+      type: 'stripe',
+      details: {
+        destinationAccount
+      },
     },
-    description: `Withdrawal to ${paymentMethod.type}`,
-    metadata: { fees, requestedAt: new Date() },
+    description: 'Stripe withdrawal request (pending admin approval)',
+    metadata: {
+      fees,
+      requestedAt: new Date(),
+      approvalRequired: true,
+      destinationAccount,
+      payoutAccountConnected: Boolean(destinationAccount)
+    },
   });
 
   await withdrawal.save();
 
-  res.json({ success: true, message: 'Withdrawal request submitted', withdrawal });
+  res.json({
+    success: true,
+    message: destinationAccount
+      ? 'Withdrawal request submitted for admin approval'
+      : 'Withdrawal request submitted. Connect Stripe payout account before admin approval.',
+    withdrawal
+  });
 });
 
 // ==================== GET WITHDRAWALS ====================
@@ -616,6 +927,65 @@ exports.getInvoices = catchAsync(async (req, res) => {
       pages: Math.ceil(total / limit),
     },
   });
+});
+
+// ==================== CREATE DEPOSIT CHECKOUT SESSION ====================
+exports.createDepositCheckoutSession = catchAsync(async (req, res) => {
+  const { amount, currency = 'usd' } = req.body;
+
+  const normalizedAmount = Number(amount);
+  if (!Number.isFinite(normalizedAmount) || normalizedAmount < 10) {
+    return res.status(400).json({ success: false, error: 'Minimum deposit amount is $10' });
+  }
+
+  if (!['brand', 'creator'].includes(req.user.userType)) {
+    return res.status(403).json({ success: false, error: 'Only brand and creator accounts can add funds' });
+  }
+
+  let stripeCustomerId = req.user.stripeCustomerId;
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: req.user.email,
+      name: req.user.fullName,
+      metadata: { userId: req.user._id.toString(), userType: req.user.userType }
+    });
+    stripeCustomerId = customer.id;
+    await User.findByIdAndUpdate(req.user._id, { stripeCustomerId });
+  }
+
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const paymentsPath = getPaymentsPathByUserType(req.user.userType);
+  const successUrl = `${frontendBaseUrl}${paymentsPath}?deposit=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${frontendBaseUrl}${paymentsPath}?deposit=cancel`;
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer: stripeCustomerId,
+    line_items: [
+      {
+        price_data: {
+          currency: String(currency).toLowerCase(),
+          product_data: {
+            name: 'Wallet Top-up',
+            description: 'Add funds via Stripe Checkout'
+          },
+          unit_amount: Math.round(normalizedAmount * 100)
+        },
+        quantity: 1
+      }
+    ],
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    client_reference_id: req.user._id.toString(),
+    metadata: {
+      purpose: 'wallet_topup',
+      userId: req.user._id.toString(),
+      userType: req.user.userType,
+      amount: String(normalizedAmount)
+    }
+  });
+
+  res.json({ success: true, url: session.url, sessionId: session.id });
 });
 
 // ==================== GET PERFORMANCE SUMMARY ====================

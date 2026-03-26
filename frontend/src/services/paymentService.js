@@ -28,7 +28,7 @@ class PaymentService {
   // ==================== PAYMENT METHODS ====================
  async getPaymentMethods() {
     try {
-      const response = await api.get('/payments/methods');
+        const response = await api.get('/brands/payment-methods');
       return response.data;
     } catch (error) {
       return { success: false, error: error.message };
@@ -37,7 +37,7 @@ class PaymentService {
 
 async addPaymentMethod(methodData) {
     try {
-      const response = await api.post('/payments/methods', methodData);
+        const response = await api.post('/brands/payment-methods', methodData);
       return response.data;
     } catch (error) {
       return { success: false, error: error.message };
@@ -47,7 +47,7 @@ async addPaymentMethod(methodData) {
 
 async setDefaultMethod(methodId) {
     try {
-      const response = await api.put(`/payments/methods/${methodId}/default`);
+      const response = await api.put(`/brands/payment-methods/${methodId}/default`);
       return response.data;
     } catch (error) {
       return { success: false, error: error.message };
@@ -56,7 +56,7 @@ async setDefaultMethod(methodId) {
 
    async deletePaymentMethod(methodId) {
     try {
-      const response = await api.delete(`/payments/methods/${methodId}`);
+      const response = await api.delete(`/brands/payment-methods/${methodId}`);
       return response.data;
     } catch (error) {
       return { success: false, error: error.message };
@@ -69,12 +69,37 @@ async getWithdrawals(params = {}) {
   return this.getTransactions({ ...params, type: 'withdrawal' });
   }
 
- async requestWithdrawal(amount, methodId) {
+ async requestWithdrawal(amount) {
     try {
-      const response = await api.post('/payments/withdraw', { amount, methodId });
+      const response = await api.post('/payments/withdraw', { amount });
       return response.data;
     } catch (error) {
       return { success: false, error: error.message };
+    }
+  }
+
+  async getPayoutAccountStatus() {
+    try {
+      const response = await api.get('/payments/payout-account/status');
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error?.error || error?.response?.data?.error || error?.message || 'Failed to fetch payout account status'
+      };
+    }
+  }
+
+  async createPayoutOnboardingLink(returnPath = null) {
+    try {
+      const payload = returnPath ? { returnPath } : {};
+      const response = await api.post('/payments/payout-account/onboarding-link', payload);
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error?.error || error?.response?.data?.error || error?.message || 'Failed to create Stripe onboarding link'
+      };
     }
   }
 
@@ -242,6 +267,26 @@ async getWithdrawals(params = {}) {
       return {
         success: false,
         error: error?.error || 'Failed to create setup intent'
+      };
+    }
+  }
+
+  async createDepositCheckoutSession(amount, currency = 'usd') {
+    try {
+      const response = await api.post('/payments/deposit/checkout-session', {
+        amount,
+        currency
+      });
+
+      return {
+        success: !!response.data?.success,
+        url: response.data?.url || null,
+        sessionId: response.data?.sessionId || null
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error?.error || error?.message || 'Failed to start Stripe checkout'
       };
     }
   }

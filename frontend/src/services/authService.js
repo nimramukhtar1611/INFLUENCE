@@ -180,35 +180,53 @@ class AuthService {
     }
   }
 
-  // ==================== SETUP 2FA ====================
-  async setup2FA() {
+  // ==================== 2FA ====================
+  async generate2FA() {
     try {
-      const response = await api.post('/auth/2fa/setup');
-      return response;
+      const response = await api.post('/auth/2fa/generate');
+      return response.data;
     } catch (error) {
-      console.error('Setup 2FA error:', error);
+      console.error('Generate 2FA secret error:', error);
       throw error;
     }
   }
 
-  // ==================== VERIFY 2FA ====================
-  async verify2FA(token) {
+  async verifyAndEnable2FA(token) {
     try {
       const response = await api.post('/auth/2fa/verify', { token });
-      return response;
+      return response.data;
     } catch (error) {
-      console.error('Verify 2FA error:', error);
+      console.error('Verify and enable 2FA error:', error);
       throw error;
     }
   }
 
-  // ==================== DISABLE 2FA ====================
-  async disable2FA() {
+  async get2FAStatus() {
     try {
-      const response = await api.post('/auth/2fa/disable');
-      return response;
+      const response = await api.get('/auth/2fa/status');
+      return response.data;
+    } catch (error) {
+      console.error('Get 2FA status error:', error);
+      throw error;
+    }
+  }
+
+  async disable2FA(token) {
+    try {
+      const response = await api.post('/auth/2fa/disable', { token });
+      return response.data;
     } catch (error) {
       console.error('Disable 2FA error:', error);
+      throw error;
+    }
+  }
+
+  async verify2FALogin(userId, token) {
+    try {
+      const response = await api.post('/auth/2fa/verify-login', { userId, token });
+      return response.data;
+    } catch (error) {
+      console.error('Verify 2FA login error:', error);
       throw error;
     }
   }
@@ -238,13 +256,7 @@ class AuthService {
       
       const response = await api.put(endpoint, profileData);
       
-      if (response?.success && (response.brand || response.creator)) {
-        // Update stored user
-        const user = response.brand || response.creator;
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-      
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Update profile error:', error);
       throw error;

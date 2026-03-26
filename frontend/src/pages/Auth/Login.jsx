@@ -111,16 +111,17 @@ const Login = () => {
         payload.captchaToken || null
       );
 
-      if (result?.success) {
+      // Check for 2FA requirement FIRST
+      if (result?.require2FA) {
+        console.log('⚠️ 2FA required');
+        toast('2FA required - please verify your code');
+        navigate('/2fa-verify', { state: { userId: result.userId } });
+      } else if (result?.success) {
         console.log('✅ Login successful');
         toast.success('Login successful!');
         setLoginAttempts(0);
         setShowCaptcha(false);
         setCaptchaToken(null);
-      } else if (result?.require2FA) {
-        console.log('⚠️ 2FA required');
-        toast.info('2FA required');
-        navigate('/2fa-verify', { state: { userId: result.userId } });
       } else {
         const newAttempts = loginAttempts + 1;
         console.log(`❌ Login failed. Attempts: ${newAttempts}`);

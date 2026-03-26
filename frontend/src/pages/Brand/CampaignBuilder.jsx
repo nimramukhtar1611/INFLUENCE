@@ -90,6 +90,25 @@ const CampaignBuilder = () => {
   const [newLocation, setNewLocation] = useState('');
   const [assets, setAssets] = useState([]);
   const [uploadingAssets, setUploadingAssets] = useState(false);
+  const [availableBalance, setAvailableBalance] = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(true);
+
+  // ==================== FETCH BALANCE ====================
+  React.useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const response = await api.get('/payments/balance');
+        if (response.data?.success) {
+          setAvailableBalance(response.data.available);
+        }
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      } finally {
+        setBalanceLoading(false);
+      }
+    };
+    fetchBalance();
+  }, []);
 
   // ==================== VALID CATEGORIES ====================
   const categories = [
@@ -221,6 +240,8 @@ const CampaignBuilder = () => {
       newErrors.budget = 'Budget must be at least $10';
     } else if (formData.budget > 1000000) {
       newErrors.budget = 'Budget cannot exceed $1,000,000';
+    } else if (formData.budget > availableBalance) {
+      newErrors.budget = `Insufficient balance. Available: $${availableBalance.toFixed(2)}`;
     }
 
     setErrors(newErrors);
@@ -958,10 +979,18 @@ const CampaignBuilder = () => {
                   }
                 }}
               />
-              {errors.budget && <p className="mt-1 text-sm text-red-600">{errors.budget}</p>}
-              <p className="text-xs text-gray-500 mt-1">
-                This is the total budget for all deliverables combined
-              </p>
+              {errors.budget && <p className="mt-1 text-sm text-red-600 font-medium flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.budget}
+              </p>}
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-gray-500">
+                  This is the total budget for all deliverables combined
+                </p>
+                <p className={`text-xs font-medium ${availableBalance < formData.budget ? 'text-red-600' : 'text-green-600'}`}>
+                  Available Balance: ${availableBalance.toFixed(2)}
+                </p>
+              </div>
             </div>
 
             <div>

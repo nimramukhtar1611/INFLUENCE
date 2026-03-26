@@ -1,7 +1,7 @@
 // pages/Admin/Creators.jsx
 import React, { useState } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
-import { Search, Filter, Eye, Edit, MoreVertical, CheckCircle, XCircle, Clock, Users, DollarSign, Star, Instagram, Youtube, Twitter } from 'lucide-react';
+import { Search, Filter, Eye, Edit, MoreVertical, CheckCircle, XCircle, Clock, Users, DollarSign, Star, Instagram, Youtube, Twitter, Download } from 'lucide-react';
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import { formatNumber, formatCurrency, formatDate } from '../../utils/helpers';

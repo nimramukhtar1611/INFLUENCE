@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const stripe = require('../../config/stripe');
 const { sendEmail } = require('../../services/emailService');
 const notificationService = require('../../services/notificationService');
 const TwoFactorService = require('../../services/twoFactorService');
@@ -1136,10 +1137,12 @@ exports.resolveDispute = async (req, res) => {
 // ==================== GET PENDING WITHDRAWALS ====================
 exports.getPendingWithdrawals = async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find({ status: 'pending' })
-      .populate('userId', 'fullName email')
-      .populate('bankAccountId')
-      .sort('-requestedAt')
+    const withdrawals = await Payment.find({
+      type: 'withdrawal',
+      status: 'pending'
+    })
+      .populate('from.userId', 'fullName email stripeAccountId stripeAccountStatus')
+      .sort('-createdAt')
       .lean();
 
     // Calculate total amount
@@ -1167,10 +1170,12 @@ exports.getPendingWithdrawals = async (req, res) => {
 exports.approveWithdrawal = async (req, res) => {
   try {
     const { withdrawalId } = req.params;
-    const { transaction_id, notes } = req.body;
+    const { notes } = req.body;
 
-    const withdrawal = await Withdrawal.findById(withdrawalId)
-      .populate('userId', 'fullName email');
+    const withdrawal = await Payment.findOne({
+      _id: withdrawalId,
+      type: 'withdrawal'
+    }).populate('from.userId', 'fullName email stripeAccountId stripeAccountStatus');
 
     if (!withdrawal) {
       return res.status(404).json({
@@ -1186,67 +1191,91 @@ exports.approveWithdrawal = async (req, res) => {
       });
     }
 
+    const creatorUser = withdrawal.from?.userId;
+    if (!creatorUser?.stripeAccountId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Creator has no connected Stripe account'
+      });
+    }
+
+    const transfer = await stripe.transfers.create({
+      amount: Math.round(Number(withdrawal.netAmount || withdrawal.amount || 0) * 100),
+      currency: String(withdrawal.currency || 'USD').toLowerCase(),
+      destination: creatorUser.stripeAccountId,
+      transfer_group: withdrawal.transactionId,
+      metadata: {
+        withdrawalId: withdrawal._id.toString(),
+        creatorId: creatorUser._id.toString(),
+        approvedBy: (req.user?._id || req.admin?._id || '').toString()
+      }
+    });
+
     // Update withdrawal status
     withdrawal.status = 'completed';
+    withdrawal.paymentMethod = {
+      type: 'stripe',
+      details: {
+        destinationAccount: creatorUser.stripeAccountId,
+        stripeTransferId: transfer.id
+      }
+    };
+    withdrawal.metadata = {
+      ...(withdrawal.metadata || {}),
+      adminApprovedAt: new Date(),
+      adminApprovedBy: req.user?._id || req.admin?._id,
+      stripeTransferId: transfer.id
+    };
     withdrawal.processedAt = new Date();
-    withdrawal.processedBy = req.user._id;
-    withdrawal.transactionId = transaction_id;
+    withdrawal.paidAt = new Date();
     withdrawal.adminNotes = notes;
     await withdrawal.save();
 
-    // Update user's balance
-    const user = await User.findById(withdrawal.userId);
-    if (user) {
-      user.balance = (user.balance || 0) - withdrawal.amount;
-      await user.save();
+    // Auxiliary actions should not fail the approval after funds transfer is created.
+    try {
+      await AuditLog.create({
+        adminId: req.user?._id || req.admin?._id,
+        action: 'withdrawal_approved',
+        targetUser: creatorUser._id,
+        metadata: {
+          amount: withdrawal.amount,
+          transactionId: withdrawal.transactionId,
+          stripeTransferId: transfer.id
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+    } catch (auditError) {
+      console.error('Failed to write withdrawal audit log:', auditError.message);
     }
 
-    // Update payment record
-    await Payment.findOneAndUpdate(
-      { transactionId: withdrawal.transactionId },
-      { 
-        status: 'completed',
-        completedAt: new Date()
-      }
-    );
+    try {
+      await notificationService.createNotification(
+        creatorUser._id,
+        'payment',
+        'Withdrawal Approved',
+        `Your withdrawal of $${withdrawal.amount} has been approved and processed.`,
+        { withdrawalId: withdrawal._id }
+      );
+    } catch (notificationError) {
+      console.error('Failed to create withdrawal notification:', notificationError.message);
+    }
 
-    // Log the action
-    await AuditLog.create({
-      adminId: req.user._id,
-      action: 'withdrawal_approved',
-      targetUser: withdrawal.userId,
-      metadata: {
-        amount: withdrawal.amount,
-        transactionId
-      },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    // Notify user
-    await notificationService.createNotification(
-      withdrawal.userId,
-      'payment',
-      'Withdrawal Approved',
-      `Your withdrawal of $${withdrawal.amount} has been approved and processed.`,
-      { withdrawalId: withdrawal._id }
-    );
-
-    // Send email
     try {
       await sendEmail({
-        email: withdrawal.userId.email,
+        email: creatorUser.email,
         subject: 'Withdrawal Approved - InfluenceX',
         html: `
           <h2>Withdrawal Approved</h2>
-          <p>Hi ${withdrawal.userId.fullName},</p>
+          <p>Hi ${creatorUser.fullName},</p>
           <p>Your withdrawal request for <strong>$${withdrawal.amount}</strong> has been approved and processed.</p>
-          <p><strong>Transaction ID:</strong> ${transaction_id}</p>
+          <p><strong>Transaction ID:</strong> ${withdrawal.transactionId}</p>
+          <p><strong>Stripe Transfer ID:</strong> ${transfer.id}</p>
           <p>Funds should appear in your account within 2-3 business days.</p>
         `
       });
     } catch (emailError) {
-      console.error('Failed to send email:', emailError);
+      console.error('Failed to send email:', emailError.message);
     }
 
     res.json({

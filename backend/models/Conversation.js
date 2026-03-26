@@ -85,7 +85,7 @@ const conversationSchema = new mongoose.Schema({
     sender_id: mongoose.Schema.Types.ObjectId,
     sender_name: String,
     created_at: Date,
-    type: String
+    type: { type: String }
   },
   message_count: {
     type: Number,
@@ -334,20 +334,26 @@ conversationSchema.methods.removeParticipant = function(userId, removedBy) {
 };
 
 conversationSchema.methods.updateLastMessage = function(message) {
+  // Support both Message.js (camelCase) and Conversation.js message schema (snake_case)
+  const senderId = message.sender?.user_id || message.senderId;
+  const senderName = message.sender?.name || '';
+  const msgType = message.message_type || message.contentType || 'text';
+  const createdAt = message.created_at || message.createdAt || new Date();
+
   this.last_message = {
     message_id: message._id,
-    content: message.content.substring(0, 100),
-    sender_id: message.sender.user_id,
-    sender_name: message.sender.name,
-    created_at: message.created_at,
-    type: message.message_type
+    content: (message.content || '').substring(0, 100),
+    sender_id: senderId,
+    sender_name: senderName,
+    created_at: createdAt,
+    type: msgType
   };
   
   this.message_count += 1;
   
   // Update unread counts for all participants except sender
   this.participants.forEach(p => {
-    if (!p.user_id.equals(message.sender.user_id) && p.is_active) {
+    if (senderId && !p.user_id.equals(senderId) && p.is_active) {
       const currentCount = this.unread_count.get(p.user_id.toString()) || 0;
       this.unread_count.set(p.user_id.toString(), currentCount + 1);
     }

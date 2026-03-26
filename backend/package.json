@@ -14,6 +14,8 @@
     "test:security": "cross-env NODE_ENV=test jest tests/security --runInBand --detectOpenHandles --forceExit",
     "debug": "nodemon --inspect server.js",
     "seed:admin": "node seeders/adminSeeder.js",
+    "seed:qa": "node seeders/qaSeeder.js",
+    "seed:qa:test": "cross-env NODE_ENV=test node seeders/qaSeeder.js",
     "test:reg": "node scripts/test-registration.js",
     "test:load": "k6 run tests/load/k6-script.js",
     "test:load:smoke": "node -e \"require('fs').accessSync('tests/load/k6-script.js'); console.log('k6 script found')\"",

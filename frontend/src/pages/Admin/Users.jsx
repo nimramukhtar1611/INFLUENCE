@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -31,7 +30,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useAdminData } from '../../hooks/useAdminData';
-import { formatDate, timeAgo } from '../../utils/helpers';
+import { formatCurrency, formatDate, formatNumber, timeAgo } from '../../utils/helpers';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import StatsCard from '../../components/Common/StatsCard';
@@ -545,13 +544,13 @@ const AdminUsers = () => {
 
             {/* Actions */}
             <div className="border-t border-gray-200 pt-4 flex gap-2">
-              <Link
-                to={`/admin/users/${selectedUser._id}`}
-                className="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 text-center"
+              <button
+                type="button"
+                className="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
                 onClick={() => setShowUserModal(false)}
               >
-                View Full Profile
-              </Link>
+                Close
+              </button>
               {!selectedUser.isVerified && (
                 <button
                   onClick={() => handleVerify(selectedUser._id)}

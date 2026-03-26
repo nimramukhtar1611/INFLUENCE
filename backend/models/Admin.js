@@ -59,6 +59,14 @@ const adminSchema = new mongoose.Schema({
     type: String,
     select: false
   },
+  twoFactorTempSecret: {
+    type: String,
+    select: false
+  },
+  twoFactorTempSecretExpires: {
+    type: Date,
+    select: false
+  },
   twoFactorBackupCodes: [{
     type: String,
     select: false

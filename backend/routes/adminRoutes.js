@@ -296,11 +296,6 @@ router.post(
     param('withdrawalId')
       .isMongoId()
       .withMessage('Invalid withdrawal ID'),
-    body('transaction_id')
-      .notEmpty()
-      .withMessage('Transaction ID is required')
-      .isString()
-      .trim(),
     body('notes')
       .optional()
       .isString()

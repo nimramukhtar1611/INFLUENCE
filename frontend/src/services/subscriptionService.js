@@ -1,5 +1,25 @@
 import api from './api';
 
+const normalizeMethod = (method = {}, source = 'subscription') => {
+  const last4 = method.last4 || method.card?.last4 || (method.accountNumber ? String(method.accountNumber).slice(-4) : undefined);
+  const expiryMonth = method.expiryMonth || method.exp_month || method.card?.exp_month;
+  const expiryYear = method.expiryYear || method.exp_year || method.card?.exp_year;
+
+  return {
+    id: method.id || method._id,
+    brand: method.brand || method.card?.brand || (method.type === 'paypal' ? 'paypal' : undefined),
+    last4,
+    expiryMonth,
+    expiryYear,
+    isDefault: Boolean(method.isDefault),
+    type: method.type || 'card',
+    paypalEmail: method.paypalEmail,
+    bankName: method.bankName,
+    source,
+    nonStripe: source !== 'subscription'
+  };
+};
+
 class SubscriptionService {
   async getPlans(userType, interval = 'month') {
     try {
@@ -42,6 +62,44 @@ class SubscriptionService {
       };
     } catch (error) {
       return { success: false, error: error?.error || error?.message || 'Failed to subscribe' };
+    }
+  }
+
+  async createCheckoutSession(payload) {
+    try {
+      const response = await api.post('/subscriptions/checkout-session', payload);
+      return {
+        success: !!response.data?.success,
+        url: response.data?.url || null,
+        sessionId: response.data?.sessionId || null
+      };
+    } catch (error) {
+      return { success: false, error: error?.error || error?.message || 'Failed to start checkout' };
+    }
+  }
+
+  async createBillingPortalSession() {
+    try {
+      const response = await api.post('/subscriptions/billing-portal');
+      return {
+        success: !!response.data?.success,
+        url: response.data?.url || null
+      };
+    } catch (error) {
+      return { success: false, error: error?.error || error?.message || 'Failed to open billing portal' };
+    }
+  }
+
+  async createPlanChangeSession(payload) {
+    try {
+      const response = await api.post('/subscriptions/plan-change-session', payload);
+      return {
+        success: !!response.data?.success,
+        url: response.data?.url || null,
+        message: response.data?.message || null
+      };
+    } catch (error) {
+      return { success: false, error: error?.error || error?.message || 'Failed to start plan change' };
     }
   }
 
@@ -99,12 +157,32 @@ class SubscriptionService {
   async getPaymentMethods() {
     try {
       const response = await api.get('/subscriptions/payment-methods');
+      const methods = (response.data?.paymentMethods || [])
+        .map((method) => normalizeMethod(method, 'subscription'))
+        .filter((method) => !!method.id);
+
       return {
         success: !!response.data?.success,
-        paymentMethods: response.data?.paymentMethods || []
+        paymentMethods: methods
       };
     } catch (error) {
       return { success: false, error: error?.error || error?.message || 'Failed to load payment methods' };
+    }
+  }
+
+  async getBillingMethods() {
+    try {
+      const response = await api.get('/payments/methods');
+      const methods = (response.data?.paymentMethods || [])
+        .map((method) => normalizeMethod(method, 'billing'))
+        .filter((method) => !!method.id);
+
+      return {
+        success: !!response.data?.success,
+        paymentMethods: methods
+      };
+    } catch (error) {
+      return { success: false, error: error?.error || error?.message || 'Failed to load billing methods' };
     }
   }
 

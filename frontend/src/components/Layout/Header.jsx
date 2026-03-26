@@ -36,6 +36,14 @@ const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { unreadCount: messageUnread } = useSocket();
   const navigate = useNavigate();
+  const isMessagingUser = ['brand', 'creator'].includes(user?.userType);
+  const notificationsRoute = user?.userType === 'brand'
+    ? '/brand/notifications'
+    : user?.userType === 'creator'
+      ? '/creator/notifications'
+      : '/admin/notifications';
+  const messageRoute = user?.userType === 'brand' ? '/brand/inbox' : '/creator/inbox';
+  const settingsRoute = user?.userType === 'admin' ? '/admin/settings' : user?.userType === 'brand' ? '/brand/settings' : '/creator/settings';
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -82,10 +90,12 @@ const Header = () => {
       }
     };
 
-    if (user) {
+    if (isMessagingUser) {
       fetchNotifications();
+    } else {
+      setNotifications([]);
     }
-  }, [user]);
+  }, [isMessagingUser]);
 
   // ==================== HANDLE SEARCH ====================
   const handleSearch = async (e) => {
@@ -280,17 +290,19 @@ const Header = () => {
           </button>
 
           {/* Messages */}
-          <Link
-            to={user?.userType === 'brand' ? '/brand/inbox' : '/creator/inbox'}
-            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <MessageSquare className="w-5 h-5 text-gray-600" />
-            {messageUnread > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {messageUnread > 9 ? '9+' : messageUnread}
-              </span>
-            )}
-          </Link>
+          {isMessagingUser ? (
+            <Link
+              to={messageRoute}
+              className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <MessageSquare className="w-5 h-5 text-gray-600" />
+              {messageUnread > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {messageUnread > 9 ? '9+' : messageUnread}
+                </span>
+              )}
+            </Link>
+          ) : null}
 
           {/* Notifications */}
           <div className="relative" ref={notificationsRef}>
@@ -310,7 +322,7 @@ const Header = () => {
                 <div className="px-4 py-2 border-b border-gray-200 flex justify-between items-center">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
                   <Link
-                    to={user?.userType === 'brand' ? '/brand/notifications' : '/creator/notifications'}
+                    to={notificationsRoute}
                     className="text-xs text-indigo-600 hover:text-indigo-700"
                     onClick={() => setShowNotifications(false)}
                   >
@@ -405,7 +417,7 @@ const Header = () => {
                 </Link>
                 
                 <Link
-                  to={user?.userType === 'brand' ? '/brand/settings' : '/creator/settings'}
+                  to={settingsRoute}
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setShowUserMenu(false)}
                 >

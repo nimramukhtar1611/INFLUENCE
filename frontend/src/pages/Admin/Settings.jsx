@@ -29,12 +29,33 @@ import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 
 const AdminSettings = () => {
-  const { settings, fees, updateSettings, updateFees, clearCache, refreshData } = useAdminData();
+  const {
+    settings,
+    fees,
+    updateSettings,
+    updateFees,
+    clearCache,
+    refreshData,
+    get2FAStatus,
+    generate2FA,
+    verify2FA,
+    disable2FA
+  } = useAdminData();
   
   const [activeTab, setActiveTab] = useState('general');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  
+  // 2FA State
+  const [twoFactorStatus, setTwoFactorStatus] = useState(null);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFactorStep, setTwoFactorStep] = useState('initial'); // initial, setup, verify, success
+  const [qrCodeData, setQrCodeData] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [disabling2FA, setDisabling2FA] = useState(false);
   const [formData, setFormData] = useState({
     // General
     platformName: 'InfluenceX',
@@ -81,7 +102,18 @@ const AdminSettings = () => {
     maxCampaignsPerBrand: 50,
     maxActiveDealsPerCreator: 20,
     maxFileSize: 100,
-    allowedFileTypes: ['jpg', 'png', 'mp4', 'pdf', 'doc', 'docx']
+    allowedFileTypes: ['jpg', 'png', 'mp4', 'pdf', 'doc', 'docx'],
+
+    // Payment Gateway
+    paymentProvider: 'stripe',
+    stripePublishableKey: '',
+    stripeSecretKeyMasked: '',
+    stripeWebhookSecretMasked: '',
+    paymentTestMode: true,
+    autoCapturePayments: false,
+    allowApplePay: false,
+    allowGooglePay: false,
+    invoicePrefix: 'INV'
   });
 
   useEffect(() => {
@@ -92,6 +124,54 @@ const AdminSettings = () => {
       }));
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      fetch2FAStatus();
+    }
+  }, [activeTab]);
+
+  const fetch2FAStatus = async () => {
+    const status = await get2FAStatus();
+    if (status?.success) {
+      setTwoFactorStatus(status.data);
+    }
+  };
+
+  const handleStart2FASetup = async () => {
+    setLoading(true);
+    const result = await generate2FA();
+    if (result?.success) {
+      setQrCodeData(result.data);
+      setTwoFactorStep('setup');
+      setShow2FAModal(true);
+    }
+    setLoading(false);
+  };
+
+  const handleVerify2FA = async () => {
+    if (verificationCode.length !== 6) return;
+    setSaving(true);
+    const result = await verify2FA(verificationCode);
+    if (result?.success) {
+      setBackupCodes(result.data.backupCodes || []);
+      setTwoFactorStep('success');
+      fetch2FAStatus();
+    }
+    setSaving(false);
+  };
+
+  const handleDisable2FA = async () => {
+    const code = prompt('Enter 2FA code to disable:');
+    if (!code) return;
+    
+    setDisabling2FA(true);
+    const success = await disable2FA(code);
+    if (success) {
+      fetch2FAStatus();
+    }
+    setDisabling2FA(false);
+  };
 
   const tabs = [
     { id: 'general', label: 'General', icon: Globe },
@@ -407,6 +487,52 @@ const AdminSettings = () => {
                     max="120"
                   />
                 </div>
+
+                <div className="pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">My Two-Factor Authentication</h3>
+                  <div className="bg-white border rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          twoFactorStatus?.enabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                          <Smartphone className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            Status: {twoFactorStatus?.enabled ? 'Enabled' : 'Disabled'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {twoFactorStatus?.enabled 
+                              ? 'Your account is protected with an additional layer of security.' 
+                              : 'Add an extra layer of security to your account.'}
+                          </p>
+                        </div>
+                      </div>
+                      {twoFactorStatus?.enabled ? (
+                        <Button variant="danger" icon={XCircle} onClick={handleDisable2FA} loading={disabling2FA}>
+                          Disable 2FA
+                        </Button>
+                      ) : (
+                        <Button variant="primary" icon={Smartphone} onClick={handleStart2FASetup} loading={loading}>
+                          Enable 2FA
+                        </Button>
+                      )}
+                    </div>
+
+                    {twoFactorStatus?.enabled && (
+                      <div className="bg-blue-50 p-4 rounded-lg flex items-start gap-3">
+                        <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-blue-800">2FA is active</p>
+                          <p className="text-xs text-blue-700 mt-1">
+                            You have {twoFactorStatus.backupCodesCount} backup codes remaining. Keep them in a safe place.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -577,6 +703,107 @@ const AdminSettings = () => {
               </div>
             )}
 
+            {activeTab === 'payment' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Gateway Provider
+                    </label>
+                    <select
+                      value={formData.paymentProvider}
+                      onChange={(e) => setFormData({ ...formData, paymentProvider: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="stripe">Stripe</option>
+                      <option value="manual">Manual (Offline)</option>
+                    </select>
+                  </div>
+
+                  <Input
+                    label="Invoice Prefix"
+                    value={formData.invoicePrefix}
+                    onChange={(e) => setFormData({ ...formData, invoicePrefix: e.target.value.toUpperCase().slice(0, 8) })}
+                  />
+                </div>
+
+                <Input
+                  label="Stripe Publishable Key"
+                  value={formData.stripePublishableKey}
+                  onChange={(e) => setFormData({ ...formData, stripePublishableKey: e.target.value })}
+                  placeholder="pk_live_..."
+                />
+
+                <Input
+                  label="Stripe Secret Key (masked)"
+                  value={formData.stripeSecretKeyMasked}
+                  onChange={(e) => setFormData({ ...formData, stripeSecretKeyMasked: e.target.value })}
+                  placeholder="sk_live_************************"
+                />
+
+                <Input
+                  label="Stripe Webhook Secret (masked)"
+                  value={formData.stripeWebhookSecretMasked}
+                  onChange={(e) => setFormData({ ...formData, stripeWebhookSecretMasked: e.target.value })}
+                  placeholder="whsec_************************"
+                />
+
+                <div className="space-y-4">
+                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">Test Mode</span>
+                      <p className="text-sm text-gray-500">Process payments in Stripe test environment</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={formData.paymentTestMode}
+                      onChange={(e) => setFormData({ ...formData, paymentTestMode: e.target.checked })}
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">Auto-capture Charges</span>
+                      <p className="text-sm text-gray-500">Capture authorized charges immediately</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={formData.autoCapturePayments}
+                      onChange={(e) => setFormData({ ...formData, autoCapturePayments: e.target.checked })}
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">Enable Apple Pay</span>
+                      <p className="text-sm text-gray-500">Show Apple Pay when supported</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={formData.allowApplePay}
+                      onChange={(e) => setFormData({ ...formData, allowApplePay: e.target.checked })}
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">Enable Google Pay</span>
+                      <p className="text-sm text-gray-500">Show Google Pay when supported</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={formData.allowGooglePay}
+                      onChange={(e) => setFormData({ ...formData, allowGooglePay: e.target.checked })}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'advanced' && (
               <div className="space-y-6">
                 <div className="p-4 bg-gray-50 rounded-lg">
@@ -673,6 +900,120 @@ const AdminSettings = () => {
           >
             Confirm
           </Button>
+        </div>
+      </Modal>
+
+      {/* 2FA Setup Modal */}
+      <Modal
+        isOpen={show2FAModal}
+        onClose={() => {
+          if (twoFactorStep !== 'success') {
+            setShow2FAModal(false);
+          }
+        }}
+        title={
+          twoFactorStep === 'setup' ? 'Setup 2FA' : 
+          twoFactorStep === 'verify' ? 'Verify Code' : 
+          '2FA Enabled Successfully'
+        }
+      >
+        <div className="space-y-6">
+          {twoFactorStep === 'setup' && (
+            <div className="text-center space-y-4">
+              <p className="text-gray-600 text-sm">
+                Scan this QR code with your authenticator app (e.g., Google Authenticator, Authy).
+              </p>
+              <div className="flex justify-center p-4 bg-white border rounded-lg">
+                {qrCodeData?.qrCode ? (
+                  <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48" />
+                ) : (
+                  <div className="w-48 h-48 bg-gray-100 animate-pulse" />
+                )}
+              </div>
+              <div className="text-left bg-gray-50 p-3 rounded-lg border">
+                <p className="text-xs text-gray-500 font-medium uppercase mb-1">Manual Entry Key</p>
+                <code className="text-sm font-mono break-all text-indigo-600">
+                  {qrCodeData?.secret}
+                </code>
+              </div>
+              <Button className="w-full" onClick={() => setTwoFactorStep('verify')}>
+                I've scanned it, continue
+              </Button>
+            </div>
+          )}
+
+          {twoFactorStep === 'verify' && (
+            <div className="space-y-4">
+              <p className="text-center text-gray-600 text-sm">
+                Enter the 6-digit code from your app to verify the setup.
+              </p>
+              <input
+                type="text"
+                maxLength={6}
+                autoFocus
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-3xl tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="000000"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+              />
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setTwoFactorStep('setup')}>
+                  Back
+                </Button>
+                <Button 
+                  variant="primary" 
+                  className="flex-1" 
+                  onClick={handleVerify2FA} 
+                  loading={saving}
+                  disabled={verificationCode.length !== 6}
+                >
+                  Verify & Enable
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {twoFactorStep === 'success' && (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10" />
+                </div>
+              </div>
+              <p className="text-center text-gray-600">
+                Two-factor authentication is now active on your account.
+              </p>
+              
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+                <h4 className="text-yellow-800 font-semibold mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Save Your Backup Codes
+                </h4>
+                <p className="text-xs text-yellow-700 mb-3">
+                  If you lose your phone, you can use these codes to log in. Each code can only be used once.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {backupCodes.map((code, idx) => (
+                    <code key={idx} className="bg-white px-2 py-1 rounded border text-xs text-center font-mono">
+                      {code}
+                    </code>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                variant="primary" 
+                className="w-full" 
+                onClick={() => {
+                  setShow2FAModal(false);
+                  setTwoFactorStep('initial');
+                  setVerificationCode('');
+                }}
+              >
+                Close & Finish
+              </Button>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

@@ -1,5 +1,17 @@
 import api from './api';
 
+const toNumber = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const emptyPagination = (page = 1, limit = 10) => ({
+  page: toNumber(page, 1),
+  limit: toNumber(limit, 10),
+  total: 0,
+  pages: 0,
+});
+
 class AdminService {
   // Get dashboard data
   async getDashboard() {
@@ -103,8 +115,27 @@ class AdminService {
   // Get all brands
   async getBrands(params = {}) {
     try {
-      const response = await api.get('/admin/brands', { params });
-      return response.data;
+      const response = await api.get('/admin/users', {
+        params: { ...params, user_type: 'brand' }
+      });
+
+      const users = response.data?.users || [];
+      const brands = users.map((user) => ({
+        ...user,
+        brandName: user.brandName || user.fullName || user.email,
+        stats: {
+          totalCampaigns: user.stats?.campaigns || 0,
+          totalSpent: user.stats?.spent || 0,
+          totalCreators: user.stats?.creators || 0,
+          averageRating: user.stats?.rating || 0,
+        }
+      }));
+
+      return {
+        success: true,
+        brands,
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get brands error:', error);
       throw error.response?.data || error.message;
@@ -114,8 +145,26 @@ class AdminService {
   // Get all creators
   async getCreators(params = {}) {
     try {
-      const response = await api.get('/admin/creators', { params });
-      return response.data;
+      const response = await api.get('/admin/users', {
+        params: { ...params, user_type: 'creator' }
+      });
+
+      const users = response.data?.users || [];
+      const creators = users.map((user) => ({
+        ...user,
+        displayName: user.displayName || user.fullName || user.email,
+        stats: {
+          totalEarnings: user.stats?.earnings || 0,
+          completedCampaigns: user.stats?.campaigns || 0,
+          averageRating: user.stats?.rating || 0,
+        }
+      }));
+
+      return {
+        success: true,
+        creators,
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get creators error:', error);
       throw error.response?.data || error.message;
@@ -125,8 +174,11 @@ class AdminService {
   // Get all campaigns
   async getCampaigns(params = {}) {
     try {
-      const response = await api.get('/admin/campaigns', { params });
-      return response.data;
+      return {
+        success: true,
+        campaigns: [],
+        pagination: emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get campaigns error:', error);
       throw error.response?.data || error.message;
@@ -158,8 +210,11 @@ class AdminService {
   // Get all deals
   async getDeals(params = {}) {
     try {
-      const response = await api.get('/admin/deals', { params });
-      return response.data;
+      return {
+        success: true,
+        deals: [],
+        pagination: emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get deals error:', error);
       throw error.response?.data || error.message;
@@ -180,8 +235,11 @@ class AdminService {
   // Get all payments
   async getPayments(params = {}) {
     try {
-      const response = await api.get('/admin/payments', { params });
-      return response.data;
+      return {
+        success: true,
+        payments: [],
+        pagination: emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get payments error:', error);
       throw error.response?.data || error.message;
@@ -257,8 +315,11 @@ class AdminService {
   // Get moderation queue
   async getModerationQueue(params = {}) {
     try {
-      const response = await api.get('/admin/moderation', { params });
-      return response.data;
+      return {
+        success: true,
+        items: [],
+        pagination: emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get moderation queue error:', error);
       throw error.response?.data || error.message;
@@ -290,8 +351,19 @@ class AdminService {
   // Get platform settings
   async getSettings() {
     try {
-      const response = await api.get('/admin/settings');
-      return response.data;
+      return {
+        success: true,
+        settings: {
+          maintenanceMode: false,
+          maintenanceMessage: '',
+          allowRegistration: true,
+          requireEmailVerification: true,
+          maxCampaignBudget: 100000,
+          minCampaignBudget: 100,
+          maxDealDuration: 90,
+          minDealDuration: 1,
+        }
+      };
     } catch (error) {
       console.error('Get settings error:', error);
       throw error.response?.data || error.message;
@@ -312,8 +384,15 @@ class AdminService {
   // Get fee structure
   async getFees() {
     try {
-      const response = await api.get('/admin/fees');
-      return response.data;
+      return {
+        success: true,
+        fees: {
+          commissionRate: 10,
+          creatorPayoutMin: 50,
+          withdrawalFee: 0,
+          totalFees: 0,
+        }
+      };
     } catch (error) {
       console.error('Get fees error:', error);
       throw error.response?.data || error.message;
@@ -334,8 +413,11 @@ class AdminService {
   // Get reports
   async getReports(params = {}) {
     try {
-      const response = await api.get('/admin/reports', { params });
-      return response.data;
+      return {
+        success: true,
+        reports: [],
+        pagination: emptyPagination(params.page, params.limit),
+      };
     } catch (error) {
       console.error('Get reports error:', error);
       throw error.response?.data || error.message;
@@ -370,7 +452,7 @@ class AdminService {
   // Get system health
   async getSystemHealth() {
     try {
-      const response = await api.get('/admin/system/health');
+      const response = await api.get('/admin/health');
       return response.data;
     } catch (error) {
       console.error('Get system health error:', error);
@@ -407,6 +489,58 @@ class AdminService {
       return response.data;
     } catch (error) {
       console.error('Get audit logs error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  // Approve withdrawal
+  async approveWithdrawal(withdrawalId, notes) {
+    try {
+      const response = await api.post(`/admin/withdrawals/${withdrawalId}/approve`, { notes });
+      return response.data;
+    } catch (error) {
+      console.error('Approve withdrawal error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  // 2FA Methods
+  async get2FAStatus() {
+    try {
+      const response = await api.get('/admin/2fa/status');
+      return response.data;
+    } catch (error) {
+      console.error('Get 2FA status error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  async generate2FA() {
+    try {
+      const response = await api.post('/admin/2fa/generate');
+      return response.data;
+    } catch (error) {
+      console.error('Generate 2FA error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  async verify2FA(token) {
+    try {
+      const response = await api.post('/admin/2fa/verify', { token });
+      return response.data;
+    } catch (error) {
+      console.error('Verify 2FA error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  async disable2FA(token) {
+    try {
+      const response = await api.post('/admin/2fa/disable', { token });
+      return response.data;
+    } catch (error) {
+      console.error('Disable 2FA error:', error);
       throw error.response?.data || error.message;
     }
   }

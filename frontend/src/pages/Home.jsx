@@ -324,7 +324,7 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
               <Link
-                to="/register?role=brand"
+                to="/signup?type=brand"
                 className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center">
@@ -334,7 +334,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </Link>
               <Link
-                to="/register?role=creator"
+                to="/signup?type=creator"
                 className="px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg border-2 border-gray-200 hover:border-indigo-600 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
               >
                 Start Earning Today

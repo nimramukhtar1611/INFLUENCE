@@ -1,5 +1,5 @@
 // pages/Creator/Earnings.jsx - COMPLETE FIXED VERSION
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   DollarSign,
@@ -19,6 +19,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
+  Link2,
   Eye,
   FileText,
   BarChart3
@@ -42,50 +43,76 @@ import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import StatsCard from '../../components/Common/StatsCard';
+import paymentService from '../../services/paymentService';
 import toast from 'react-hot-toast';
 
 const Earnings = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const {
     loading,
     balance,
     pendingBalance,
     transactions,
     withdrawals,
-    paymentMethods,
     earningsHistory,
     summary,
     pagination,
     fetchBalance,
     fetchTransactions,
     fetchWithdrawals,
-    fetchPaymentMethods,
     fetchEarningsHistory,
     requestWithdrawal,
-    addPaymentMethod,
-    setDefaultMethod,
-    deletePaymentMethod,
     getGrowthPercentage
   } = useEarnings();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [showAddMethodModal, setShowAddMethodModal] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState('');
   const [period, setPeriod] = useState('30d');
   const [chartType, setChartType] = useState('area');
-  
-  const [newMethod, setNewMethod] = useState({
-    type: 'paypal',
-    paypalEmail: '',
-    bankName: '',
-    accountNumber: '',
-    routingNumber: '',
-    accountHolderName: ''
+  const [connectingStripe, setConnectingStripe] = useState(false);
+  const [payoutAccount, setPayoutAccount] = useState({
+    loading: true,
+    connected: false,
+    status: 'not_connected',
+    payoutsEnabled: false,
+    detailsSubmitted: false,
+    currentlyDue: []
   });
+
+  const loadPayoutAccountStatus = useCallback(async () => {
+    setPayoutAccount((prev) => ({ ...prev, loading: true }));
+    const response = await paymentService.getPayoutAccountStatus();
+
+    if (response?.success) {
+      setPayoutAccount({
+        loading: false,
+        connected: Boolean(response.connected),
+        status: response.status || 'pending',
+        payoutsEnabled: Boolean(response.payoutsEnabled),
+        detailsSubmitted: Boolean(response.detailsSubmitted),
+        currentlyDue: response.currentlyDue || []
+      });
+      return;
+    }
+
+    setPayoutAccount((prev) => ({ ...prev, loading: false }));
+  }, []);
+
+  const handleConnectStripe = useCallback(async () => {
+    setConnectingStripe(true);
+    const response = await paymentService.createPayoutOnboardingLink('/creator/earnings');
+    setConnectingStripe(false);
+
+    if (!response?.success || !response?.url) {
+      toast.error(response?.error || 'Failed to open Stripe onboarding');
+      return;
+    }
+
+    window.location.assign(response.url);
+  }, []);
 
   // ==================== FETCH DATA ON MOUNT ====================
   useEffect(() => {
@@ -96,7 +123,6 @@ const Earnings = () => {
         fetchBalance(),
         fetchTransactions(1, 10),
         fetchWithdrawals(1, 10),
-        fetchPaymentMethods(),
         fetchEarningsHistory(period)
       ]);
     };
@@ -104,10 +130,31 @@ const Earnings = () => {
     loadData();
   }, [period, user]);
 
+  useEffect(() => {
+    if (!user) return;
+    loadPayoutAccountStatus();
+  }, [user, loadPayoutAccountStatus]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stripeConnectState = params.get('stripe_connect');
+    if (!stripeConnectState) return;
+
+    if (stripeConnectState === 'return') {
+      toast.success('Stripe payout account details updated.');
+      loadPayoutAccountStatus();
+      refreshUser?.();
+    } else if (stripeConnectState === 'refresh') {
+      toast('Stripe onboarding was not finished. Complete it to receive payouts.');
+    }
+
+    window.history.replaceState({}, '', window.location.pathname);
+  }, [loadPayoutAccountStatus, refreshUser]);
+
   // ==================== WITHDRAWAL HANDLER ====================
   const handleWithdraw = async () => {
-    if (!withdrawAmount || !selectedMethod) {
-      toast.error('Please fill all fields');
+    if (!withdrawAmount) {
+      toast.error('Please enter an amount');
       return;
     }
 
@@ -122,37 +169,10 @@ const Earnings = () => {
       return;
     }
 
-    const success = await requestWithdrawal(amount, selectedMethod);
-    if (success) {
+    const result = await requestWithdrawal(amount);
+    if (result?.success) {
       setShowWithdrawModal(false);
       setWithdrawAmount('');
-      setSelectedMethod('');
-    }
-  };
-
-  // ==================== ADD PAYMENT METHOD ====================
-  const handleAddPaymentMethod = async () => {
-    if (newMethod.type === 'paypal' && !newMethod.paypalEmail) {
-      toast.error('PayPal email is required');
-      return;
-    }
-
-    if (newMethod.type === 'bank_account' && (!newMethod.accountNumber || !newMethod.routingNumber)) {
-      toast.error('Bank account details are required');
-      return;
-    }
-
-    const success = await addPaymentMethod(newMethod);
-    if (success) {
-      setShowAddMethodModal(false);
-      setNewMethod({
-        type: 'paypal',
-        paypalEmail: '',
-        bankName: '',
-        accountNumber: '',
-        routingNumber: '',
-        accountHolderName: ''
-      });
     }
   };
 
@@ -210,6 +230,18 @@ const Earnings = () => {
     .filter(t => t.status === 'pending' || t.status === 'in-escrow')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
+  const payoutStatusText = payoutAccount.connected
+    ? 'Connected'
+    : payoutAccount.status === 'pending'
+      ? 'Action Required'
+      : 'Not Connected';
+
+  const payoutStatusClass = payoutAccount.connected
+    ? 'bg-green-100 text-green-800'
+    : payoutAccount.status === 'pending'
+      ? 'bg-yellow-100 text-yellow-800'
+      : 'bg-gray-100 text-gray-700';
+
   // ==================== LOADING STATE ====================
   if (loading && transactions.length === 0) {
     return (
@@ -236,7 +268,6 @@ const Earnings = () => {
               fetchBalance();
               fetchTransactions(1, 10);
               fetchWithdrawals(1, 10);
-              fetchPaymentMethods();
               fetchEarningsHistory(period);
             }}
           >
@@ -291,6 +322,29 @@ const Earnings = () => {
           icon={DollarSign}
           color="bg-blue-500"
         />
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-100">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Stripe Payout Account</h2>
+            <p className="text-sm text-gray-600 mt-1">Connect Stripe so approved withdrawals can be paid out.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${payoutStatusClass}`}>
+              Stripe: {payoutStatusText}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Link2}
+              onClick={handleConnectStripe}
+              loading={connectingStripe || payoutAccount.loading}
+            >
+              {payoutAccount.connected ? 'Update Stripe Account' : 'Connect Stripe Account'}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Time Period Selector */}
@@ -427,16 +481,6 @@ const Earnings = () => {
             }`}
           >
             Withdrawals
-          </button>
-          <button
-            onClick={() => setActiveTab('methods')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'methods'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Payment Methods
           </button>
         </nav>
       </div>
@@ -639,7 +683,7 @@ const Earnings = () => {
                         {formatCurrency(withdrawal.amount || 0)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {withdrawal.paymentMethod?.type || 'Bank Transfer'}
+                        Stripe
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(withdrawal.status)}`}>
@@ -670,107 +714,12 @@ const Earnings = () => {
         </div>
       )}
 
-      {activeTab === 'methods' && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={Plus}
-                onClick={() => setShowAddMethodModal(true)}
-              >
-                Add Method
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {paymentMethods.length > 0 ? (
-                paymentMethods.map((method) => (
-                  <div key={method._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {method.type === 'paypal' ? (
-                        <CreditCard className="w-6 h-6 text-blue-600" />
-                      ) : (
-                        <Building2 className="w-6 h-6 text-gray-600" />
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {method.type === 'paypal' 
-                            ? `PayPal - ${method.paypalEmail}` 
-                            : `${method.bankName || 'Bank'} - ****${method.accountNumber?.slice(-4)}`}
-                        </p>
-                        {method.verified && (
-                          <p className="text-xs text-green-600 flex items-center mt-1">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Verified
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {method.isDefault && (
-                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-                          Default
-                        </span>
-                      )}
-                      {!method.isDefault && (
-                        <button
-                          onClick={() => setDefaultMethod(method._id)}
-                          className="text-sm text-indigo-600 hover:text-indigo-700"
-                        >
-                          Set Default
-                        </button>
-                      )}
-                      <button
-                        onClick={() => deletePaymentMethod(method._id)}
-                        className="text-gray-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-4">No payment methods added yet</p>
-                  <Button variant="outline" onClick={() => setShowAddMethodModal(true)}>
-                    Add Payment Method
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Payout Schedule</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600">Processing Time</span>
-                <span className="font-medium">2-3 business days</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600">Minimum Withdrawal</span>
-                <span className="font-medium">$50</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600">Withdrawal Fee</span>
-                <span className="font-medium text-green-600">Free</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Withdraw Modal */}
       <Modal
         isOpen={showWithdrawModal}
         onClose={() => {
           setShowWithdrawModal(false);
           setWithdrawAmount('');
-          setSelectedMethod('');
         }}
         title="Withdraw Funds"
       >
@@ -797,36 +746,19 @@ const Earnings = () => {
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Payment Method
-            </label>
-            <select
-              value={selectedMethod}
-              onChange={(e) => setSelectedMethod(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select a method</option>
-              {paymentMethods.length > 0 ? (
-                paymentMethods.map(method => (
-                  <option key={method._id} value={method._id}>
-                    {method.type === 'paypal' 
-                      ? `PayPal - ${method.paypalEmail}`
-                      : `${method.bankName || 'Bank'} - ****${method.accountNumber?.slice(-4)}`}
-                    {method.isDefault ? ' (Default)' : ''}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>No payment methods added</option>
-              )}
-            </select>
-          </div>
-
           <div className="bg-blue-50 p-4 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Processing Time:</strong> Withdrawals typically take 2-3 business days to process.
+              <strong>Processing:</strong> Withdrawal requests stay pending until admin approval, then payout is sent via Stripe.
             </p>
           </div>
+
+          {!payoutAccount.connected ? (
+            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+              <p className="text-sm text-amber-900">
+                Stripe payout account is not connected yet. You can submit this request, then connect Stripe before admin approval.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
@@ -836,125 +768,9 @@ const Earnings = () => {
           <Button 
             variant="primary" 
             onClick={handleWithdraw}
-            disabled={!withdrawAmount || !selectedMethod || parseFloat(withdrawAmount) < 50 || parseFloat(withdrawAmount) > balance}
+            disabled={!withdrawAmount || parseFloat(withdrawAmount) < 50 || parseFloat(withdrawAmount) > balance}
           >
             Confirm Withdrawal
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Add Payment Method Modal */}
-      <Modal
-        isOpen={showAddMethodModal}
-        onClose={() => {
-          setShowAddMethodModal(false);
-          setNewMethod({
-            type: 'paypal',
-            paypalEmail: '',
-            bankName: '',
-            accountNumber: '',
-            routingNumber: '',
-            accountHolderName: ''
-          });
-        }}
-        title="Add Payment Method"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Payment Method Type
-            </label>
-            <select
-              value={newMethod.type}
-              onChange={(e) => setNewMethod({...newMethod, type: e.target.value})}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="paypal">PayPal</option>
-              <option value="bank_account">Bank Account (US Only)</option>
-            </select>
-          </div>
-
-          {newMethod.type === 'paypal' ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                PayPal Email
-              </label>
-              <input
-                type="email"
-                value={newMethod.paypalEmail}
-                onChange={(e) => setNewMethod({...newMethod, paypalEmail: e.target.value})}
-                placeholder="your@email.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          ) : (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Account Holder Name
-                </label>
-                <input
-                  type="text"
-                  value={newMethod.accountHolderName}
-                  onChange={(e) => setNewMethod({...newMethod, accountHolderName: e.target.value})}
-                  placeholder="John Doe"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bank Name
-                </label>
-                <input
-                  type="text"
-                  value={newMethod.bankName}
-                  onChange={(e) => setNewMethod({...newMethod, bankName: e.target.value})}
-                  placeholder="Chase, Wells Fargo, etc."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Routing Number
-                </label>
-                <input
-                  type="text"
-                  value={newMethod.routingNumber}
-                  onChange={(e) => setNewMethod({...newMethod, routingNumber: e.target.value})}
-                  placeholder="9-digit routing number"
-                  maxLength="9"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  value={newMethod.accountNumber}
-                  onChange={(e) => setNewMethod({...newMethod, accountNumber: e.target.value})}
-                  placeholder="Account number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-            </>
-          )}
-
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Note:</strong> Your payment method will be verified within 1-2 business days. You'll receive a confirmation email once verified.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={() => setShowAddMethodModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleAddPaymentMethod}>
-            Add Method
           </Button>
         </div>
       </Modal>

@@ -3,6 +3,7 @@ const Subscription = require('../models/Subscription');
 const Plan = require('../models/Plan');
 const User = require('../models/User');
 const stripe = require('../config/stripe');
+const stripeService = require('../services/stripeService');
 const subscriptionPlans = require('../config/subscriptionPlans');
 const asyncHandler = require('express-async-handler');
 const mongoose = require('mongoose');
@@ -32,6 +33,133 @@ const resolveStripePriceId = (plan, interval) => {
   return plan.stripePriceId?.month || plan.stripePriceId?.year || null;
 };
 
+const getFrontendBaseUrl = () => process.env.FRONTEND_URL || 'http://localhost:5173';
+
+const getSubscriptionPathByUserType = (userType) => {
+  if (userType === 'brand') return '/brand/subscription';
+  if (userType === 'creator') return '/creator/subscription';
+  return '/pricing';
+};
+
+let managedPlanChangePortalConfigId = process.env.STRIPE_PLAN_CHANGE_PORTAL_CONFIG_ID || null;
+
+const collectPortalProductsFromPlans = (plans = []) => {
+  const productPriceMap = new Map();
+
+  for (const plan of plans) {
+    const productId = plan?.stripeProductId;
+    if (!productId) continue;
+
+    if (!productPriceMap.has(productId)) {
+      productPriceMap.set(productId, new Set());
+    }
+
+    const prices = [];
+    if (typeof plan?.stripePriceId === 'string') {
+      prices.push(plan.stripePriceId);
+    } else if (plan?.stripePriceId && typeof plan.stripePriceId === 'object') {
+      if (plan.stripePriceId.month) prices.push(plan.stripePriceId.month);
+      if (plan.stripePriceId.year) prices.push(plan.stripePriceId.year);
+    }
+
+    for (const price of prices) {
+      if (price) productPriceMap.get(productId).add(price);
+    }
+  }
+
+  return Array.from(productPriceMap.entries())
+    .map(([product, pricesSet]) => ({ product, prices: Array.from(pricesSet) }))
+    .filter((entry) => entry.prices.length > 0);
+};
+
+const configIncludesPrice = (config, priceId) => {
+  const products = config?.features?.subscription_update?.products || [];
+  return products.some((entry) => Array.isArray(entry?.prices) && entry.prices.includes(priceId));
+};
+
+const ensurePlanChangePortalConfiguration = async ({ requiredPriceId, returnUrl }) => {
+  const activePlans = await Plan.find({ isActive: true }).select('stripeProductId stripePriceId');
+  const products = collectPortalProductsFromPlans(activePlans);
+
+  if (!products.some((entry) => entry.prices.includes(requiredPriceId))) {
+    throw new Error(`Selected plan price is not present in portal-allowed products: ${requiredPriceId}`);
+  }
+
+  const subscriptionUpdateFeatures = {
+    enabled: true,
+    default_allowed_updates: ['price', 'quantity', 'promotion_code'],
+    proration_behavior: 'always_invoice',
+    products
+  };
+
+  const configurationUpdatePayload = {
+    default_return_url: returnUrl,
+    features: {
+      subscription_update: subscriptionUpdateFeatures
+    }
+  };
+
+  if (managedPlanChangePortalConfigId) {
+    try {
+      const updated = await stripe.billingPortal.configurations.update(
+        managedPlanChangePortalConfigId,
+        configurationUpdatePayload
+      );
+
+      if (updated?.active && configIncludesPrice(updated, requiredPriceId)) {
+        return updated;
+      }
+    } catch (error) {
+      managedPlanChangePortalConfigId = null;
+    }
+  }
+
+  const existingConfigs = await stripe.billingPortal.configurations.list({ active: true, limit: 50 });
+  const managedExisting = existingConfigs.data.find(
+    (config) => config?.metadata?.managed_by === 'influencex' && config?.metadata?.purpose === 'plan_change'
+  );
+
+  if (managedExisting) {
+    const updated = await stripe.billingPortal.configurations.update(
+      managedExisting.id,
+      configurationUpdatePayload
+    );
+    managedPlanChangePortalConfigId = updated.id;
+    return updated;
+  }
+
+  const created = await stripe.billingPortal.configurations.create({
+    business_profile: {
+      headline: 'Manage your subscription'
+    },
+    default_return_url: returnUrl,
+    features: {
+      customer_update: {
+        enabled: true,
+        allowed_updates: ['email', 'name', 'address', 'phone', 'tax_id']
+      },
+      invoice_history: {
+        enabled: true
+      },
+      payment_method_update: {
+        enabled: true
+      },
+      subscription_cancel: {
+        enabled: true,
+        mode: 'at_period_end'
+      },
+      subscription_update: subscriptionUpdateFeatures
+    },
+    metadata: {
+      managed_by: 'influencex',
+      purpose: 'plan_change'
+    }
+  });
+
+  managedPlanChangePortalConfigId = created.id;
+  return created;
+};
+
 // ============================================================
 // PUBLIC ROUTES
 // ============================================================
@@ -43,7 +171,13 @@ const getPlans = asyncHandler(async (req, res) => {
   const { userType, interval = 'month' } = req.query;
 
   const query = { isActive: true, isPublic: true };
-  if (userType) query.userType = userType;
+  if (['brand', 'creator'].includes(userType)) {
+    query.$or = [
+      { userType: { $in: [userType, 'both'] } },
+      { userType: { $exists: false } },
+      { userType: null }
+    ];
+  }
 
   const plans = await Plan.find(query).sort('price');
 
@@ -158,7 +292,7 @@ const calculatePrice = asyncHandler(async (req, res) => {
 // @route   GET /api/subscriptions/current
 // @access  Private
 const getCurrentSubscription = asyncHandler(async (req, res) => {
-  const subscription = await Subscription.findOne({
+  let subscription = await Subscription.findOne({
     userId: req.user._id,
     status: { $in: ['active', 'trialing', 'past_due'] }
   }).populate('planId');
@@ -170,6 +304,16 @@ const getCurrentSubscription = asyncHandler(async (req, res) => {
   let upcomingInvoice = null;
   if (subscription.stripeSubscriptionId) {
     try {
+      // Keep local plan snapshot in sync with Stripe in case webhooks were delayed or metadata was stale.
+      const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId, {
+        expand: ['items.data.price']
+      });
+      const synced = await stripeService.upsertSubscriptionFromStripe(stripeSubscription);
+      if (synced?._id) {
+        const refreshed = await Subscription.findById(synced._id).populate('planId');
+        if (refreshed) subscription = refreshed;
+      }
+
       const invoice = await stripe.invoices.retrieveUpcoming({
         subscription: subscription.stripeSubscriptionId
       });
@@ -212,11 +356,17 @@ const subscribe = asyncHandler(async (req, res) => {
   });
 
   if (existingSubscription) {
-    return res.status(400).json({
-      success: false,
-      message: 'You already have an active subscription. Use upgrade/downgrade instead.',
-      subscription: existingSubscription
-    });
+    // Cancel old Stripe subscription to prevent duplicates in billing portal
+    if (existingSubscription.stripeSubscriptionId) {
+      try {
+        await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+        console.log(`🗑️ Cancelled old Stripe subscription before new subscribe: ${existingSubscription.stripeSubscriptionId}`);
+      } catch (err) {
+        // Subscription may already be cancelled/expired - continue anyway
+        console.warn('⚠️ Could not cancel old Stripe subscription:', err.message);
+      }
+    }
+    await Subscription.deleteOne({ _id: existingSubscription._id });
   }
 
   const normalizedFeatures = normalizePlanFeatures(plan.features);
@@ -332,6 +482,221 @@ const subscribe = asyncHandler(async (req, res) => {
     subscription,
     clientSecret: stripeSubscription.latest_invoice?.payment_intent?.client_secret
   });
+});
+
+// @desc    Create Stripe Checkout session for subscription
+// @route   POST /api/subscriptions/checkout-session
+// @access  Private
+const createCheckoutSession = asyncHandler(async (req, res) => {
+  const { planId, interval = 'month' } = req.body;
+
+  if (!['brand', 'creator'].includes(req.user.userType)) {
+    res.status(403);
+    throw new Error('Only brand and creator accounts can subscribe');
+  }
+
+  const plan = await Plan.findOne({ planId, isActive: true });
+  if (!plan) {
+    res.status(404);
+    throw new Error('Plan not found');
+  }
+
+  const stripePriceId = resolveStripePriceId(plan, interval);
+  if (!stripePriceId) {
+    res.status(500);
+    throw new Error(`Payment configuration error: missing Stripe price for plan ${plan.planId}`);
+  }
+
+  let stripeCustomerId = req.user.stripeCustomerId;
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: req.user.email,
+      name: req.user.fullName,
+      metadata: { userId: req.user._id.toString(), userType: req.user.userType }
+    });
+    stripeCustomerId = customer.id;
+    await User.findByIdAndUpdate(req.user._id, { stripeCustomerId });
+  }
+
+  const existingSubscription = await Subscription.findOne({
+    userId: req.user._id,
+    status: { $in: ['active', 'trialing', 'past_due'] },
+    stripeSubscriptionId: { $ne: null }
+  });
+
+  if (existingSubscription) {
+    // Cancel old Stripe subscription to prevent duplicates in billing portal
+    if (existingSubscription.stripeSubscriptionId) {
+      try {
+        await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+        console.log(`🗑️ Cancelled old Stripe subscription before new checkout: ${existingSubscription.stripeSubscriptionId}`);
+      } catch (err) {
+        console.warn('⚠️ Could not cancel old Stripe subscription:', err.message);
+      }
+    }
+    await Subscription.deleteOne({ _id: existingSubscription._id });
+  }
+
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const subscriptionPath = getSubscriptionPathByUserType(req.user.userType);
+  const successUrl = `${frontendBaseUrl}${subscriptionPath}?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${frontendBaseUrl}${subscriptionPath}?checkout=cancel`;
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer: stripeCustomerId,
+    line_items: [{ price: stripePriceId, quantity: 1 }],
+    allow_promotion_codes: true,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    client_reference_id: req.user._id.toString(),
+    metadata: {
+      userId: req.user._id.toString(),
+      userType: req.user.userType,
+      planId: plan.planId,
+      interval
+    },
+    subscription_data: {
+      metadata: {
+        userId: req.user._id.toString(),
+        userType: req.user.userType,
+        planId: plan.planId,
+        interval
+      }
+    }
+  });
+
+  res.json({
+    success: true,
+    url: session.url,
+    sessionId: session.id
+  });
+});
+
+// @desc    Create Stripe Billing Portal session
+// @route   POST /api/subscriptions/billing-portal
+// @access  Private
+const createBillingPortalSession = asyncHandler(async (req, res) => {
+  if (!req.user.stripeCustomerId) {
+    res.status(400);
+    throw new Error('No Stripe customer found');
+  }
+
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const subscriptionPath = getSubscriptionPathByUserType(req.user.userType);
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: req.user.stripeCustomerId,
+    return_url: `${frontendBaseUrl}${subscriptionPath}`
+  });
+
+  res.json({ success: true, url: session.url });
+});
+
+// @desc    Create Stripe plan-change confirmation session
+// @route   POST /api/subscriptions/plan-change-session
+// @access  Private
+const createPlanChangeSession = asyncHandler(async (req, res) => {
+  const { planId, interval = 'month' } = req.body;
+
+  if (!req.user.stripeCustomerId) {
+    res.status(400);
+    throw new Error('No Stripe customer found');
+  }
+
+  const plan = await Plan.findOne({ planId, isActive: true });
+  if (!plan) {
+    res.status(404);
+    throw new Error('Plan not found');
+  }
+
+  const stripePriceId = resolveStripePriceId(plan, interval);
+  if (!stripePriceId) {
+    res.status(500);
+    throw new Error(`Payment configuration error: missing Stripe price for plan ${plan.planId}`);
+  }
+
+  const existingSubscription = await Subscription.findOne({
+    userId: req.user._id,
+    status: { $in: ['active', 'trialing', 'past_due'] },
+    stripeSubscriptionId: { $ne: null }
+  });
+
+  if (!existingSubscription) {
+    res.status(400);
+    throw new Error('No active subscription to change');
+  }
+
+  const stripeSubscription = await stripe.subscriptions.retrieve(existingSubscription.stripeSubscriptionId, {
+    expand: ['items.data.price']
+  });
+
+  const currentItem = stripeSubscription.items?.data?.[0];
+  if (!currentItem?.id) {
+    res.status(400);
+    throw new Error('Unable to resolve current subscription item');
+  }
+
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const subscriptionPath = getSubscriptionPathByUserType(req.user.userType);
+  const returnUrl = `${frontendBaseUrl}${subscriptionPath}`;
+  const portalConfiguration = await ensurePlanChangePortalConfiguration({
+    requiredPriceId: stripePriceId,
+    returnUrl
+  });
+
+  if (currentItem.price?.id === stripePriceId) {
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: req.user.stripeCustomerId,
+      return_url: returnUrl
+    });
+
+    return res.json({
+      success: true,
+      url: portalSession.url,
+      message: 'You are already on this plan.'
+    });
+  }
+
+  if (stripeSubscription.cancel_at_period_end) {
+    await stripe.subscriptions.update(stripeSubscription.id, {
+      cancel_at_period_end: false
+    });
+  }
+
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: req.user.stripeCustomerId,
+      configuration: portalConfiguration.id,
+      return_url: returnUrl,
+      flow_data: {
+        type: 'subscription_update_confirm',
+        after_completion: {
+          type: 'redirect',
+          redirect: {
+            return_url: returnUrl
+          }
+        },
+        subscription_update_confirm: {
+          subscription: stripeSubscription.id,
+          items: [{
+            id: currentItem.id,
+            price: stripePriceId,
+            quantity: currentItem.quantity || 1
+          }]
+        }
+      }
+    });
+
+    return res.json({
+      success: true,
+      url: session.url
+    });
+  } catch (error) {
+    console.error('Stripe plan change session error:', error.message);
+    res.status(400);
+    throw new Error(`Unable to open Stripe plan change confirmation. ${error.message}`);
+  }
 });
 
 // @desc    Cancel subscription
@@ -575,9 +940,16 @@ const getPaymentMethods = asyncHandler(async (req, res) => {
 const addPaymentMethod = asyncHandler(async (req, res) => {
   const { paymentMethodId, setDefault = false } = req.body;
 
-  if (!paymentMethodId) {
+  const normalizedPaymentMethodId = String(paymentMethodId || '').trim();
+
+  if (!normalizedPaymentMethodId) {
     res.status(400);
     throw new Error('Payment method ID is required');
+  }
+
+  if (!/^pm_[A-Za-z0-9_]+$/.test(normalizedPaymentMethodId)) {
+    res.status(400);
+    throw new Error('Invalid payment method ID format');
   }
 
   let stripeCustomerId = req.user.stripeCustomerId;
@@ -592,15 +964,15 @@ const addPaymentMethod = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, { stripeCustomerId });
   }
 
-  await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
+  await stripe.paymentMethods.attach(normalizedPaymentMethodId, { customer: stripeCustomerId });
 
   if (setDefault) {
     await stripe.customers.update(stripeCustomerId, {
-      invoice_settings: { default_payment_method: paymentMethodId }
+      invoice_settings: { default_payment_method: normalizedPaymentMethodId }
     });
   }
 
-  const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+  const paymentMethod = await stripe.paymentMethods.retrieve(normalizedPaymentMethodId);
 
   res.json({
     success: true,
@@ -813,8 +1185,18 @@ const downloadInvoice = asyncHandler(async (req, res) => {
     throw new Error('Invoice PDF not available');
   }
 
-  // Redirect to Stripe-hosted PDF
-  res.redirect(invoice.invoice_pdf);
+  const pdfResponse = await fetch(invoice.invoice_pdf);
+  if (!pdfResponse.ok) {
+    res.status(502);
+    throw new Error('Failed to fetch invoice PDF from Stripe');
+  }
+
+  const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+  const safeFileBase = invoice.number || invoice.id || 'invoice';
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeFileBase}.pdf"`);
+  res.send(pdfBuffer);
 });
 
 // @desc    Get upcoming invoice
@@ -1517,6 +1899,9 @@ module.exports = {
   // User
   getCurrentSubscription,
   subscribe,
+  createCheckoutSession,
+  createBillingPortalSession,
+  createPlanChangeSession,
   cancelSubscription,
   changePlan,
   updatePaymentMethod,

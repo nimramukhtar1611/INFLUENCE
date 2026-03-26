@@ -18,6 +18,22 @@ const api = axios.create({
 // ==================== TOKEN MANAGEMENT ====================
 const getToken = () => localStorage.getItem('token');
 const getRefreshToken = () => localStorage.getItem('refreshToken');
+const getStoredUser = () => {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+const isAdminSession = () => {
+  const role = getStoredUser()?.userType || getStoredUser()?.role;
+  return role === 'admin' || role === 'super_admin' || window.location.pathname.startsWith('/admin');
+};
+const getLoginRoute = () => (isAdminSession() ? '/admin/login' : '/login');
+const redirectToLogin = () => {
+  window.location.href = getLoginRoute();
+};
 const setTokens = (token, refreshToken) => {
   if (token) localStorage.setItem('token', token);
   if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
@@ -114,6 +130,7 @@ api.interceptors.response.use(
     if (status === 401 && !originalRequest._retry) {
       // Don't retry on login or register endpoints
       const isAuthEndpoint =
+        originalRequest.url?.includes('/admin/login') ||
         originalRequest.url?.includes('/auth/login') ||
         originalRequest.url?.includes('/auth/register') ||
         originalRequest.url?.includes('/auth/admin/login');
@@ -122,12 +139,23 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      // Admin sessions are refreshed through a separate path; avoid user refresh flow.
+      if (isAdminSession()) {
+        clearTokens();
+        redirectToLogin();
+        return Promise.reject({
+          success: false,
+          error: 'Admin session expired. Please login again.',
+          code: 'ADMIN_SESSION_EXPIRED',
+        });
+      }
+
       // Check if refresh token exists
       const refreshToken = getRefreshToken();
       if (!refreshToken) {
         clearTokens();
         // Redirect to login after clearing
-        window.location.href = '/login';
+        redirectToLogin();
         return Promise.reject({
           success: false,
           error: 'Session expired. Please login again.',
@@ -180,7 +208,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         clearTokens();
-        window.location.href = '/login';
+        redirectToLogin();
         return Promise.reject({
           success: false,
           error: 'Session expired. Please login again.',
@@ -336,7 +364,7 @@ api.logout = () => {
   clearTokens();
   // Optional: call logout endpoint
   // api.post('/auth/logout').catch(() => {});
-  window.location.href = '/login';
+  redirectToLogin();
 };
 
 // ==================== EXPORTS ====================

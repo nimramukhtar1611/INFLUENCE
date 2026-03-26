@@ -3,12 +3,18 @@ const Deal = require('../models/Deal');
 const Campaign = require('../models/Campaign');
 const Creator = require('../models/Creator');
 const Payment = require('../models/Payment');
-const Conversation = require('../models/Conversation');
+const { Conversation } = require('../models/Conversation');
 const Message = require('../models/Message');
 const Notification = require('../models/Notification');
 const { catchAsync } = require('../utils/catchAsync');
 const { isValidObjectId, isValidBudget, isValidFutureDate } = require('../utils/validators');
+const { getBrandFinancials } = require('./paymentController');
+const PaymentCalculator = require('../services/paymentCalculator');
 const mongoose = require('mongoose');
+
+const buildConversationId = (dealId) => `deal_${dealId}_${Date.now()}`;
+
+const buildMessageId = (conversationId) => `msg_${conversationId}_${Date.now()}`;
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -131,28 +137,45 @@ exports.createDeal = catchAsync(async (req, res) => {
 
   await deal.save();
 
-  // Create conversation for deal
-  const conversation = new Conversation({
-    type: 'deal',
-    dealId: deal._id,
-    participants: [
-      { user_id: deal.brandId, user_type: 'brand' },
-      { user_id: deal.creatorId, user_type: 'creator' },
-    ],
-    created_by: { user_id: deal.brandId, user_type: 'brand' },
-  });
-  await conversation.save();
+  // Create conversation for deal (non-blocking - deal still succeeds if this fails)
+  try {
+    const conversation = new Conversation({
+      conversation_id: buildConversationId(deal._id),
+      type: 'deal',
+      deal_id: deal._id,
+      participants: [
+        { user_id: deal.brandId, user_type: 'brand' },
+        { user_id: deal.creatorId, user_type: 'creator' },
+      ],
+      participant_count: 2,
+      created_by: { user_id: deal.brandId, user_type: 'brand' },
+    });
+    await conversation.save();
 
-  // Add system message to conversation
-  await Message.create({
-    conversationId: conversation._id,
-    senderId: null,
-    content: `A new deal has been created. Budget: $${budget}, Deadline: ${new Date(deadline).toLocaleDateString()}`,
-    contentType: 'system',
-  });
+    // Add initial deal message in conversation
+    await Message.create({
+      message_id: buildMessageId(conversation.conversation_id),
+      conversation_id: conversation._id,
+      sender: {
+        user_id: deal.brandId,
+        user_type: 'brand',
+      },
+      message_type: 'deal_update',
+      content: `A new deal has been created. Budget: $${budget}, Deadline: ${new Date(deadline).toLocaleDateString()}`,
+      metadata: {
+        deal_update_data: {
+          dealId: deal._id,
+          event: 'deal_created',
+        },
+      },
+    });
 
-  deal.conversationId = conversation._id;
-  await deal.save();
+    deal.conversationId = conversation._id;
+    await deal.save();
+  } catch (convError) {
+    console.error('Failed to create conversation for deal:', convError.message);
+    // Deal is still valid, conversation can be created later
+  }
 
   // Update campaign invited creators
   await Campaign.findByIdAndUpdate(campaignId, {
@@ -278,8 +301,11 @@ exports.getDeal = catchAsync(async (req, res) => {
     return res.status(404).json({ success: false, error: 'Deal not found' });
   }
 
-  // Check authorization
-  if (!canUserAct(deal, req.user._id)) {
+  // Check authorization - extract _id from populated fields
+  const dealBrandId = deal.brandId?._id || deal.brandId;
+  const dealCreatorId = deal.creatorId?._id || deal.creatorId;
+  const userId = req.user._id.toString();
+  if (dealBrandId.toString() !== userId && dealCreatorId.toString() !== userId) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
@@ -350,8 +376,43 @@ exports.acceptDeal = catchAsync(async (req, res) => {
     return res.status(404).json({ success: false, error: 'Deal not found or cannot be accepted' });
   }
 
+  // Check if brand has enough balance for escrow
+  const financials = await getBrandFinancials(deal.brandId);
+  if (deal.budget > financials.available) {
+    return res.status(400).json({
+      success: false,
+      error: `Brand has insufficient balance to start this deal. Available: $${financials.available.toFixed(2)}, Required: $${deal.budget.toFixed(2)}.`
+    });
+  }
+
+  // Create escrow payment
+  const fees = await PaymentCalculator.calculateFees(deal.budget, 'brand');
+  const payment = new Payment({
+    transactionId: `ESC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    type: 'escrow',
+    status: 'in-escrow',
+    amount: deal.budget,
+    fee: fees.total,
+    netAmount: deal.budget - fees.total,
+    from: { userId: deal.brandId, accountType: 'brand' },
+    to: { userId: deal.creatorId, accountType: 'creator' },
+    dealId: deal._id,
+    campaignId: deal.campaignId,
+    description: `Escrow payment for deal ${deal._id}`,
+    metadata: { fees }
+  });
+
+  await payment.save();
+
   deal.status = 'accepted';
+  deal.paymentStatus = 'in-escrow';
+  deal.paymentId = payment._id;
+  
   addTimelineEvent(deal, 'Deal Accepted', 'Creator accepted the deal', req.user._id);
+  
+  // Create first timeline event for escrow
+  addTimelineEvent(deal, 'Payment Escrowed', `Funds ($${deal.budget}) secured in escrow`, req.user._id, { paymentId: payment._id });
+  
   await deal.save();
 
   // Notify brand
@@ -814,6 +875,24 @@ exports.sendMessage = catchAsync(async (req, res) => {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
+  if (!deal.conversationId) {
+    const conversation = new Conversation({
+      conversation_id: buildConversationId(deal._id),
+      type: 'deal',
+      deal_id: deal._id,
+      participants: [
+        { user_id: deal.brandId, user_type: 'brand' },
+        { user_id: deal.creatorId, user_type: 'creator' },
+      ],
+      participant_count: 2,
+      created_by: { user_id: deal.brandId, user_type: 'brand' },
+    });
+
+    await conversation.save();
+    deal.conversationId = conversation._id;
+    await deal.save();
+  }
+
   const message = new Message({
     dealId: deal._id,
     conversationId: deal.conversationId,
@@ -826,8 +905,15 @@ exports.sendMessage = catchAsync(async (req, res) => {
 
   if (deal.conversationId) {
     await Conversation.findByIdAndUpdate(deal.conversationId, {
-      lastMessage: message,
-      updatedAt: new Date(),
+      $set: {
+        'last_message.message_id': message._id,
+        'last_message.content': content,
+        'last_message.sender_id': req.user._id,
+        'last_message.created_at': new Date(),
+        'last_message.type': 'text',
+        updated_at: new Date(),
+      },
+      $inc: { message_count: 1 },
     });
   }
 
@@ -1081,12 +1167,14 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
 
   // Create conversation for deal
   const conversation = new Conversation({
+    conversation_id: buildConversationId(deal._id),
     type: 'deal',
-    dealId: deal._id,
+    deal_id: deal._id,
     participants: [
       { user_id: deal.brandId, user_type: 'brand' },
       { user_id: deal.creatorId, user_type: 'creator' },
     ],
+    participant_count: 2,
     created_by: { user_id: deal.brandId, user_type: 'brand' },
   });
   await conversation.save();
@@ -1094,9 +1182,9 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
   // System message
   await Message.create({
     conversationId: conversation._id,
-    senderId: null,
+    senderId: deal.brandId,
     content: `A new performance-based deal (${paymentType.toUpperCase()}) has been created. Base budget: $${budget}, Deadline: ${new Date(deadline).toLocaleDateString()}`,
-    contentType: 'system',
+    contentType: 'text',
   });
 
   deal.conversationId = conversation._id;

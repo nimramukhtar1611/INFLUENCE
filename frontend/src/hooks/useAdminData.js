@@ -26,6 +26,7 @@ export const useAdminData = () => {
     totalUsers: 0,
     totalBrands: 0,
     totalCreators: 0,
+    totalCampaigns: 0,
     totalRevenue: 0,
     totalFees: 0,
     activeCampaigns: 0,
@@ -86,11 +87,57 @@ export const useAdminData = () => {
 
       // Dashboard
       if (dashboardRes.status === 'fulfilled' && dashboardRes.value?.success) {
+        const dashboardData = dashboardRes.value;
         setDashboard(dashboardRes.value);
+
+        const recentDeals = dashboardData.recent?.deals || [];
+        const campaignsFromDeals = Array.from(
+          new Map(
+            recentDeals
+              .map((deal) => {
+                const campaignId = deal?.campaignId?._id || deal?.campaignId || deal?._id;
+                if (!campaignId) return null;
+                return [String(campaignId), {
+                  _id: campaignId,
+                  title: deal?.campaignId?.title || 'Campaign',
+                  brandId: { brandName: deal?.brandId?.brandName || 'Unknown brand' },
+                  status: deal?.status === 'completed' ? 'completed' : 'active',
+                  budget: deal?.budget || 0,
+                  selectedCreators: deal?.creatorId ? [deal.creatorId] : [],
+                  metrics: { engagement: 0, impressions: 0 },
+                  createdAt: deal?.createdAt,
+                }];
+              })
+              .filter(Boolean)
+          ).values()
+        );
+
+        setCampaigns(campaignsFromDeals);
+        setDeals(recentDeals);
+        setPayments(dashboardData.recent?.payments || []);
+        setModerationQueue(
+          (dashboardData.recent?.users || [])
+            .filter((u) => u?.isVerified === false)
+            .map((u) => ({
+              id: u._id,
+              type: 'user_verification',
+              status: 'pending',
+              title: u.fullName || u.email,
+              createdAt: u.createdAt,
+            }))
+        );
+        setFees((prev) => ({
+          commissionRate: prev?.commissionRate || 10,
+          creatorPayoutMin: prev?.creatorPayoutMin || 50,
+          withdrawalFee: prev?.withdrawalFee || 0,
+          totalFees: dashboardData.stats?.revenue?.fees || 0,
+        }));
+
         setStats({
           totalUsers: dashboardRes.value.stats?.users?.total || 0,
           totalBrands: dashboardRes.value.stats?.users?.brands || 0,
           totalCreators: dashboardRes.value.stats?.users?.creators || 0,
+          totalCampaigns: dashboardRes.value.stats?.campaigns?.total || 0,
           totalRevenue: dashboardRes.value.stats?.revenue?.total || 0,
           totalFees: dashboardRes.value.stats?.revenue?.fees || 0,
           activeCampaigns: dashboardRes.value.stats?.campaigns?.active || 0,
@@ -128,7 +175,11 @@ export const useAdminData = () => {
       }
 
       // Campaigns
-      if (campaignsRes.status === 'fulfilled' && campaignsRes.value?.success) {
+      if (
+        campaignsRes.status === 'fulfilled' &&
+        campaignsRes.value?.success &&
+        (campaignsRes.value.campaigns || []).length > 0
+      ) {
         setCampaigns(campaignsRes.value.campaigns || []);
         setPagination(prev => ({
           ...prev,
@@ -137,7 +188,11 @@ export const useAdminData = () => {
       }
 
       // Deals
-      if (dealsRes.status === 'fulfilled' && dealsRes.value?.success) {
+      if (
+        dealsRes.status === 'fulfilled' &&
+        dealsRes.value?.success &&
+        (dealsRes.value.deals || []).length > 0
+      ) {
         setDeals(dealsRes.value.deals || []);
         setPagination(prev => ({
           ...prev,
@@ -146,7 +201,11 @@ export const useAdminData = () => {
       }
 
       // Payments
-      if (paymentsRes.status === 'fulfilled' && paymentsRes.value?.success) {
+      if (
+        paymentsRes.status === 'fulfilled' &&
+        paymentsRes.value?.success &&
+        (paymentsRes.value.payments || []).length > 0
+      ) {
         setPayments(paymentsRes.value.payments || []);
         setPagination(prev => ({
           ...prev,
@@ -164,7 +223,11 @@ export const useAdminData = () => {
       }
 
       // Moderation Queue
-      if (moderationRes.status === 'fulfilled' && moderationRes.value?.success) {
+      if (
+        moderationRes.status === 'fulfilled' &&
+        moderationRes.value?.success &&
+        (moderationRes.value.items || []).length > 0
+      ) {
         setModerationQueue(moderationRes.value.items || []);
       }
 
@@ -174,7 +237,12 @@ export const useAdminData = () => {
       }
 
       // Fees
-      if (feesRes.status === 'fulfilled' && feesRes.value?.success) {
+      if (
+        feesRes.status === 'fulfilled' &&
+        feesRes.value?.success &&
+        feesRes.value?.fees &&
+        Number(feesRes.value.fees.totalFees || 0) > 0
+      ) {
         setFees(feesRes.value.fees);
       }
 
@@ -428,6 +496,20 @@ export const useAdminData = () => {
     }
   }, [fetchAllData]);
 
+  const approveWithdrawal = useCallback(async (withdrawalId, notes) => {
+    try {
+      const response = await adminService.approveWithdrawal(withdrawalId, notes);
+      if (response.success) {
+        toast.success('Withdrawal approved successfully');
+        await fetchAllData();
+        return true;
+      }
+    } catch (error) {
+      toast.error(error.error || 'Failed to approve withdrawal');
+      return false;
+    }
+  }, [fetchAllData]);
+
   const updateSettings = useCallback(async (settingsData) => {
     try {
       const response = await adminService.updateSettings(settingsData);
@@ -452,6 +534,50 @@ export const useAdminData = () => {
       }
     } catch (error) {
       toast.error(error.error || 'Failed to update fees');
+      return false;
+    }
+  }, []);
+
+  const get2FAStatus = useCallback(async () => {
+    try {
+      return await adminService.get2FAStatus();
+    } catch (error) {
+      toast.error('Failed to get 2FA status');
+      return null;
+    }
+  }, []);
+
+  const generate2FA = useCallback(async () => {
+    try {
+      return await adminService.generate2FA();
+    } catch (error) {
+      toast.error('Failed to generate 2FA secret');
+      return null;
+    }
+  }, []);
+
+  const verify2FA = useCallback(async (token) => {
+    try {
+      const response = await adminService.verify2FA(token);
+      if (response.success) {
+        toast.success('2FA enabled successfully');
+        return response;
+      }
+    } catch (error) {
+      toast.error(error.error || 'Failed to verify 2FA code');
+      return null;
+    }
+  }, []);
+
+  const disable2FA = useCallback(async (token) => {
+    try {
+      const response = await adminService.disable2FA(token);
+      if (response.success) {
+        toast.success('2FA disabled successfully');
+        return true;
+      }
+    } catch (error) {
+      toast.error(error.error || 'Failed to disable 2FA');
       return false;
     }
   }, []);
@@ -505,8 +631,13 @@ export const useAdminData = () => {
     rejectItem,
     resolveDispute,
     refundPayment,
+    approveWithdrawal,
     updateSettings,
     updateFees,
+    get2FAStatus,
+    generate2FA,
+    verify2FA,
+    disable2FA,
     clearCache
   };
-};
+};

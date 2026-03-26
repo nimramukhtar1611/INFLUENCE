@@ -4,8 +4,158 @@ const Payment = require('../models/Payment');
 const User = require('../models/User');
 const Deal = require('../models/Deal');
 const Notification = require('../models/Notification');
+const Subscription = require('../models/Subscription');
+const Plan = require('../models/Plan');
 
 class StripeService {
+  async findPlanByStripePriceId(priceId) {
+    if (!priceId) return null;
+
+    return Plan.findOne({
+      $or: [
+        { stripePriceId: priceId },
+        { 'stripePriceId.month': priceId },
+        { 'stripePriceId.year': priceId }
+      ]
+    });
+  }
+
+  async resolveUserFromStripeContext(stripeCustomerId, metadata = {}) {
+    if (metadata?.userId) {
+      const user = await User.findById(metadata.userId);
+      if (user) return user;
+    }
+
+    if (!stripeCustomerId) return null;
+    return User.findOne({ stripeCustomerId });
+  }
+
+  async upsertSubscriptionFromStripe(stripeSubscription) {
+    const metadata = stripeSubscription?.metadata || {};
+    const user = await this.resolveUserFromStripeContext(stripeSubscription?.customer, metadata);
+
+    if (!user) {
+      console.warn('⚠️ Unable to resolve user for Stripe subscription:', stripeSubscription?.id);
+      return null;
+    }
+
+    const priceId = stripeSubscription?.items?.data?.[0]?.price?.id;
+    const planByPrice = await this.findPlanByStripePriceId(priceId);
+    const existingLocalSubscription = await Subscription.findOne({ userId: user._id }).select('planId planDetails.interval');
+    const stripeInterval = stripeSubscription?.items?.data?.[0]?.price?.recurring?.interval;
+
+    // Prefer Stripe price mapping over metadata because metadata can be stale after portal updates.
+    const planId = planByPrice?.planId || metadata.planId || existingLocalSubscription?.planId || 'free';
+    const interval = stripeInterval || planByPrice?.interval || metadata.interval || existingLocalSubscription?.planDetails?.interval || 'month';
+
+    const plan = planByPrice || await Plan.findOne({ planId });
+    if (!plan) {
+      console.warn('⚠️ Unable to resolve plan for Stripe subscription:', stripeSubscription?.id);
+      return null;
+    }
+
+    const currentPeriodStartSeconds = stripeSubscription.current_period_start || stripeSubscription.items?.data?.[0]?.current_period_start;
+    const currentPeriodEndSeconds = stripeSubscription.current_period_end || stripeSubscription.items?.data?.[0]?.current_period_end;
+    const billingStart = currentPeriodStartSeconds ? new Date(currentPeriodStartSeconds * 1000) : new Date();
+    const billingEnd = currentPeriodEndSeconds ? new Date(currentPeriodEndSeconds * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const normalizedFeatures = Array.isArray(plan.features)
+      ? plan.features.map((feature) => (typeof feature === 'string' ? feature : feature?.name)).filter(Boolean)
+      : [];
+
+    const subscriptionDoc = await Subscription.findOneAndUpdate(
+      { userId: user._id },
+      {
+        userId: user._id,
+        planId,
+        status: stripeSubscription.status || 'active',
+        stripeCustomerId: stripeSubscription.customer,
+        stripeSubscriptionId: stripeSubscription.id,
+        stripePriceId: priceId,
+        planDetails: {
+          name: plan.name,
+          price: plan.price,
+          currency: plan.currency,
+          interval,
+          intervalCount: plan.intervalCount,
+          features: normalizedFeatures,
+          limits: plan.limits
+        },
+        billingPeriod: {
+          start: billingStart,
+          end: billingEnd
+        },
+        cancelAtPeriodEnd: Boolean(stripeSubscription.cancel_at_period_end),
+        canceledAt: stripeSubscription.canceled_at ? new Date(stripeSubscription.canceled_at * 1000) : undefined
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    await User.findByIdAndUpdate(user._id, {
+      stripeCustomerId: stripeSubscription.customer,
+      'subscription.status': stripeSubscription.status,
+      'subscription.currentPeriodStart': billingStart,
+      'subscription.currentPeriodEnd': billingEnd,
+      'subscription.cancelAtPeriodEnd': Boolean(stripeSubscription.cancel_at_period_end)
+    });
+
+    // Cancel any OTHER active Stripe subscriptions for this customer to prevent duplicates
+    await this.cancelDuplicateSubscriptions(stripeSubscription.customer, stripeSubscription.id);
+
+    return subscriptionDoc;
+  }
+
+  /**
+   * Cancel all active Stripe subscriptions for a customer EXCEPT the one with keepSubscriptionId.
+   * This prevents duplicate active subscriptions from appearing in the billing portal.
+   */
+  async cancelDuplicateSubscriptions(customerId, keepSubscriptionId) {
+    if (!customerId || !keepSubscriptionId) return;
+
+    try {
+      const allSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 100
+      });
+
+      // Also check for trialing or past_due duplicates
+      const trialingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'trialing',
+        limit: 100
+      });
+
+      const pastDueSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'past_due',
+        limit: 100
+      });
+
+      const allSubscriptions = [
+        ...allSubs.data,
+        ...trialingSubs.data,
+        ...pastDueSubs.data
+      ];
+
+      for (const sub of allSubscriptions) {
+        if (sub.id !== keepSubscriptionId) {
+          try {
+            await stripe.subscriptions.cancel(sub.id);
+            console.log(`🗑️ Cancelled duplicate Stripe subscription: ${sub.id} (keeping ${keepSubscriptionId})`);
+          } catch (cancelErr) {
+            console.warn(`⚠️ Failed to cancel duplicate subscription ${sub.id}:`, cancelErr.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error checking for duplicate subscriptions:', error.message);
+    }
+  }
 
   // ==================== CUSTOMER MANAGEMENT ====================
   async createCustomer(email, name, metadata = {}) {
@@ -236,6 +386,7 @@ class StripeService {
     console.log(`⚡ Processing webhook: ${event.type}`);
 
     const handlers = {
+      'checkout.session.completed':       () => this.handleCheckoutSessionCompleted(event.data.object),
       'payment_intent.succeeded':        () => this.handlePaymentIntentSucceeded(event.data.object),
       'payment_intent.payment_failed':   () => this.handlePaymentIntentFailed(event.data.object),
       'charge.refunded':                 () => this.handleChargeRefunded(event.data.object),
@@ -251,6 +402,49 @@ class StripeService {
       await handler();
     } else {
       console.log(`ℹ️ Unhandled webhook event: ${event.type}`);
+    }
+  }
+
+  async handleCheckoutSessionCompleted(session) {
+    try {
+      if (session.mode === 'subscription' && session.subscription) {
+        const stripeSubscription = await stripe.subscriptions.retrieve(session.subscription, {
+          expand: ['items.data.price']
+        });
+        await this.upsertSubscriptionFromStripe(stripeSubscription);
+      }
+
+      if (session.mode === 'payment' && session.metadata?.purpose === 'wallet_topup') {
+        const user = await this.resolveUserFromStripeContext(session.customer, session.metadata);
+        if (user) {
+          const existing = await Payment.findOne({ 'metadata.checkoutSessionId': session.id });
+          if (!existing) {
+            const amount = (session.amount_total || 0) / 100;
+            const transactionId = `DEP-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+            await Payment.create({
+              transactionId,
+              type: 'payment',
+              status: 'completed',
+              amount,
+              currency: (session.currency || 'usd').toUpperCase(),
+              fee: 0,
+              netAmount: amount,
+              from: { userId: user._id, accountType: user.userType || 'brand' },
+              to: { userId: user._id, accountType: user.userType || 'brand' },
+              description: 'Stripe wallet top-up',
+              metadata: {
+                kind: 'deposit',
+                checkoutSessionId: session.id,
+                paymentIntentId: session.payment_intent
+              }
+            });
+          }
+        }
+      }
+
+      console.log(`✅ Checkout session completed: ${session.id}`);
+    } catch (error) {
+      console.error('Error handling checkout session completed:', error);
     }
   }
 
@@ -371,14 +565,7 @@ class StripeService {
 
   async handleSubscriptionCreated(subscription) {
     try {
-      const { userId } = subscription.metadata;
-      if (!userId) return console.warn('⚠️ No userId in subscription metadata');
-
-      await User.findByIdAndUpdate(userId, {
-        'subscription.status': subscription.status,
-        'subscription.currentPeriodStart': new Date(subscription.current_period_start * 1000),
-        'subscription.currentPeriodEnd': new Date(subscription.current_period_end * 1000)
-      });
+      await this.upsertSubscriptionFromStripe(subscription);
 
       console.log(`📅 Subscription created: ${subscription.id}`);
     } catch (error) {
@@ -388,15 +575,7 @@ class StripeService {
 
   async handleSubscriptionUpdated(subscription) {
     try {
-      const { userId } = subscription.metadata;
-      if (!userId) return console.warn('⚠️ No userId in subscription metadata');
-
-      await User.findByIdAndUpdate(userId, {
-        'subscription.status': subscription.status,
-        'subscription.currentPeriodStart': new Date(subscription.current_period_start * 1000),
-        'subscription.currentPeriodEnd': new Date(subscription.current_period_end * 1000),
-        'subscription.cancelAtPeriodEnd': subscription.cancel_at_period_end
-      });
+      await this.upsertSubscriptionFromStripe(subscription);
 
       console.log(`📅 Subscription updated: ${subscription.id}`);
     } catch (error) {
@@ -406,10 +585,19 @@ class StripeService {
 
   async handleSubscriptionDeleted(subscription) {
     try {
-      const { userId } = subscription.metadata;
-      if (!userId) return console.warn('⚠️ No userId in subscription metadata');
+      const user = await this.resolveUserFromStripeContext(subscription?.customer, subscription?.metadata || {});
+      if (!user) return;
 
-      await User.findByIdAndUpdate(userId, {
+      await Subscription.findOneAndUpdate(
+        { userId: user._id },
+        {
+          status: 'canceled',
+          cancelAtPeriodEnd: false,
+          canceledAt: new Date()
+        }
+      );
+
+      await User.findByIdAndUpdate(user._id, {
         'subscription.status': 'canceled',
         'subscription.canceledAt': new Date()
       });

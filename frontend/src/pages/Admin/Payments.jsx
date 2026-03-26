@@ -27,7 +27,7 @@ import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
 const AdminPayments = () => {
-  const { payments, loading, refreshData, stats } = useAdminData();
+  const { payments, loading, refreshData, stats, approveWithdrawal } = useAdminData();
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -139,6 +139,22 @@ const AdminPayments = () => {
     a.download = `payments-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  // ==================== HANDLE APPROVE WITHDRAWAL ====================
+  const handleApproveWithdrawal = async (payment) => {
+    if (!window.confirm(`Are you sure you want to approve this withdrawal of ${formatCurrency(payment.amount)} for ${payment.from?.fullName || 'the creator'}?`)) {
+      return;
+    }
+
+    try {
+      const success = await approveWithdrawal(payment._id);
+      if (success) {
+        refreshData();
+      }
+    } catch (error) {
+      console.error('Approval failed:', error);
+    }
   };
 
   // ==================== STATUS HELPERS ====================
@@ -469,6 +485,15 @@ const AdminPayments = () => {
                             title="Refund"
                           >
                             <RefreshCw className="w-4 h-4" />
+                          </button>
+                        )}
+                        {payment.status === 'pending' && payment.type === 'withdrawal' && (
+                          <button
+                            onClick={() => handleApproveWithdrawal(payment)}
+                            className="text-green-600 hover:text-green-700"
+                            title="Approve Withdrawal"
+                          >
+                            <CheckCircle className="w-4 h-4" />
                           </button>
                         )}
                         <button className="text-gray-400 hover:text-gray-600">

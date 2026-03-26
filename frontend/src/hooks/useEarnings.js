@@ -12,7 +12,6 @@ export const useEarnings = () => {
   const [pendingBalance, setPendingBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
-  const [paymentMethods, setPaymentMethods] = useState([]);
   const [earningsHistory, setEarningsHistory] = useState([]);
   const [summary, setSummary] = useState({
     total: 0,
@@ -62,17 +61,6 @@ export const useEarnings = () => {
     }
   }, []);
 
-  const fetchPaymentMethods = useCallback(async () => {
-    try {
-      const res = await paymentService.getPaymentMethods();
-      if (res?.success) {
-        setPaymentMethods(res.paymentMethods || []);
-      }
-    } catch (error) {
-      console.error('Payment methods fetch error:', error);
-    }
-  }, []);
-
   const fetchEarningsHistory = useCallback(async (period = '30d') => {
     try {
       const res = await creatorService.getEarningsHistory(period);
@@ -95,9 +83,9 @@ export const useEarnings = () => {
     }
   }, []);
 
-  const requestWithdrawal = useCallback(async (amount, methodId) => {
+  const requestWithdrawal = useCallback(async (amount) => {
     try {
-      const res = await paymentService.requestWithdrawal(amount, methodId);
+      const res = await paymentService.requestWithdrawal(amount);
       if (res?.success) {
         toast.success('Withdrawal requested successfully');
         await fetchBalance();
@@ -113,54 +101,6 @@ export const useEarnings = () => {
     }
   }, [fetchBalance, fetchWithdrawals]);
 
-  const addPaymentMethod = useCallback(async (methodData) => {
-    try {
-      const res = await paymentService.addPaymentMethod(methodData);
-      if (res?.success) {
-        toast.success('Payment method added');
-        await fetchPaymentMethods();
-      } else {
-        toast.error(res?.error || 'Failed to add payment method');
-      }
-      return res;
-    } catch (error) {
-      toast.error('Failed to add payment method');
-      return { success: false, error: error.message };
-    }
-  }, [fetchPaymentMethods]);
-
-  const setDefaultMethod = useCallback(async (methodId) => {
-    try {
-      const res = await paymentService.setDefaultMethod(methodId);
-      if (res?.success) {
-        toast.success('Default method updated');
-        await fetchPaymentMethods();
-      } else {
-        toast.error(res?.error || 'Failed to update default method');
-      }
-      return res;
-    } catch (error) {
-      toast.error('Failed to update default method');
-      return { success: false, error: error.message };
-    }
-  }, [fetchPaymentMethods]);
-
-  const deletePaymentMethod = useCallback(async (methodId) => {
-    try {
-      const res = await paymentService.deletePaymentMethod(methodId);
-      if (res?.success) {
-        toast.success('Payment method removed');
-        await fetchPaymentMethods();
-      } else {
-        toast.error(res?.error || 'Failed to remove payment method');
-      }
-      return res;
-    } catch (error) {
-      toast.error('Failed to remove payment method');
-      return { success: false, error: error.message };
-    }
-  }, [fetchPaymentMethods]);
-
   const getGrowthPercentage = useCallback(() => {
     if (summary.total === 0) return '0%';
     return ((summary.thisMonth - summary.total) / summary.total * 100).toFixed(1) + '%';
@@ -174,7 +114,6 @@ export const useEarnings = () => {
         fetchBalance(),
         fetchTransactions(1, 10),
         fetchWithdrawals(1, 10),
-        fetchPaymentMethods(),
         fetchEarningsHistory('30d'),
         fetchSummary()
       ]);
@@ -191,19 +130,14 @@ export const useEarnings = () => {
     pendingBalance,
     transactions,
     withdrawals,
-    paymentMethods,
     earningsHistory,
     summary,
     pagination,
     fetchBalance,
     fetchTransactions,
     fetchWithdrawals,
-    fetchPaymentMethods,
     fetchEarningsHistory,
     requestWithdrawal,
-    addPaymentMethod,
-    setDefaultMethod,
-    deletePaymentMethod,
     getGrowthPercentage
   };
 };

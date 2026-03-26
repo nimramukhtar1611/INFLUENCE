@@ -61,8 +61,17 @@ export const SubscriptionProvider = ({ children }) => {
 
     const response = await subscriptionService.getPaymentMethods();
     if (response.success) {
-      setPaymentMethods(response.paymentMethods);
-      return response.paymentMethods;
+      let methods = response.paymentMethods || [];
+
+      if (methods.length === 0) {
+        const billingResponse = await subscriptionService.getBillingMethods();
+        if (billingResponse.success) {
+          methods = billingResponse.paymentMethods || [];
+        }
+      }
+
+      setPaymentMethods(methods);
+      return methods;
     }
 
     setError(response.error || 'Failed to load payment methods');
@@ -151,6 +160,48 @@ export const SubscriptionProvider = ({ children }) => {
     await refreshAll();
     return response;
   }, [refreshAll]);
+
+  const startCheckout = useCallback(async ({ planId, interval = 'month' }) => {
+    setBusy(true);
+    const response = await subscriptionService.createCheckoutSession({ planId, interval });
+    setBusy(false);
+
+    if (!response.success || !response.url) {
+      toast.error(response.error || 'Failed to start Stripe checkout');
+      return response;
+    }
+
+    window.location.assign(response.url);
+    return response;
+  }, []);
+
+  const openBillingPortal = useCallback(async () => {
+    setBusy(true);
+    const response = await subscriptionService.createBillingPortalSession();
+    setBusy(false);
+
+    if (!response.success || !response.url) {
+      toast.error(response.error || 'Failed to open billing portal');
+      return response;
+    }
+
+    window.location.assign(response.url);
+    return response;
+  }, []);
+
+  const startPlanChange = useCallback(async ({ planId, interval = 'month' }) => {
+    setBusy(true);
+    const response = await subscriptionService.createPlanChangeSession({ planId, interval });
+    setBusy(false);
+
+    if (!response.success || !response.url) {
+      toast.error(response.error || 'Failed to start plan update');
+      return response;
+    }
+
+    window.location.assign(response.url);
+    return response;
+  }, []);
 
   const changePlan = useCallback(async ({ newPlanId, interval = 'month' }) => {
     setBusy(true);
@@ -299,6 +350,9 @@ export const SubscriptionProvider = ({ children }) => {
     loadLimits,
     refreshAll,
     subscribe,
+    startCheckout,
+    openBillingPortal,
+    startPlanChange,
     changePlan,
     previewPlanChange,
     cancelSubscription,
@@ -330,6 +384,9 @@ export const SubscriptionProvider = ({ children }) => {
     loadLimits,
     refreshAll,
     subscribe,
+    startCheckout,
+    openBillingPortal,
+    startPlanChange,
     changePlan,
     previewPlanChange,
     cancelSubscription,

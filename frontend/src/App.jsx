@@ -24,6 +24,7 @@ import Signup from './pages/Auth/Signup';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 import VerifyEmail from './pages/Auth/VerifyEmail';
+import Verify2FA from './pages/Auth/Verify2FA';
 import NotFound from './pages/NotFound';
 
 // Brand Pages
@@ -62,6 +63,7 @@ import AdminUsers from './pages/Admin/Users';
 import AdminBrands from './pages/Admin/Brands';
 import AdminCreators from './pages/Admin/Creators';
 import AdminCampaigns from './pages/Admin/Campaigns';
+import AdminDeals from './pages/Admin/Deals';
 import AdminPayments from './pages/Admin/Payments';
 import AdminReports from './pages/Admin/Reports';
 import AdminSettings from './pages/Admin/Settings';
@@ -125,6 +127,7 @@ function App() {
                           <Route path="/forgot-password" element={<ForgotPassword />} />
                           <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/verify-email" element={<VerifyEmail />} />
+                          <Route path="/2fa-verify" element={<Verify2FA />} />
                           <Route path="/pricing" element={<Pricing />} />
                           <Route path="/terms" element={<Terms />} />
                           <Route path="/privacy" element={<Privacy />} />
@@ -195,6 +198,7 @@ function App() {
   <Route path="brands" element={<AdminBrands />} />
   <Route path="creators" element={<AdminCreators />} />
   <Route path="campaigns" element={<AdminCampaigns />} />
+  <Route path="deals" element={<AdminDeals />} />
   <Route path="payments" element={<AdminPayments />} />
   <Route path="reports" element={<AdminReports />} />
   <Route path="settings" element={<AdminSettings />} />

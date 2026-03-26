@@ -3,14 +3,29 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const crypto = require('crypto');
 const User = require('../models/User');
+const Admin = require('../models/Admin');
 const NotificationService = require('./notificationService');
 
 class TwoFactorService {
   
   /**
+   * Helper to find user or admin by ID
+   * @private
+   */
+  async _findRecord(userId, select = '') {
+    // Try User first
+    let record = await User.findById(userId).select(select);
+    if (record) return record;
+    
+    // Try Admin second
+    record = await Admin.findById(userId).select(select);
+    return record;
+  }
+
+  /**
    * Generate 2FA secret for user
-   * @param {string} userId - User ID
-   * @param {string} email - User email
+   * @param {string} userId - User/Admin ID
+   * @param {string} email - User/Admin email
    * @returns {Promise<Object>} Secret and QR code
    */
   async generateSecret(userId, email) {
@@ -25,11 +40,22 @@ class TwoFactorService {
       // Generate QR code
       const qrCode = await QRCode.toDataURL(secret.otpauth_url);
 
-      // Store temporary secret (will be verified before enabling)
-      await User.findByIdAndUpdate(userId, {
+      // Store temporary secret
+      const update = {
         twoFactorTempSecret: secret.base32,
         twoFactorTempSecretExpires: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-      });
+      };
+
+      // Try User
+      let success = await User.findByIdAndUpdate(userId, update);
+      if (!success) {
+        // Try Admin
+        success = await Admin.findByIdAndUpdate(userId, update);
+      }
+
+      if (!success) {
+        return { success: false, error: 'User or Admin not found' };
+      }
 
       return {
         success: true,
@@ -48,15 +74,15 @@ class TwoFactorService {
 
   /**
    * Verify and enable 2FA
-   * @param {string} userId - User ID
+   * @param {string} userId - User/Admin ID
    * @param {string} token - TOTP token
    * @returns {Promise<Object>}
    */
   async verifyAndEnable(userId, token) {
     try {
-      const user = await User.findById(userId).select('+twoFactorTempSecret +twoFactorTempSecretExpires');
+      const record = await this._findRecord(userId, '+twoFactorTempSecret +twoFactorTempSecretExpires');
 
-      if (!user || !user.twoFactorTempSecret) {
+      if (!record || !record.twoFactorTempSecret) {
         return {
           success: false,
           error: 'No pending 2FA setup found'
@@ -64,7 +90,7 @@ class TwoFactorService {
       }
 
       // Check if temporary secret expired
-      if (user.twoFactorTempSecretExpires < new Date()) {
+      if (record.twoFactorTempSecretExpires < new Date()) {
         return {
           success: false,
           error: '2FA setup expired. Please try again.'
@@ -73,10 +99,10 @@ class TwoFactorService {
 
       // Verify token
       const verified = speakeasy.totp.verify({
-        secret: user.twoFactorTempSecret,
+        secret: record.twoFactorTempSecret,
         encoding: 'base32',
         token,
-        window: 2 // Allow 2 steps before/after for time drift
+        window: 2
       });
 
       if (!verified) {
@@ -87,27 +113,29 @@ class TwoFactorService {
       }
 
       // Enable 2FA
-      user.twoFactorEnabled = true;
-      user.twoFactorSecret = user.twoFactorTempSecret;
-      user.twoFactorTempSecret = undefined;
-      user.twoFactorTempSecretExpires = undefined;
-      user.twoFactorBackupCodes = this.generateBackupCodes();
-      await user.save();
+      record.twoFactorEnabled = true;
+      record.twoFactorSecret = record.twoFactorTempSecret;
+      record.twoFactorTempSecret = undefined;
+      record.twoFactorTempSecretExpires = undefined;
+      record.twoFactorBackupCodes = this.generateBackupCodes();
+      await record.save();
 
-      // Send notification
-      await NotificationService.createNotification(
-        userId,
-        'security',
-        '2FA Enabled',
-        'Two-factor authentication has been enabled on your account.',
-        { type: 'security_update' },
-        { priority: 'high' }
-      );
+      // Send notification (Only for Users as Admin might not have notification integration yet)
+      if (record.constructor.modelName === 'User') {
+        await NotificationService.createNotification(
+          userId,
+          'security',
+          '2FA Enabled',
+          'Two-factor authentication has been enabled on your account.',
+          { type: 'security_update' },
+          { priority: 'high' }
+        );
+      }
 
       return {
         success: true,
         message: '2FA enabled successfully',
-        backupCodes: user.twoFactorBackupCodes
+        backupCodes: record.twoFactorBackupCodes
       };
     } catch (error) {
       console.error('2FA verification error:', error);
@@ -124,26 +152,11 @@ class TwoFactorService {
    * @param {string} token - TOTP token or backup code
    * @returns {Promise<Object>}
    */
-  async regenerateBackupCodes(userId, token) {
-  const user = await User.findById(userId).select('+twoFactorSecret +twoFactorBackupCodes');
-  if (!user) return { success: false, error: 'User not found' };
-  const verified = speakeasy.totp.verify({
-    secret: user.twoFactorSecret,
-    encoding: 'base32',
-    token,
-    window: 2
-  });
-  if (!verified) return { success: false, error: 'Invalid verification code' };
-  const newCodes = this.generateBackupCodes();
-  user.twoFactorBackupCodes = newCodes;
-  await user.save();
-  return { success: true, backupCodes: newCodes };
-}
   async verifyToken(userId, token) {
     try {
-      const user = await User.findById(userId).select('+twoFactorSecret +twoFactorBackupCodes');
+      const record = await this._findRecord(userId, '+twoFactorSecret +twoFactorBackupCodes');
 
-      if (!user || !user.twoFactorEnabled) {
+      if (!record || !record.twoFactorEnabled) {
         return {
           success: false,
           error: '2FA not enabled for this user'
@@ -151,31 +164,32 @@ class TwoFactorService {
       }
 
       // Check if it's a backup code
-      if (user.twoFactorBackupCodes && user.twoFactorBackupCodes.includes(token)) {
+      if (record.twoFactorBackupCodes && record.twoFactorBackupCodes.includes(token)) {
         // Remove used backup code
-        user.twoFactorBackupCodes = user.twoFactorBackupCodes.filter(code => code !== token);
-        await user.save();
+        record.twoFactorBackupCodes = record.twoFactorBackupCodes.filter(code => code !== token);
+        await record.save();
 
-        // Send alert about backup code usage
-        await NotificationService.createNotification(
-          userId,
-          'security',
-          'Backup Code Used',
-          'A backup code was used to log into your account.',
-          { type: 'security_alert' },
-          { priority: 'high' }
-        );
+        if (record.constructor.modelName === 'User') {
+          await NotificationService.createNotification(
+            userId,
+            'security',
+            'Backup Code Used',
+            'A backup code was used to log into your account.',
+            { type: 'security_alert' },
+            { priority: 'high' }
+          );
+        }
 
         return {
           success: true,
           usedBackupCode: true,
-          remainingBackupCodes: user.twoFactorBackupCodes.length
+          remainingBackupCodes: record.twoFactorBackupCodes.length
         };
       }
 
       // Verify TOTP
       const verified = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
+        secret: record.twoFactorSecret,
         encoding: 'base32',
         token,
         window: 2
@@ -202,13 +216,9 @@ class TwoFactorService {
 
   /**
    * Disable 2FA for user
-   * @param {string} userId - User ID
-   * @param {string} token - Current TOTP token for verification
-   * @returns {Promise<Object>}
    */
   async disable(userId, token) {
     try {
-      // First verify the token
       const verification = await this.verifyToken(userId, token);
       
       if (!verification.success) {
@@ -218,22 +228,32 @@ class TwoFactorService {
         };
       }
 
-      // Disable 2FA
-      await User.findByIdAndUpdate(userId, {
+      // Try User update
+      let updated = await User.findByIdAndUpdate(userId, {
         twoFactorEnabled: false,
         twoFactorSecret: undefined,
         twoFactorBackupCodes: undefined
       });
 
-      // Send notification
-      await NotificationService.createNotification(
-        userId,
-        'security',
-        '2FA Disabled',
-        'Two-factor authentication has been disabled on your account.',
-        { type: 'security_update' },
-        { priority: 'high' }
-      );
+      if (!updated) {
+        // Try Admin update
+        updated = await Admin.findByIdAndUpdate(userId, {
+          twoFactorEnabled: false,
+          twoFactorSecret: undefined,
+          twoFactorBackupCodes: undefined
+        });
+      }
+
+      if (updated && updated.constructor.modelName === 'User') {
+        await NotificationService.createNotification(
+          userId,
+          'security',
+          '2FA Disabled',
+          'Two-factor authentication has been disabled on your account.',
+          { type: 'security_update' },
+          { priority: 'high' }
+        );
+      }
 
       return {
         success: true,
@@ -249,14 +269,10 @@ class TwoFactorService {
   }
 
   /**
-   * Generate new backup codes
-   * @param {string} userId - User ID
-   * @param {string} token - Current TOTP token for verification
-   * @returns {Promise<Object>}
+   * Regenerate backup codes
    */
   async regenerateBackupCodes(userId, token) {
     try {
-      // Verify token first
       const verification = await this.verifyToken(userId, token);
       
       if (!verification.success) {
@@ -268,9 +284,15 @@ class TwoFactorService {
 
       const newBackupCodes = this.generateBackupCodes();
 
-      await User.findByIdAndUpdate(userId, {
+      let updated = await User.findByIdAndUpdate(userId, {
         twoFactorBackupCodes: newBackupCodes
       });
+
+      if (!updated) {
+        updated = await Admin.findByIdAndUpdate(userId, {
+          twoFactorBackupCodes: newBackupCodes
+        });
+      }
 
       return {
         success: true,
@@ -300,19 +322,19 @@ class TwoFactorService {
   }
 
   /**
-   * Get 2FA status for user
-   * @param {string} userId - User ID
+   * Get 2FA status for user/admin
+   * @param {string} userId - User/Admin ID
    * @returns {Promise<Object>}
    */
   async getStatus(userId) {
     try {
-      const user = await User.findById(userId).select('twoFactorEnabled twoFactorBackupCodes');
+      const record = await this._findRecord(userId, 'twoFactorEnabled twoFactorBackupCodes');
 
       return {
         success: true,
-        enabled: user?.twoFactorEnabled || false,
-        hasBackupCodes: user?.twoFactorBackupCodes?.length > 0,
-        backupCodesCount: user?.twoFactorBackupCodes?.length || 0
+        enabled: record?.twoFactorEnabled || false,
+        hasBackupCodes: record?.twoFactorBackupCodes?.length > 0,
+        backupCodesCount: record?.twoFactorBackupCodes?.length || 0
       };
     } catch (error) {
       console.error('Get 2FA status error:', error);
@@ -324,4 +346,4 @@ class TwoFactorService {
   }
 }
 
-module.exports = new TwoFactorService();
+module.exports = new TwoFactorService();

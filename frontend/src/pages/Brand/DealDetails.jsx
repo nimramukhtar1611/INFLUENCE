@@ -50,7 +50,7 @@ const DealDetails = () => {
   const { user } = useAuth();
   const { socket, joinConversation, leaveConversation, sendMessage: sendSocketMessage, markAsRead, addReaction, deleteMessage } = useSocket();
   const {
-    deal,
+    currentDeal: deal,
     loading,
     fetchDeal,
     updateDealStatus,
@@ -273,9 +273,24 @@ const DealDetails = () => {
 
   const handleApproveDeliverable = async () => {
     try {
-      await approveDeliverable(id, selectedDeliverable, '');
-      toast.success('Deliverable approved');
+      if (selectedDeliverable) {
+        // Approve a single specific deliverable
+        await approveDeliverable(id, selectedDeliverable, '');
+        toast.success('Deliverable approved');
+      } else {
+        // Approve all submitted deliverables
+        const submitted = deal.deliverables?.filter(d => d.status === 'submitted') || [];
+        if (submitted.length === 0) {
+          toast.error('No submitted deliverables to approve');
+          return;
+        }
+        for (const del of submitted) {
+          await approveDeliverable(id, del._id, '');
+        }
+        toast.success(`${submitted.length} deliverable(s) approved`);
+      }
       setShowApproveModal(false);
+      setSelectedDeliverable(null);
       loadDeal();
     } catch (error) {
       toast.error('Failed to approve');

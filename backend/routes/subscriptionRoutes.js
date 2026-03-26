@@ -10,6 +10,9 @@ const {
   // User routes
   getCurrentSubscription,
   subscribe,
+  createCheckoutSession,
+  createBillingPortalSession,
+  createPlanChangeSession,
   cancelSubscription,
   changePlan,
   updatePaymentMethod,
@@ -105,6 +108,31 @@ router.get('/limits', checkLimits);
  * @body    {string} couponCode - Coupon code (optional)
  */
 router.post('/subscribe', subscribe);
+
+/**
+ * @route   POST /api/subscriptions/checkout-session
+ * @desc    Create Stripe Checkout session for subscription
+ * @access  Private
+ * @body    {string} planId - Plan ID
+ * @body    {string} interval - Interval (month/year)
+ */
+router.post('/checkout-session', createCheckoutSession);
+
+/**
+ * @route   POST /api/subscriptions/billing-portal
+ * @desc    Create Stripe Billing Portal session
+ * @access  Private
+ */
+router.post('/billing-portal', createBillingPortalSession);
+
+/**
+ * @route   POST /api/subscriptions/plan-change-session
+ * @desc    Create Stripe plan change confirmation session
+ * @access  Private
+ * @body    {string} planId - Plan ID
+ * @body    {string} interval - Interval (month/year)
+ */
+router.post('/plan-change-session', createPlanChangeSession);
 
 /**
  * @route   PUT /api/subscriptions/change

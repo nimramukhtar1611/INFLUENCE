@@ -4,11 +4,13 @@ import {
   User, Instagram, Youtube, Twitter, Lock,
   ChevronRight, Save, Loader, CheckCircle, AlertTriangle,
   Phone, Mail, Calendar, X, Camera, Upload, Image as ImageIcon,
-  Globe, MapPin, Link2, Smartphone, Eye, EyeOff
+  Globe, MapPin, Link2, Smartphone, Eye, EyeOff, Shield
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import creatorService from '../../services/creatorService';
+import authService from '../../services/authService';
 import api from '../../services/api';
+import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 
 // ---------- Local UI Components ----------
@@ -274,7 +276,7 @@ const SocialLinksSettings = ({ settings, setSettings, onVerify }) => {
             <div className="flex items-center gap-3">
               {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-600" />}
               {platform === 'youtube' && <Youtube className="w-5 h-5 text-red-600" />}
-              {platform === 'tiktok' && <Twitter className="w-5 h-5 text-black" />}
+              {platform === 'tiktok' && <Globe className="w-5 h-5 text-black" />}
               <span className="font-medium capitalize">{platform}</span>
             </div>
             {settings.socialMedia?.[platform]?.verified && (
@@ -329,7 +331,8 @@ const SecuritySettingsComp = ({
   showDeleteForm, setShowDeleteForm,
   passwordData, setPasswordData,
   deletePassword, setDeletePassword,
-  handleChangePassword, handleDeleteAccount
+  handleChangePassword, handleDeleteAccount,
+  twoFactorStatus, handleStart2FASetup, handleDisable2FA, disabling2FA, saving
 }) => {
   return (
     <div className="space-y-6">
@@ -380,13 +383,35 @@ const SecuritySettingsComp = ({
         )}
       </div>
 
-      {/* 2FA section (placeholder) */}
-      <div className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-        <div>
-          <h4 className="font-medium text-gray-900">Two-Factor Authentication</h4>
-          <p className="text-sm text-gray-500">Add an extra layer of security</p>
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="flex justify-between items-center">
+          <div>
+            <h4 className="font-medium text-gray-900">Two-Factor Authentication</h4>
+            <p className="text-sm text-gray-500">
+              {twoFactorStatus?.enabled 
+                ? 'Your account is protected with 2FA.' 
+                : 'Add an extra layer of security using an authenticator app.'}
+            </p>
+          </div>
+          {twoFactorStatus?.enabled ? (
+            <Button variant="danger" size="sm" onClick={handleDisable2FA} loading={disabling2FA}>
+              Disable 2FA
+            </Button>
+          ) : (
+            <Button variant="primary" size="sm" onClick={handleStart2FASetup} loading={saving}>
+              Enable 2FA
+            </Button>
+          )}
         </div>
-        <Button variant="primary" size="sm">Enable 2FA</Button>
+        
+        {twoFactorStatus?.enabled && (
+          <div className="mt-4 bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-blue-600" />
+            <span className="text-xs text-blue-700">
+              2FA is active. {twoFactorStatus.backupCodesCount} backup codes remaining.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Delete Account section */}
@@ -447,6 +472,83 @@ const CreatorSettings = () => {
   });
 
   const [deletePassword, setDeletePassword] = useState('');
+
+  // 2FA State
+  const [twoFactorStatus, setTwoFactorStatus] = useState(null);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFactorStep, setTwoFactorStep] = useState('initial'); // initial, setup, verify, success
+  const [qrCodeData, setQrCodeData] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [disabling2FA, setDisabling2FA] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      fetch2FAStatus();
+    }
+  }, [activeTab]);
+
+  const fetch2FAStatus = async () => {
+    try {
+      const res = await authService.get2FAStatus();
+      if (res?.success) {
+        setTwoFactorStatus(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching 2FA status:', error);
+    }
+  };
+
+  const handleStart2FASetup = async () => {
+    try {
+      setSaving(true);
+      const res = await authService.generate2FA();
+      if (res?.success) {
+        setQrCodeData(res.data);
+        setTwoFactorStep('setup');
+        setShow2FAModal(true);
+      }
+    } catch (error) {
+      toast.error('Failed to generate 2FA secret');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (verificationCode.length !== 6) return;
+    try {
+      setSaving(true);
+      const res = await authService.verifyAndEnable2FA(verificationCode);
+      if (res?.success) {
+        setBackupCodes(res.data.backupCodes || []);
+        setTwoFactorStep('success');
+        fetch2FAStatus();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to verify 2FA code');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    const code = prompt('Enter 2FA code to disable authentication:');
+    if (!code) return;
+    
+    try {
+      setDisabling2FA(true);
+      const res = await authService.disable2FA(code);
+      if (res?.success) {
+        toast.success('Two-factor authentication disabled');
+        fetch2FAStatus();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to disable 2FA');
+    } finally {
+      setDisabling2FA(false);
+    }
+  };
 
   const [settings, setSettings] = useState({
     displayName: '',
@@ -585,6 +687,11 @@ const CreatorSettings = () => {
             setDeletePassword={setDeletePassword}
             handleChangePassword={handleChangePassword}
             handleDeleteAccount={handleDeleteAccount}
+            twoFactorStatus={twoFactorStatus}
+            handleStart2FASetup={handleStart2FASetup}
+            handleDisable2FA={handleDisable2FA}
+            disabling2FA={disabling2FA}
+            saving={saving}
           />
         );
       default:
@@ -646,6 +753,122 @@ const CreatorSettings = () => {
           </div>
         </div>
       </div>
+
+      {/* 2FA Setup Modal */}
+      <Modal
+        isOpen={show2FAModal}
+        onClose={() => {
+          if (twoFactorStep !== 'success') {
+            setShow2FAModal(false);
+          }
+        }}
+        title={
+          twoFactorStep === 'setup' ? 'Setup Two-Factor Authentication' : 
+          twoFactorStep === 'verify' ? 'Verify Code' : 
+          '2FA Enabled Successfully'
+        }
+      >
+        <div className="space-y-6 pt-2">
+          {twoFactorStep === 'setup' && (
+            <div className="text-center space-y-4">
+              <p className="text-gray-600 text-sm">
+                Scan this QR code with your authenticator app (e.g., Google Authenticator, Authy).
+              </p>
+              <div className="flex justify-center p-4 bg-white border rounded-lg">
+                {qrCodeData?.qrCode ? (
+                  <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48" />
+                ) : (
+                  <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
+                    <Loader className="w-8 h-8 text-indigo-500 animate-spin" />
+                  </div>
+                )}
+              </div>
+              <div className="text-left bg-gray-50 p-3 rounded-lg border">
+                <p className="text-xs text-gray-500 font-medium uppercase mb-1 text-center">Manual Entry Key</p>
+                <code className="text-sm font-mono break-all text-indigo-600 font-bold block text-center">
+                  {qrCodeData?.secret}
+                </code>
+              </div>
+              <Button className="w-full" onClick={() => setTwoFactorStep('verify')}>
+                I've scanned it, continue
+              </Button>
+            </div>
+          )}
+
+          {twoFactorStep === 'verify' && (
+            <div className="space-y-4">
+              <p className="text-center text-gray-600 text-sm">
+                Enter the 6-digit code from your app to verify the setup.
+              </p>
+              <input
+                type="text"
+                maxLength={6}
+                autoFocus
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="000000"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+              />
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setTwoFactorStep('setup')}>
+                  Back
+                </Button>
+                <Button 
+                  variant="primary" 
+                  className="flex-1" 
+                  onClick={handleVerify2FA} 
+                  loading={saving}
+                  disabled={verificationCode.length !== 6}
+                >
+                  Verify & Enable
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {twoFactorStep === 'success' && (
+            <div className="space-y-4 text-center">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10" />
+                </div>
+              </div>
+              <p className="text-gray-600">
+                Two-factor authentication is now active.
+              </p>
+              
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100 text-left">
+                <h4 className="text-yellow-800 font-semibold mb-2 flex items-center gap-2 text-sm">
+                  <Smartphone className="w-4 h-4" />
+                  Backup Codes
+                </h4>
+                <p className="text-xs text-yellow-700 mb-3">
+                  Save these codes in a safe place. Each can be used once if you lose your phone.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {backupCodes.map((code, idx) => (
+                    <code key={idx} className="bg-white px-2 py-1 rounded border text-xs text-center font-mono font-bold">
+                      {code}
+                    </code>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                variant="primary" 
+                className="w-full" 
+                onClick={() => {
+                  setShow2FAModal(false);
+                  setTwoFactorStep('initial');
+                  setVerificationCode('');
+                }}
+              >
+                Close & Finish
+              </Button>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
