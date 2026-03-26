@@ -1759,3 +1759,1041 @@
 {"timestamp":"2026-03-26 20:18:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
 {"timestamp":"2026-03-26 20:18:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
 {"timestamp":"2026-03-26 20:18:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 20:19:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:19:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:19:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:19:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:19:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:20:00","level":"info","message":"✅ Cron job pending-tasks completed in 148ms"}
+{"timestamp":"2026-03-26 20:21:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:21:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:21:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:21:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:21:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:22:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:22:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:22:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:22:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:22:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:23:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:23:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:23:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:23:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:23:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:24:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:24:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:24:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:24:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:24:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:25:00","level":"info","message":"✅ Cron job pending-tasks completed in 143ms"}
+{"timestamp":"2026-03-26 20:26:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:26:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:26:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:26:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:26:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:27:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:27:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:27:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:27:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:27:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:28:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:28:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:28:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:28:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:28:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:29:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:29:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:29:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:29:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:29:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"✅ Cron job pending-tasks completed in 142ms"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:30:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:31:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:31:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:31:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:31:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:31:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:32:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:32:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:32:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:32:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:32:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:33:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:33:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:33:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:33:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:33:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:34:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:34:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:34:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:34:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:34:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"✅ Cron job pending-tasks completed in 142ms"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:35:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:36:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:36:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:36:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:36:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:36:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 20:37:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:37:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:37:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:37:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:37:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:38:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:38:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:38:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:38:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:38:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 20:39:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:39:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:39:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:39:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:39:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"✅ Cron job pending-tasks completed in 140ms"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:40:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:41:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:41:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:41:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:41:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:41:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:42:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:42:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:42:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:42:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:42:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:43:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:43:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:43:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:43:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:43:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:44:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:44:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:44:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:44:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:44:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"✅ Cron job pending-tasks completed in 142ms"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:45:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:46:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:46:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:46:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:46:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:46:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:47:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:47:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:47:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:47:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:47:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:48:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:48:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:48:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:48:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:48:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:49:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:49:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:49:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:49:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:49:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"✅ Cron job pending-tasks completed in 141ms"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:50:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:51:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:51:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:51:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:51:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:51:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:52:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:52:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:52:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:52:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:52:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 20:53:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:53:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:53:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:53:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:53:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:54:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:54:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:54:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:54:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:54:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"✅ Cron job pending-tasks completed in 142ms"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:55:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 20:56:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:56:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:56:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:56:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:56:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 20:57:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:57:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:57:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:57:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:57:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 20:58:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:58:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:58:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:58:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:58:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 20:59:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 20:59:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 20:59:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 20:59:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 20:59:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 139ms"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"⏰ Running cron job: payment-processing"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"💰 Processing payment jobs..."}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"⏰ Running cron job: deadline-check-hourly"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Processed 0 stuck payments"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Cron job payment-processing completed in 73ms"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 139ms"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Cron job pending-tasks completed in 142ms"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:00:00","level":"info","message":"✅ Cron job deadline-check-hourly completed in 145ms"}
+{"timestamp":"2026-03-26 21:01:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:01:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:01:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:01:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:01:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 149ms"}
+{"timestamp":"2026-03-26 21:02:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:02:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:02:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:02:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:02:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:03:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:03:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:03:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:03:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:03:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:04:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:04:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:04:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:04:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:04:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"✅ Cron job pending-tasks completed in 142ms"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:05:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:06:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:06:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:06:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:06:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:06:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:07:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:07:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:07:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:07:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:07:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:08:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:08:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:08:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:08:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:08:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:09:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:09:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:09:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:09:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:09:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:10:00","level":"info","message":"✅ Cron job pending-tasks completed in 147ms"}
+{"timestamp":"2026-03-26 21:11:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:11:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:11:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:11:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:11:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:12:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:12:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:12:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:12:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:12:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:13:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:13:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:13:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:13:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:13:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:14:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:14:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:14:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:14:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:14:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:15:00","level":"info","message":"✅ Cron job pending-tasks completed in 146ms"}
+{"timestamp":"2026-03-26 21:16:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:16:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:16:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:16:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:16:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:17:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:17:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:17:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:17:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:17:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:18:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:18:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:18:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:18:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:18:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:19:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:19:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:19:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:19:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:19:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 148ms"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:20:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 21:21:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:21:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:21:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:21:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:21:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:22:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:22:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:22:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:22:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:22:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:23:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:23:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:23:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:23:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:23:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:24:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:24:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:24:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:24:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:24:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:25:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 21:26:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:26:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:26:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:26:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:26:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:27:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:27:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:27:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:27:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:27:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 152ms"}
+{"timestamp":"2026-03-26 21:28:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:28:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:28:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:28:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:28:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:29:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:29:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:29:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:29:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:29:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:30:00","level":"info","message":"✅ Cron job pending-tasks completed in 144ms"}
+{"timestamp":"2026-03-26 21:31:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:31:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:31:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:31:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:31:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:32:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:32:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:32:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:32:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:32:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:33:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:33:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:33:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:33:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:33:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:34:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:34:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:34:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:34:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:34:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 154ms"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:35:00","level":"info","message":"✅ Cron job pending-tasks completed in 158ms"}
+{"timestamp":"2026-03-26 21:36:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:36:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:36:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:36:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:36:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:37:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:37:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:37:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:37:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:37:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:38:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:38:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:38:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:38:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:38:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:39:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:39:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:39:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:39:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:39:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:40:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 21:41:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:41:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:41:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:41:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:41:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:42:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:42:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:42:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:42:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:42:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:43:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:43:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:43:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:43:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:43:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 156ms"}
+{"timestamp":"2026-03-26 21:44:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:44:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:44:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:44:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:44:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"✅ Cron job pending-tasks completed in 141ms"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:45:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 21:46:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:46:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:46:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:46:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:46:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 159ms"}
+{"timestamp":"2026-03-26 21:47:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:47:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:47:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:47:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:47:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:48:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:48:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:48:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:48:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:48:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:49:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:49:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:49:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:49:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:49:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"✅ Cron job pending-tasks completed in 144ms"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:50:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:51:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:51:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:51:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:51:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:51:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:52:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:52:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:52:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:52:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:52:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:53:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:53:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:53:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:53:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:53:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:54:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:54:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:54:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:54:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:54:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 21:55:00","level":"info","message":"✅ Cron job pending-tasks completed in 148ms"}
+{"timestamp":"2026-03-26 21:56:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:56:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:56:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:56:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:56:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 21:57:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:57:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:57:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:57:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:57:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 21:58:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:58:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:58:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:58:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:58:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 21:59:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 21:59:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 21:59:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 21:59:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 21:59:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"⏰ Running cron job: payment-processing"}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"💰 Processing payment jobs..."}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"⏰ Running cron job: deadline-check-hourly"}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"✅ Processed 0 stuck payments"}
+{"timestamp":"2026-03-26 22:00:00","level":"info","message":"✅ Cron job payment-processing completed in 71ms"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"✅ Cron job deadline-check-minute completed in 1208ms"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"✅ Cron job deadline-check-hourly completed in 1206ms"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:00:01","level":"info","message":"✅ Cron job pending-tasks completed in 1211ms"}
+{"timestamp":"2026-03-26 22:02:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:02:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:02:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:02:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:02:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:03:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:03:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:03:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:03:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:03:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:04:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:04:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:04:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:04:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:04:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:05:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:05:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:05:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:05:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:05:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:06:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:06:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:06:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:06:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:06:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:07:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:07:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:07:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:07:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:07:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:08:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:08:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:08:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:08:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:08:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:09:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:09:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:09:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:09:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:09:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:10:00","level":"info","message":"✅ Cron job pending-tasks completed in 149ms"}
+{"timestamp":"2026-03-26 22:11:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:11:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:11:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:11:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:11:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:12:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:12:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:12:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:12:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:12:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:13:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:13:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:13:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:13:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:13:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:14:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:14:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:14:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:14:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:14:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:15:00","level":"info","message":"✅ Cron job pending-tasks completed in 144ms"}
+{"timestamp":"2026-03-26 22:16:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:16:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:16:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:16:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:16:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:17:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:17:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:17:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:17:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:17:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:18:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:18:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:18:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:18:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:18:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:19:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:19:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:19:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:19:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:19:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:20:00","level":"info","message":"✅ Cron job pending-tasks completed in 146ms"}
+{"timestamp":"2026-03-26 22:21:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:21:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:21:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:21:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:21:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:22:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:22:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:22:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:22:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:22:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:23:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:23:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:23:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:23:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:23:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:24:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:24:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:24:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:24:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:24:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:25:00","level":"info","message":"✅ Cron job pending-tasks completed in 147ms"}
+{"timestamp":"2026-03-26 22:26:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:26:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:26:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:26:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:26:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:27:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:27:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:27:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:27:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:27:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:28:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:28:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:28:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:28:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:28:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:29:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:29:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:29:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:29:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:29:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:30:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 22:31:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:31:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:31:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:31:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:31:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:32:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:32:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:32:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:32:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:32:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:33:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:33:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:33:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:33:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:33:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:34:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:34:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:34:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:34:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:34:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 141ms"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:35:00","level":"info","message":"✅ Cron job pending-tasks completed in 144ms"}
+{"timestamp":"2026-03-26 22:36:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:36:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:36:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:36:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:36:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:37:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:37:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:37:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:37:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:37:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:38:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:38:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:38:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:38:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:38:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:39:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:39:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:39:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:39:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:39:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:40:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 22:41:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:41:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:41:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:41:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:41:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 149ms"}
+{"timestamp":"2026-03-26 22:42:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:42:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:42:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:42:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:42:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 147ms"}
+{"timestamp":"2026-03-26 22:43:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:43:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:43:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:43:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:43:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 22:44:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:44:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:44:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:44:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:44:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 150ms"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 140ms"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:45:00","level":"info","message":"✅ Cron job pending-tasks completed in 143ms"}
+{"timestamp":"2026-03-26 22:46:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:46:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:46:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:46:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:46:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:47:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:47:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:47:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:47:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:47:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:48:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:48:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:48:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:48:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:48:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:49:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:49:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:49:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:49:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:49:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:50:00","level":"info","message":"✅ Cron job pending-tasks completed in 146ms"}
+{"timestamp":"2026-03-26 22:51:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:51:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:51:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:51:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:51:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:52:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:52:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:52:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:52:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:52:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:53:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:53:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:53:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:53:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:53:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:54:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:54:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:54:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:54:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:54:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 22:55:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 22:56:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:56:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:56:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:56:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:56:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 22:57:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:57:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:57:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:57:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:57:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:58:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:58:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:58:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:58:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:58:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 22:59:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 22:59:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 22:59:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 22:59:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 22:59:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 143ms"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 23:00:00","level":"info","message":"✅ Cron job pending-tasks completed in 146ms"}
+{"timestamp":"2026-03-26 23:01:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:01:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:01:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:01:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:01:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 23:02:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:02:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:02:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:02:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:02:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 155ms"}
+{"timestamp":"2026-03-26 23:03:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:03:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:03:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:03:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:03:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 23:04:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:04:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:04:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:04:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:04:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 148ms"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 142ms"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 23:05:00","level":"info","message":"✅ Cron job pending-tasks completed in 145ms"}
+{"timestamp":"2026-03-26 23:06:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:06:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:06:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:06:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:06:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 23:07:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:07:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:07:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:07:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:07:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 23:08:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:08:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:08:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:08:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:08:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 144ms"}
+{"timestamp":"2026-03-26 23:09:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:09:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:09:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:09:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:09:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 146ms"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"🚀 Initializing all cron jobs..."}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: deadline-check-minute - */1 * * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: deadline-check-hourly - 0 * * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: pending-tasks - */5 * * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: payment-processing - 0 * * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: daily-reports - 0 0 * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: daily-cleanup - 0 1 * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: analytics-aggregation - 0 3 * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: weekly-reports - 0 4 * * 1"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: monthly-reports - 0 5 1 * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"📅 Scheduled job: token-cleanup - 0 */6 * * *"}
+{"timestamp":"2026-03-26 23:09:33","level":"info","message":"✅ All cron jobs initialized successfully"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"⏰ Running cron job: pending-tasks"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"⚙️ Processing pending tasks..."}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"✅ Processed 0 pending deals, 0 revision deals"}
+{"timestamp":"2026-03-26 23:10:00","level":"info","message":"✅ Cron job pending-tasks completed in 140ms"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"🚀 Initializing all cron jobs..."}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: deadline-check-minute - */1 * * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: deadline-check-hourly - 0 * * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: pending-tasks - */5 * * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: payment-processing - 0 * * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: daily-reports - 0 0 * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: daily-cleanup - 0 1 * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: analytics-aggregation - 0 3 * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: weekly-reports - 0 4 * * 1"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: monthly-reports - 0 5 1 * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"📅 Scheduled job: token-cleanup - 0 */6 * * *"}
+{"timestamp":"2026-03-26 23:10:38","level":"info","message":"✅ All cron jobs initialized successfully"}
+{"timestamp":"2026-03-26 23:11:00","level":"info","message":"⏰ Running cron job: deadline-check-minute"}
+{"timestamp":"2026-03-26 23:11:00","level":"info","message":"🕐 Running deadline checks..."}
+{"timestamp":"2026-03-26 23:11:00","level":"info","message":"Found 0 upcoming deadlines, 0 overdue deals"}
+{"timestamp":"2026-03-26 23:11:00","level":"info","message":"✅ Sent 0 deadline reminders, marked 0 deals overdue"}
+{"timestamp":"2026-03-26 23:11:00","level":"info","message":"✅ Cron job deadline-check-minute completed in 145ms"}

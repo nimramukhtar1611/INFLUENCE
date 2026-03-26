@@ -22,35 +22,50 @@ class SocialService {
       // METHOD 2: RapidAPI Instagram scraper (paid but reliable)
       if (process.env.RAPIDAPI_KEY) {
         try {
-          const response = await axios.get('https://instagram-scraper-api2.p.rapidapi.com/v1/info', {
-            params: { username_or_id_or_url: username },
+          const response = await axios.get('https://instagram-scraper-20251.p.rapidapi.com/userinfo/', {
+            params: { username_or_id: username },
             headers: {
               'X-RapidAPI-Key':  process.env.RAPIDAPI_KEY,
-              'X-RapidAPI-Host': 'instagram-scraper-api2.p.rapidapi.com'
+              'X-RapidAPI-Host': 'instagram-scraper-20251.p.rapidapi.com'
             },
             timeout: 8000
           });
 
-          const data = response.data?.data;
+          const data = response.data?.data || response.data?.result || response.data;
           if (data) {
-            const followers   = data.follower_count || 0;
-            const following   = data.following_count || 0;
-            const posts       = data.media_count || 0;
-            const engagement  = followers > 0 ? parseFloat(((data.avg_likes || 0) / followers * 100).toFixed(2)) : 0;
+            const followers =
+              data.follower_count ||
+              data.followers_count ||
+              data.followers ||
+              data.edge_followed_by?.count ||
+              0;
+            const following =
+              data.following_count ||
+              data.following ||
+              data.edge_follow?.count ||
+              0;
+            const posts =
+              data.media_count ||
+              data.posts_count ||
+              data.post_count ||
+              data.edge_owner_to_timeline_media?.count ||
+              0;
+            const avgLikes = data.avg_likes || data.average_likes || 0;
+            const engagement = followers > 0 ? parseFloat(((avgLikes / followers) * 100).toFixed(2)) : 0;
 
             return {
               success: true,
               data: {
                 handle:         username,
-                fullName:       data.full_name || username,
+                fullName:       data.full_name || data.username || username,
                 followers,
                 following,
                 posts,
-                profilePicture: data.profile_pic_url || this._avatar(username, '833AB4'),
-                isVerified:     data.is_verified || false,
-                isBusiness:     data.is_business || false,
+                profilePicture: data.profile_pic_url || data.profile_pic_url_hd || this._avatar(username, '833AB4'),
+                isVerified:     data.is_verified || data.verified || false,
+                isBusiness:     data.is_business || data.is_professional_account || false,
                 engagement,
-                bio:            data.biography || '',
+                bio:            data.biography || data.bio || '',
                 source:         'rapidapi'
               }
             };
