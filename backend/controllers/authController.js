@@ -323,7 +323,15 @@ exports.forgotPassword = catchAsync(async (req, res) => {
   await user.save();
 
   try {
-    await emailService.sendPasswordResetEmail(user.email, resetToken);
+    const emailResult = await emailService.sendPasswordResetEmail(user.email, user.fullName, resetToken);
+    if (!emailResult?.success) {
+      console.warn('Password reset email not delivered:', {
+        to: user.email,
+        error: emailResult?.error,
+        rejected: emailResult?.rejected,
+        pending: emailResult?.pending,
+      });
+    }
   } catch (emailError) {
     console.warn('Password reset email failed:', emailError.message);
   }

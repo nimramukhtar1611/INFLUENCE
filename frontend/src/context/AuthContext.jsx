@@ -182,6 +182,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    setLoading(true);
+    try {
+      const res = await api.post('/auth/forgot-password', { email });
+      if (res.data?.success) {
+        toast.success(res.data?.message || 'Password reset link sent');
+        return { success: true, message: res.data?.message };
+      }
+
+      const msg = res.data?.error || res.data?.message || 'Failed to send reset link';
+      toast.error(msg);
+      return { success: false, error: msg };
+    } catch (error) {
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to send reset link';
+      toast.error(msg);
+      return { success: false, error: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteAccount = async (password) => {
     try {
       const res = await api.delete('/compliance/account', { data: { password, confirm: 'DELETE' } });
@@ -286,7 +307,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user, loading, isAuthenticated, token, refreshToken,
     isAdmin, isBrand, isCreator,
-    updateUser, completeLogin, signup, login, refreshUser, deleteAccount, changePassword,
+    updateUser, completeLogin, signup, login, refreshUser, deleteAccount, changePassword, forgotPassword,
     loginAdmin, logout,
     sendEmailOTP, verifyEmailOTP, sendPhoneOTP, verifyPhoneOTP,
   };

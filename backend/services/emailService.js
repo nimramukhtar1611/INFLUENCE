@@ -88,11 +88,44 @@ class EmailService {
       if (options.bcc)     mailOptions.bcc     = options.bcc;
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`✅ Email sent: ${info.messageId}`);
+
+      const accepted = Array.isArray(info.accepted) ? info.accepted : [];
+      const rejected = Array.isArray(info.rejected) ? info.rejected : [];
+      const pending = Array.isArray(info.pending) ? info.pending : [];
+
+      // Some SMTP providers return messageId even when recipients are rejected/pending.
+      if (accepted.length === 0 && (rejected.length > 0 || pending.length > 0)) {
+        console.error('❌ Email not accepted by SMTP server:', {
+          to: mailOptions.to,
+          rejected,
+          pending,
+          response: info.response,
+        });
+
+        return {
+          success: false,
+          error: 'SMTP server did not accept recipient',
+          messageId: info.messageId,
+          accepted,
+          rejected,
+          pending,
+          response: info.response,
+        };
+      }
+
+      console.log(`✅ Email sent: ${info.messageId}`, {
+        to: mailOptions.to,
+        accepted,
+        rejected,
+        pending,
+      });
 
       return {
         success: true,
         messageId: info.messageId,
+        accepted,
+        rejected,
+        pending,
         response: info.response
       };
     } catch (error) {
@@ -303,6 +336,11 @@ class EmailService {
     });
   }
 
+  // Backward-compatible alias used by older controllers
+  async sendWelcomeEmail(email, name) {
+    return this.sendWelcome(email, name);
+  }
+
   async sendVerification(email, name, token) {
     const url = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
     return this.sendEmail({
@@ -321,6 +359,15 @@ class EmailService {
       template: 'resetPassword',
       data: { name, url }
     });
+  }
+
+  // Backward-compatible alias supports both signatures:
+  // (email, token) and (email, name, token)
+  async sendPasswordResetEmail(email, arg2, arg3) {
+    const hasName = typeof arg3 === 'string';
+    const name = hasName ? arg2 : undefined;
+    const token = hasName ? arg3 : arg2;
+    return this.sendPasswordReset(email, name || 'there', token);
   }
 
   // ✅ FIX: Use otpCode template instead of plain HTML
