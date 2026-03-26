@@ -603,6 +603,7 @@ const TeamMembers = () => {
                 {filteredMembers.length > 0 ? (
                   filteredMembers.map((member) => {
                     const StatusIcon = getStatusIcon(member.status);
+                    const canToggleStatus = member.status === 'active' || member.status === 'inactive';
                     return (
                       <tr key={member._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
@@ -656,8 +657,9 @@ const TeamMembers = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleToggleStatus(member)}
-                              className={`${member.status === 'active' ? 'text-green-500 hover:text-red-500' : 'text-gray-400 hover:text-green-500'}`}
-                              title={member.status === 'active' ? 'Deactivate' : 'Activate'}
+                              disabled={!canToggleStatus}
+                              className={`${canToggleStatus ? (member.status === 'active' ? 'text-green-500 hover:text-red-500' : 'text-gray-400 hover:text-green-500') : 'text-gray-300 cursor-not-allowed'}`}
+                              title={canToggleStatus ? (member.status === 'active' ? 'Deactivate' : 'Activate') : 'Pending invite: member must accept invitation'}
                             >
                               {member.status === 'active' ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                             </button>

@@ -3,9 +3,62 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F9FAFB;
+    --bg-tertiary: #F3F4F6;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-tertiary: #6B7280;
+    --border-color: #E5E7EB;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply antialiased;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
     font-family: 'Inter', sans-serif;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+}
+
+/*
+  Global dark-mode utility overrides.
+  Most screens currently use static Tailwind gray/white classes (no dark: variants),
+  so we remap the common utility colors when html has class="dark".
+*/
+@layer utilities {
+  .dark .bg-white { background-color: #111827 !important; }
+  .dark .bg-gray-50 { background-color: #0F172A !important; }
+  .dark .bg-gray-100 { background-color: #1F2937 !important; }
+  .dark .bg-gray-200 { background-color: #374151 !important; }
+
+  .dark .text-gray-900 { color: #F9FAFB !important; }
+  .dark .text-gray-800 { color: #F3F4F6 !important; }
+  .dark .text-gray-700 { color: #E5E7EB !important; }
+  .dark .text-gray-600 { color: #D1D5DB !important; }
+  .dark .text-gray-500,
+  .dark .text-gray-400 { color: #9CA3AF !important; }
+
+  .dark .border-gray-200 { border-color: #374151 !important; }
+  .dark .border-gray-300 { border-color: #4B5563 !important; }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background-color: #111827;
+    color: #F9FAFB;
+    border-color: #374151;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #9CA3AF;
   }
 }
 

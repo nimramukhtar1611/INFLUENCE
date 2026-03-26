@@ -19,6 +19,7 @@ export const useBrandData = () => {
   const [transactions, setTransactions] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [stats, setStats] = useState({
     totalCampaigns: 0,
@@ -43,7 +44,9 @@ export const useBrandData = () => {
         dealService.getBrandDeals('all', 1, 5),
         paymentService.getBalance(),
         paymentService.getTransactions(1, 5),
-        brandService.getAnalytics('30d')
+        brandService.getAnalytics('30d'),
+        brandService.getTeamMembers(),
+        brandService.getInvitations()
       ]);
 
       // Profile
@@ -79,6 +82,20 @@ export const useBrandData = () => {
       // Analytics
       if (results[5].status === 'fulfilled' && results[5].value?.success) {
         setAnalytics(results[5].value.analytics || null);
+      }
+
+      // Team members
+      if (results[6].status === 'fulfilled' && results[6].value?.success) {
+        setTeamMembers(results[6].value.teamMembers || []);
+      } else {
+        setTeamMembers([]);
+      }
+
+      // Invitations
+      if (results[7].status === 'fulfilled' && results[7].value?.success) {
+        setInvitations(results[7].value.invitations || []);
+      } else {
+        setInvitations([]);
       }
 
       // Compute stats
@@ -136,6 +153,7 @@ export const useBrandData = () => {
     transactions,
     paymentMethods,
     teamMembers,
+    invitations,
     invoices,
     stats,
     refreshData

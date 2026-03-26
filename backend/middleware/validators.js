@@ -397,8 +397,8 @@ const brandValidations = {
       .normalizeEmail(),
     
     body('role')
-      .isIn(['admin', 'manager', 'member'])
-      .withMessage('Role must be admin, manager, or member'),
+      .isIn(['admin', 'manager', 'member', 'viewer'])
+      .withMessage('Role must be admin, manager, member, or viewer'),
     
     body('permissions')
       .optional()
@@ -413,8 +413,8 @@ const brandValidations = {
     
     body('role')
       .optional()
-      .isIn(['admin', 'manager', 'member'])
-      .withMessage('Role must be admin, manager, or member'),
+      .isIn(['admin', 'manager', 'member', 'viewer'])
+      .withMessage('Role must be admin, manager, member, or viewer'),
     
     body('permissions')
       .optional()
@@ -1573,7 +1573,7 @@ const notificationValidations = {
   sendTest: [
     body('type')
       .optional()
-      .isIn(['deal', 'message', 'payment', 'campaign', 'system'])
+      .isIn(['deal', 'message', 'payment', 'campaign', 'reminder', 'system', 'alert', 'security', 'team', 'general'])
       .withMessage('Invalid notification type')
   ]
 };

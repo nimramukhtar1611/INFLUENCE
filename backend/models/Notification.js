@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['deal', 'message', 'payment', 'campaign', 'reminder', 'system', 'alert', 'security'],
+    enum: ['deal', 'message', 'payment', 'campaign', 'reminder', 'system', 'alert', 'security', 'team', 'general'],
     required: true
   },
   title: {
@@ -24,9 +24,15 @@ const notificationSchema = new mongoose.Schema({
   data: {
     dealId: { type: mongoose.Schema.Types.ObjectId, ref: 'Deal' },
     campaignId: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign' },
+    brandId: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand' },
     paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' },
     messageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    token: String,
+    invitationStatus: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'cancelled', 'expired']
+    },
     url: String,
     action: String,
     metadata: mongoose.Schema.Types.Mixed

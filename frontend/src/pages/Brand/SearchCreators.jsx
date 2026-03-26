@@ -1,7 +1,7 @@
 // pages/Brand/SearchCreators.js - FULL FIXED VERSION
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, Star, Instagram, Youtube, Twitter, ChevronDown, Loader, User } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Star, Instagram, Youtube, Globe, ChevronDown, Loader, User } from 'lucide-react';
 import brandService from '../../services/brandService';
 import { formatNumber } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,21 @@ const SearchCreators = () => {
   const [creators,   setCreators]   = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
 const navigate = useNavigate();
+
+  const hasPlatformAccount = (creator, platform) => {
+    const social = creator?.socialMedia?.[platform];
+    const explicitVerification = creator?.socialVerification?.[platform];
+    if (!social) return false;
+
+    if (explicitVerification || social?.verified) return true;
+
+    const handle = typeof social?.handle === 'string' ? social.handle.trim() : '';
+    const url = typeof social?.url === 'string' ? social.url.trim() : '';
+    if (handle || url) return true;
+
+    return [social?.followers, social?.subscribers, social?.views, social?.posts, social?.videos, social?.likes]
+      .some((value) => Number(value) > 0);
+  };
   // FIX 29: q: '' added to initial state
   const [filters, setFilters] = useState({
     q:             '',
@@ -183,10 +198,9 @@ const navigate = useNavigate();
 
               {/* Platforms */}
               <div className="flex items-center gap-2 mb-4">
-                {creator.socialMedia?.instagram && <Instagram className="w-5 h-5 text-pink-600" />}
-                {creator.socialMedia?.youtube   && <Youtube   className="w-5 h-5 text-red-600" />}
-                {creator.socialMedia?.tiktok    && <Twitter   className="w-5 h-5 text-black" />}
-                {creator.socialMedia?.twitter   && <Twitter   className="w-5 h-5 text-blue-400" />}
+                {hasPlatformAccount(creator, 'instagram') && <Instagram className="w-5 h-5 text-pink-600" />}
+                {hasPlatformAccount(creator, 'youtube')   && <Youtube   className="w-5 h-5 text-red-600" />}
+                {hasPlatformAccount(creator, 'tiktok')    && <Globe     className="w-5 h-5 text-black" />}
               </div>
 
               {/* Actions */}

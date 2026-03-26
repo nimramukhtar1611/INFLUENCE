@@ -349,8 +349,11 @@ exports.getTeamMembers = catchAsync(async (req, res) => {
 
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
-  const activeMembers = brand.teamMembers.filter(m => m.status !== 'removed');
-  res.json({ success: true, teamMembers: activeMembers });
+  // Only accepted team members belong in the members table.
+  const visibleMembers = brand.teamMembers.filter(
+    (m) => m.status === 'active' || m.status === 'inactive'
+  );
+  res.json({ success: true, teamMembers: visibleMembers });
 });
 
 /**
@@ -394,11 +397,13 @@ exports.addTeamMember = catchAsync(async (req, res) => {
     return res.status(400).json({ success: false, error: 'Email is required' });
   }
 
+  const normalizedEmail = String(email).trim().toLowerCase();
+
   const brand = await Brand.findById(req.user._id);
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Check if user exists
-  let user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (user) {
     // Check if already a member
     const existingMember = brand.teamMembers.find(
@@ -408,30 +413,54 @@ exports.addTeamMember = catchAsync(async (req, res) => {
       return res.status(400).json({ success: false, error: 'User is already a team member' });
     }
 
-    // Add member
-    brand.teamMembers.push({
-      userId: user._id,
+    const existingPendingInvitation = brand.teamInvitations.find(
+      (inv) => inv.email?.toLowerCase() === normalizedEmail && inv.status === 'pending'
+    );
+
+    if (existingPendingInvitation) {
+      return res.status(400).json({ success: false, error: 'An invitation is already pending for this email' });
+    }
+
+    // Existing users now follow invitation flow as well.
+    const token = crypto.randomBytes(32).toString('hex');
+    const invitation = {
+      email: normalizedEmail,
       role,
       permissions,
       invitedBy: req.user._id,
       invitedAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      token,
       status: 'pending',
-    });
+    };
+    brand.teamInvitations.push(invitation);
     await brand.save();
 
-    // Notify user
-    await Notification.create({
-      userId: user._id,
-      type: 'team',
-      title: 'Added to Team',
-      message: `You have been added to ${brand.brandName}'s team as ${role}`,
-      data: { brandId: brand._id },
-    });
+    // Notify user without blocking the invite flow if notification delivery fails.
+    try {
+      await Notification.create({
+        userId: user._id,
+        type: 'team',
+        title: 'Team Invitation',
+        message: `You have been invited to join ${brand.brandName}'s team as ${role}`,
+        data: { brandId: brand._id, token },
+      });
+    } catch (notificationError) {
+      console.error('Team member notification failed:', notificationError.message);
+    }
   } else {
+    const existingPendingInvitation = brand.teamInvitations.find(
+      (inv) => inv.email?.toLowerCase() === normalizedEmail && inv.status === 'pending'
+    );
+
+    if (existingPendingInvitation) {
+      return res.status(400).json({ success: false, error: 'An invitation is already pending for this email' });
+    }
+
     // Send invitation to non-existing user
     const token = crypto.randomBytes(32).toString('hex');
     const invitation = {
-      email,
+      email: normalizedEmail,
       role,
       permissions,
       invitedBy: req.user._id,
@@ -446,12 +475,11 @@ exports.addTeamMember = catchAsync(async (req, res) => {
     // TODO: Send invitation email
   }
 
-  await brand.populate('teamMembers.userId', 'fullName email profilePicture');
-
   res.json({
     success: true,
-    message: user ? 'Team member added' : 'Invitation sent',
+    message: 'Invitation sent',
     teamMembers: brand.teamMembers,
+    invitations: brand.teamInvitations.filter((inv) => inv.status === 'pending'),
   });
 });
 
@@ -600,6 +628,10 @@ exports.cancelInvitation = catchAsync(async (req, res) => {
 exports.acceptInvitation = catchAsync(async (req, res) => {
   const { token, userId } = req.body;
 
+  if (!token || !userId) {
+    return res.status(400).json({ success: false, error: 'Invitation token and user ID are required' });
+  }
+
   const brand = await Brand.findOne({ 'teamInvitations.token': token });
   if (!brand) return res.status(404).json({ success: false, error: 'Invalid invitation token' });
 
@@ -620,20 +652,104 @@ exports.acceptInvitation = catchAsync(async (req, res) => {
     return res.status(400).json({ success: false, error: 'User not found' });
   }
 
-  // Add as team member
-  brand.teamMembers.push({
-    userId: user._id,
-    role: invitation.role,
-    permissions: invitation.permissions,
-    invitedBy: invitation.invitedBy,
-    invitedAt: invitation.invitedAt,
-    joinedAt: new Date(),
-    status: 'active',
-  });
+  if (String(user.email || '').toLowerCase() !== String(invitation.email || '').toLowerCase()) {
+    return res.status(403).json({ success: false, error: 'This invitation is not assigned to your account email' });
+  }
+
+  const existingMember = brand.teamMembers.find(
+    (m) => m.userId?.toString() === user._id.toString() && m.status !== 'removed'
+  );
+
+  if (existingMember) {
+    existingMember.role = invitation.role || existingMember.role;
+    if (Array.isArray(invitation.permissions) && invitation.permissions.length > 0) {
+      existingMember.permissions = invitation.permissions;
+    }
+    existingMember.joinedAt = existingMember.joinedAt || new Date();
+    existingMember.status = 'active';
+    existingMember.lastActive = new Date();
+  } else {
+    // Add as team member
+    brand.teamMembers.push({
+      userId: user._id,
+      role: invitation.role,
+      permissions: invitation.permissions,
+      invitedBy: invitation.invitedBy,
+      invitedAt: invitation.invitedAt,
+      joinedAt: new Date(),
+      status: 'active',
+    });
+  }
+
   invitation.status = 'accepted';
   await brand.save();
 
+  await Notification.updateMany(
+    {
+      userId: user._id,
+      type: 'team',
+      'data.token': token
+    },
+    {
+      $set: {
+        'data.invitationStatus': 'accepted',
+        read: true,
+        readAt: new Date()
+      }
+    }
+  );
+
   res.json({ success: true, message: 'Invitation accepted' });
+});
+
+/**
+ * @desc    Reject invitation (public route)
+ * @route   POST /api/brands/team/invitations/reject
+ * @access  Public
+ */
+exports.rejectInvitation = catchAsync(async (req, res) => {
+  const { token, userId } = req.body;
+
+  if (!token || !userId) {
+    return res.status(400).json({ success: false, error: 'Invitation token and user ID are required' });
+  }
+
+  const brand = await Brand.findOne({ 'teamInvitations.token': token });
+  if (!brand) return res.status(404).json({ success: false, error: 'Invalid invitation token' });
+
+  const invitation = brand.teamInvitations.find(i => i.token === token);
+  if (!invitation || invitation.status !== 'pending') {
+    return res.status(400).json({ success: false, error: 'Invitation not valid' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(400).json({ success: false, error: 'User not found' });
+  }
+
+  if (String(user.email || '').toLowerCase() !== String(invitation.email || '').toLowerCase()) {
+    return res.status(403).json({ success: false, error: 'This invitation is not assigned to your account email' });
+  }
+
+  invitation.status = 'cancelled';
+  await brand.save();
+
+  await Notification.updateMany(
+    {
+      userId: user._id,
+      type: 'team',
+      'data.token': token
+    },
+    {
+      $set: {
+        'data.invitationStatus': 'rejected',
+        read: true,
+        readAt: new Date()
+      }
+    }
+  );
+
+  res.json({ success: true, message: 'Invitation rejected' });
 });
 
 // ==================== TEAM ACTIVITY ====================
@@ -946,6 +1062,10 @@ exports.updateTeamMemberStatus = catchAsync(async (req, res) => {
 
   if (member.status === 'removed') {
     return res.status(400).json({ success: false, error: 'Cannot change status of a removed member' });
+  }
+
+  if (member.status === 'pending') {
+    return res.status(400).json({ success: false, error: 'Pending members must accept invitations before activation' });
   }
 
   const previousStatus = member.status;

@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import {
-  TrendingUp, Users, DollarSign, Eye, Download, RefreshCw,
+  TrendingUp, Users, DollarSign, Eye, RefreshCw,
   Activity, Heart, Award, Star, AlertCircle, MessageSquare,
   Share2, BarChart3, LineChart as LineChartIcon, Loader,
   PieChart as PieChartIcon
@@ -198,7 +198,7 @@ const Analytics = () => {
           ))}
         </div>
 
-        <ChartCard title="Performance Over Time">
+        <ChartCard title="Performance Over Time" showExport={false}>
           {hasChartData ? (
             <ResponsiveContainer width="100%" height={400}>
               {chartType === 'area' ? (
@@ -250,7 +250,7 @@ const Analytics = () => {
         </ChartCard>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          <ChartCard title="Platform Distribution">
+          <ChartCard title="Platform Distribution" showExport={false}>
             {hasPlatformData ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -278,7 +278,7 @@ const Analytics = () => {
             )}
           </ChartCard>
 
-          <ChartCard title="Engagement Breakdown">
+          <ChartCard title="Engagement Breakdown" showExport={false}>
             {hasEngagementData ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={engagementBreakdown} layout="vertical">

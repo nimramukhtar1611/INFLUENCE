@@ -92,7 +92,10 @@ const NOTIFICATION_TYPES = {
   CAMPAIGN: 'campaign',
   REMINDER: 'reminder',
   SYSTEM: 'system',
-  ALERT: 'alert'
+  ALERT: 'alert',
+  SECURITY: 'security',
+  TEAM: 'team',
+  GENERAL: 'general'
 };
 
 // ==================== NOTIFICATION PRIORITY ====================

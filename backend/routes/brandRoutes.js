@@ -12,6 +12,7 @@ const brandController = require('../controllers/brandController');
 
 // Accept a team invitation — user may not be logged in yet
 router.post('/team/invitations/accept', brandController.acceptInvitation);
+router.post('/team/invitations/reject', brandController.rejectInvitation);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ALL ROUTES BELOW REQUIRE AUTHENTICATION + BRAND ROLE

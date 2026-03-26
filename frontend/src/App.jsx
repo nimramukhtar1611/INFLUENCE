@@ -30,7 +30,7 @@ import NotFound from './pages/NotFound';
 // Brand Pages
 import BrandDashboard from './pages/Brand/Dashboard';
 import BrandCampaigns from './pages/Brand/CampaignList';
-import CreatorProfile from './pages/Brand/CreatorProfile'
+import BrandCreatorProfile from './pages/Brand/CreatorProfile'
 import BrandCampaignBuilder from './pages/Brand/CampaignBuilder';
 import BrandCampaignDetails from './pages/Brand/CampaignDetails';
 import BrandSearchCreators from './pages/Brand/SearchCreators';
@@ -54,6 +54,7 @@ import CreatorDeliverables from './pages/Creator/Deliverables';
 import CreatorAnalytics from './pages/Creator/Analytics';
 import CreatorEarnings from './pages/Creator/Earnings';
 import CreatorWithdrawals from './pages/Creator/Withdrawals';
+import CreatorProfile from './pages/Creator/Profile';
 import CreatorSettings from './pages/Creator/Settings';
 import CreatorInbox from './pages/Creator/Inbox';
 
@@ -147,7 +148,7 @@ function App() {
                             <Route path="search" element={<BrandSearchCreators />} />
                             <Route path="deals" element={<BrandDeals />} />
                             <Route path="deals/:id" element={<BrandDealDetails />} />
-                            <Route path="creators/:id" element={<CreatorProfile />} />
+                            <Route path="creators/:id" element={<BrandCreatorProfile />} />
                             <Route path="analytics" element={<BrandAnalytics />} />
                             <Route path="payments" element={<BrandPayments />} />
                             <Route path="createdeal" element={<CreateDeal />} />
@@ -177,6 +178,7 @@ function App() {
                             <Route path="analytics" element={<CreatorAnalytics />} />
                             <Route path="earnings" element={<CreatorEarnings />} />
                             <Route path="withdrawals" element={<CreatorWithdrawals />} />
+                            <Route path="profile" element={<CreatorProfile />} />
                             <Route path="settings" element={<CreatorSettings />} />
                             <Route path="subscription" element={<SubscriptionManager />} />
                             <Route path="inbox" element={<CreatorInbox />} />

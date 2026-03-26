@@ -45,6 +45,7 @@ const Notifications = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [invitationActionId, setInvitationActionId] = useState(null);
 
   const fetchNotifications = async (reset = false) => {
     try {
@@ -148,6 +149,7 @@ const Notifications = () => {
       case 'campaign': return '📢';
       case 'reminder': return '⏰';
       case 'alert': return '⚠️';
+      case 'team': return '👥';
       default: return '🔔';
     }
   };
@@ -160,6 +162,7 @@ const Notifications = () => {
       case 'campaign': return Users;
       case 'reminder': return Clock;
       case 'alert': return AlertCircle;
+      case 'team': return Users;
       case 'system': return Bell;
       default: return Bell;
     }
@@ -173,8 +176,46 @@ const Notifications = () => {
       case 'campaign': return 'text-indigo-600 bg-indigo-100';
       case 'reminder': return 'text-yellow-600 bg-yellow-100';
       case 'alert': return 'text-red-600 bg-red-100';
+      case 'team': return 'text-cyan-700 bg-cyan-100';
       case 'system': return 'text-gray-600 bg-gray-100';
       default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const handleInvitationResponse = async (notification, action) => {
+    if (!notification?.data?.token || !user?._id) {
+      toast.error('Invitation data is missing');
+      return;
+    }
+
+    try {
+      setInvitationActionId(notification._id);
+      const response = await api.post(`/brands/team/invitations/${action}`, {
+        token: notification.data.token,
+        userId: user._id
+      });
+
+      if (response.data?.success) {
+        setNotifications((prev) => prev.map((item) => {
+          if (item._id !== notification._id) return item;
+          return {
+            ...item,
+            read: true,
+            readAt: new Date().toISOString(),
+            data: {
+              ...item.data,
+              invitationStatus: action === 'accept' ? 'accepted' : 'rejected'
+            }
+          };
+        }));
+
+        setUnreadCount((prev) => (!notification.read ? Math.max(0, prev - 1) : prev));
+        toast.success(response.data.message || (action === 'accept' ? 'Invitation accepted' : 'Invitation rejected'));
+      }
+    } catch (error) {
+      toast.error(error?.error || error?.message || `Failed to ${action} invitation`);
+    } finally {
+      setInvitationActionId(null);
     }
   };
 
@@ -327,7 +368,7 @@ const Notifications = () => {
             </span>
           </button>
           
-          {['deal', 'message', 'payment', 'campaign', 'reminder', 'alert'].map((type) => (
+          {['deal', 'message', 'payment', 'campaign', 'reminder', 'alert', 'team'].map((type) => (
             <button
               key={type}
               onClick={() => setFilter(type)}
@@ -408,6 +449,33 @@ const Notifications = () => {
                                 <Eye className="w-3 h-3" />
                               </Link>
                             )}
+
+                            {notification.type === 'team' && notification.data?.token && !['accepted', 'rejected', 'cancelled', 'expired'].includes(notification.data?.invitationStatus) && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => handleInvitationResponse(notification, 'accept')}
+                                  loading={invitationActionId === notification._id}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleInvitationResponse(notification, 'reject')}
+                                  disabled={invitationActionId === notification._id}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
+
+                            {notification.type === 'team' && notification.data?.invitationStatus ? (
+                              <p className="text-xs text-gray-500 mt-2 capitalize">
+                                Invitation {notification.data.invitationStatus}
+                              </p>
+                            ) : null}
                           </div>
                         )}
                         

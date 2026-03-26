@@ -489,9 +489,13 @@ class BrandService {
    */
   _handleError(error, defaultMessage) {
     if (error.response?.data) {
+      const validationMessage = Array.isArray(error.response.data.errors)
+        ? error.response.data.errors.find((entry) => entry?.message)?.message
+        : null;
+
       return {
         success: false,
-        error: error.response.data.error || error.response.data.message || defaultMessage,
+        error: error.response.data.error || error.response.data.message || validationMessage || defaultMessage,
         ...error.response.data,
       };
     }

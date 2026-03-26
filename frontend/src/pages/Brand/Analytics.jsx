@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, AreaChart, Area, ComposedChart
 } from 'recharts';
 import {
-  TrendingUp, Users, DollarSign, Eye, Download, RefreshCw,
+  TrendingUp, Users, DollarSign, Eye, RefreshCw,
   Activity, Heart, Share2, MessageSquare, Target, Award
 } from 'lucide-react';
 import brandService from '../../services/brandService';
@@ -127,7 +127,6 @@ const Analytics = () => {
             <option value="12m">This Year</option>
           </select>
           <Button variant="outline" size="sm" icon={RefreshCw} onClick={() => fetchAnalytics(true)} loading={refreshing}>Refresh</Button>
-          <Button variant="outline" size="sm" icon={Download}>Export</Button>
         </div>
       </div>
 
@@ -137,7 +136,7 @@ const Analytics = () => {
       </div>
 
       {/* Performance chart */}
-      <ChartCard title="Campaign Performance">
+      <ChartCard title="Campaign Performance" showExport={false}>
         {performanceData.length > 0 ? (
           <ResponsiveContainer width="100%" height={400}>
             {chartType === 'area' ? (
@@ -183,7 +182,7 @@ const Analytics = () => {
       {/* Charts grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Platform distribution */}
-        <ChartCard title="Platform Distribution">
+        <ChartCard title="Platform Distribution" showExport={false}>
           {platformData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -203,7 +202,7 @@ const Analytics = () => {
         </ChartCard>
 
         {/* Deal status */}
-        <ChartCard title="Deal Status">
+        <ChartCard title="Deal Status" showExport={false}>
           {dealData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -223,7 +222,7 @@ const Analytics = () => {
         </ChartCard>
 
         {/* Monthly trends */}
-        <ChartCard title="Monthly Trends">
+        <ChartCard title="Monthly Trends" showExport={false}>
           {performanceData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart data={performanceData.slice(-12)}>
@@ -243,7 +242,7 @@ const Analytics = () => {
             FIX 28: Was 78%, 4.8%, 4.6/5, 12.5K all hardcoded.
             Now reads from analytics.summary. Shows 0 / empty state if no data.
         ──────────────────────────────────────────────────────────────────── */}
-        <ChartCard title="Key Performance Indicators">
+        <ChartCard title="Key Performance Indicators" showExport={false}>
           <div className="space-y-5 p-2">
             {!hasAnyData ? (
               <div className="py-8 text-center text-gray-400">

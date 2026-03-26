@@ -21,6 +21,22 @@ const formatDate = (value) => {
   return date.toLocaleDateString();
 };
 
+const normalizePlanId = (value) => {
+  if (value === null || value === undefined) return '';
+
+  if (typeof value === 'string') {
+    return value.trim().toLowerCase();
+  }
+
+  if (typeof value === 'object') {
+    if (typeof value.planId === 'string') return value.planId.trim().toLowerCase();
+    if (typeof value.id === 'string') return value.id.trim().toLowerCase();
+    if (typeof value._id === 'string') return value._id.trim().toLowerCase();
+  }
+
+  return String(value).trim().toLowerCase();
+};
+
 const SubscriptionManager = () => {
   const location = useLocation();
   const { user } = useAuth();
@@ -67,40 +83,82 @@ const SubscriptionManager = () => {
     }
   }, [location.search, refreshAll]);
 
-  useEffect(() => {
-    if (!selectedPlanId && plans.length > 0) {
-      setSelectedPlanId(plans[0].id);
-    }
-  }, [plans, selectedPlanId]);
-
   const selectedPlan = useMemo(
-    () => plans.find((plan) => plan.id === selectedPlanId) || null,
+    () => plans.find((plan) => normalizePlanId(plan.id) === normalizePlanId(selectedPlanId)) || null,
     [plans, selectedPlanId]
   );
 
   const activePlanId = useMemo(() => {
     if (!currentSubscription) return null;
 
-    if (currentSubscription.planDetails?.planId) {
-      return String(currentSubscription.planDetails.planId);
+    const planIdCandidates = [
+      currentSubscription.planDetails?.planId,
+      currentSubscription.planDetails?.id,
+      currentSubscription.planId?.planId,
+      currentSubscription.planId,
+      currentSubscription.planDetails?._id,
+      currentSubscription.planId?._id
+    ];
+
+    for (const candidate of planIdCandidates) {
+      const normalized = normalizePlanId(candidate);
+      if (normalized) {
+        return normalized;
+      }
     }
 
-    if (typeof currentSubscription.planId === 'string') {
-      return currentSubscription.planId;
-    }
-
-    if (currentSubscription.planId?.planId) {
-      return String(currentSubscription.planId.planId);
+    const currentPlanName = String(currentSubscription.planDetails?.name || '').trim().toLowerCase();
+    if (currentPlanName) {
+      const matchedPlan = plans.find((plan) => String(plan.name || '').trim().toLowerCase() === currentPlanName);
+      if (matchedPlan?.id) {
+        return normalizePlanId(matchedPlan.id);
+      }
     }
 
     return null;
-  }, [currentSubscription]);
+  }, [currentSubscription, plans]);
+
+  useEffect(() => {
+    if (plans.length === 0) return;
+
+    const selectedExists = plans.some((plan) => normalizePlanId(plan.id) === normalizePlanId(selectedPlanId));
+
+    if (selectedExists && normalizePlanId(selectedPlanId) !== 'free') {
+      return;
+    }
+
+    if (activePlanId) {
+      const activePlan = plans.find((plan) => normalizePlanId(plan.id) === activePlanId);
+      if (activePlan?.id) {
+        setSelectedPlanId(activePlan.id);
+        return;
+      }
+    }
+
+    const firstPaidPlan = plans.find((plan) => normalizePlanId(plan.id) !== 'free');
+    setSelectedPlanId(firstPaidPlan?.id || plans[0].id);
+  }, [plans, selectedPlanId, activePlanId]);
+
+  const hasActiveStripeSubscription = Boolean(currentSubscription?.stripeSubscriptionId)
+    && ['active', 'trialing', 'past_due'].includes(currentSubscription?.status);
+
+  const canManageBilling = Boolean(currentSubscription?.stripeSubscriptionId);
+
+  const selectedPlanIdNormalized = normalizePlanId(selectedPlan?.id || selectedPlanId);
+  const isSelectedPlanFree = selectedPlanIdNormalized === 'free';
 
   const handleSubscribeOrChange = async () => {
     if (!selectedPlan) return;
 
-    if (currentSubscription?.status === 'active' || currentSubscription?.status === 'trialing' || currentSubscription?.status === 'past_due') {
-      if (selectedPlan.id !== activePlanId) {
+    if (normalizePlanId(selectedPlan.id) === 'free') {
+      toast('Free plan is included by default and cannot be subscribed through Stripe.');
+      return;
+    }
+
+    const selectedId = normalizePlanId(selectedPlan.id);
+
+    if (hasActiveStripeSubscription) {
+      if (selectedId !== activePlanId) {
         await startPlanChange({
           planId: selectedPlan.id,
           interval
@@ -148,7 +206,7 @@ const SubscriptionManager = () => {
             <button
               type="button"
               onClick={openBillingPortal}
-              disabled={busy}
+              disabled={busy || !canManageBilling}
               className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black disabled:opacity-60"
             >
               Manage Billing
@@ -186,7 +244,7 @@ const SubscriptionManager = () => {
           <button
             type="button"
             onClick={openBillingPortal}
-            disabled={!currentSubscription || busy}
+            disabled={!canManageBilling || busy}
             className="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
           >
             Manage Billing in Stripe
@@ -217,8 +275,10 @@ const SubscriptionManager = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {plans.map((plan) => {
-            const isSelected = selectedPlanId === plan.id;
-            const isActive = activePlanId === plan.id;
+            const planId = normalizePlanId(plan.id);
+            const isSelected = selectedPlanIdNormalized === planId;
+            const isActive = activePlanId === planId;
+            const isFreePlan = planId === 'free';
             const displayPrice = interval === 'year' ? Number(plan.price || 0) * 12 : Number(plan.price || 0);
             const planFeatures = Array.isArray(plan.features)
               ? plan.features.slice(0, 4)
@@ -228,14 +288,30 @@ const SubscriptionManager = () => {
               <button
                 key={plan.id}
                 type="button"
-                onClick={() => setSelectedPlanId(plan.id)}
+                onClick={() => {
+                  if (!isFreePlan) {
+                    setSelectedPlanId(plan.id);
+                  }
+                }}
+                disabled={isFreePlan}
                 className={`text-left p-4 rounded-xl border transition ${
-                  isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                }`}
+                  isActive
+                    ? 'border-blue-500 bg-blue-50'
+                    : isSelected
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : isFreePlan
+                        ? 'border-gray-200 bg-gray-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                } ${isFreePlan ? 'cursor-not-allowed opacity-80' : ''}`}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                  {isActive ? <CheckCircle className="w-5 h-5 text-green-600" /> : null}
+                  <div className="flex items-center gap-2">
+                    {isFreePlan ? (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Included</span>
+                    ) : null}
+                    {isActive ? <CheckCircle className="w-5 h-5 text-blue-600" /> : null}
+                  </div>
                 </div>
                 <p className="mt-1 text-sm text-gray-600">{plan.description}</p>
                 <p className="mt-3 text-xl font-bold text-gray-900">{formatCurrency(displayPrice, plan.currency)}</p>
@@ -257,12 +333,14 @@ const SubscriptionManager = () => {
           <button
             type="button"
             onClick={handleSubscribeOrChange}
-            disabled={!selectedPlan || busy}
+            disabled={!selectedPlan || busy || isSelectedPlanFree}
             className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
           >
             {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            {currentSubscription
-              ? (selectedPlan?.id !== activePlanId ? 'Change Plan in Stripe' : 'Manage Billing in Stripe')
+            {isSelectedPlanFree
+              ? 'Free Plan Included'
+              : hasActiveStripeSubscription
+                ? (normalizePlanId(selectedPlan?.id) !== activePlanId ? 'Change Plan in Stripe' : 'Manage Billing in Stripe')
               : 'Subscribe via Stripe'}
           </button>
         </div>

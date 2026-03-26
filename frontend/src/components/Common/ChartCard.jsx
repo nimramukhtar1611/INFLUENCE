@@ -29,6 +29,7 @@ const ChartCard = ({
   onRefresh,
   onExpand,
   onFilter,
+  showExport = true,
   dateRange,
   chartType,
   onChartTypeChange,
@@ -278,79 +279,80 @@ const ChartCard = ({
             )}
           </button>
 
-          {/* Export Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Export"
-            >
-              <Download className="w-4 h-4 text-gray-500" />
-            </button>
+          {showExport && (
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Export"
+              >
+                <Download className="w-4 h-4 text-gray-500" />
+              </button>
 
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                <button
-                  onClick={exportAsPNG}
-                  disabled={exporting}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  Export as PNG
-                </button>
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                  <button
+                    onClick={exportAsPNG}
+                    disabled={exporting}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    Export as PNG
+                  </button>
 
-                <button
-                  onClick={exportAsPDF}
-                  disabled={exporting}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
-                >
-                  <FileText className="w-4 h-4" />
-                  Export as PDF
-                </button>
+                  <button
+                    onClick={exportAsPDF}
+                    disabled={exporting}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Export as PDF
+                  </button>
 
-                {data && data.length > 0 && (
-                  <>
-                    <div className="border-t border-gray-200 my-1"></div>
+                  {data && data.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-200 my-1"></div>
 
-                    <button
-                      onClick={exportAsCSV}
-                      disabled={exporting}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <FileText className="w-4 h-4" />
-                      Export as CSV
-                    </button>
+                      <button
+                        onClick={exportAsCSV}
+                        disabled={exporting}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Export as CSV
+                      </button>
 
-                    <button
-                      onClick={exportAsExcel}
-                      disabled={exporting}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <FileText className="w-4 h-4" />
-                      Export as Excel
-                    </button>
+                      <button
+                        onClick={exportAsExcel}
+                        disabled={exporting}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Export as Excel
+                      </button>
 
-                    <button
-                      onClick={copyAsJSON}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-600" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          Copy as JSON
-                        </>
-                      )}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+                      <button
+                        onClick={copyAsJSON}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="w-4 h-4 text-green-600" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4" />
+                            Copy as JSON
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Custom Actions */}
           {actions}
