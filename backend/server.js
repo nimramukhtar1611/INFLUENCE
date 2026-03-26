@@ -208,9 +208,30 @@ app.use((err, req, res, next) => {
 
   console.error('🔥 Error:', err.message);
   console.error(err.stack);
-  res.status(err.status || 500).json({
+
+  // Return validation errors as 4xx instead of generic 500
+  if (err?.name === 'ValidationError' && err?.errors) {
+    const errors = Object.values(err.errors).map((e) => ({
+      field: e.path,
+      message: e.message,
+    }));
+
+    return res.status(400).json({
+      success: false,
+      error: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      errors,
+    });
+  }
+
+  const statusCode = err.statusCode || err.status || 500;
+  const errorMessage = process.env.NODE_ENV === 'development'
+    ? err.message
+    : (statusCode >= 500 ? 'Internal server error' : err.message);
+
+  res.status(statusCode).json({
     success: false,
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    error: errorMessage,
   });
 });
 

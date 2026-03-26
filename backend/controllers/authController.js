@@ -54,7 +54,12 @@ const normalizeUserResponse = (user) => {
 
 // ==================== REGISTER ====================
 exports.register = catchAsync(async (req, res) => {
-  console.log('📝 Register request body:', JSON.stringify(req.body));
+  const sanitizedBodyForLog = {
+    ...req.body,
+    password: req.body?.password ? '***REDACTED***' : undefined,
+    captchaToken: req.body?.captchaToken ? '***REDACTED***' : undefined,
+  };
+  console.log('📝 Register request body:', JSON.stringify(sanitizedBodyForLog));
   const {
     email,
     password,
