@@ -28,7 +28,24 @@ exports.getProfile = async (req, res) => {
 // ==================== UPDATE PROFILE ====================
 exports.updateProfile = async (req, res) => {
    try {
-    const allowedUpdates = ['displayName', 'handle', 'bio', 'location', 'website', 'birthday', 'gender', 'niches', 'rateCard', 'availability', 'privacy', 'notifications'];
+    const allowedUpdates = [
+      'displayName',
+      'handle',
+      'bio',
+      'location',
+      'website',
+      'birthday',
+      'gender',
+      'phone',
+      'profilePicture',
+      'socialMedia',
+      'socialVerification',
+      'niches',
+      'rateCard',
+      'availability',
+      'privacy',
+      'notifications'
+    ];
     const updateData = {};
     for (const key of allowedUpdates) {
       if (req.body[key] !== undefined) updateData[key] = req.body[key];

@@ -677,6 +677,21 @@ const CreatorSettings = () => {
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
+      const sanitizePlatform = (platformData = {}) => ({
+        handle: platformData.handle || '',
+        url: platformData.url || '',
+        verified: Boolean(platformData.verified),
+        followers: Number(platformData.followers || 0),
+        engagement: Number(platformData.engagement || 0),
+        subscribers: Number(platformData.subscribers || 0),
+        views: Number(platformData.views || 0),
+        videos: Number(platformData.videos || 0),
+        likes: Number(platformData.likes || 0),
+        following: Number(platformData.following || 0),
+        posts: Number(platformData.posts || 0),
+        tweets: Number(platformData.tweets || 0),
+      });
+
       const profileUpdate = {
         displayName: settings.displayName,
         handle: settings.handle,
@@ -684,7 +699,13 @@ const CreatorSettings = () => {
         phone: settings.phone,
         birthday: settings.birthday,
         gender: settings.gender,
-        profilePicture: settings.profilePicture
+        profilePicture: settings.profilePicture,
+        socialMedia: {
+          instagram: sanitizePlatform(settings.socialMedia?.instagram),
+          youtube: sanitizePlatform(settings.socialMedia?.youtube),
+          tiktok: sanitizePlatform(settings.socialMedia?.tiktok),
+          twitter: sanitizePlatform(settings.socialMedia?.twitter)
+        }
       };
 
       const profileRes = await creatorService.updateProfile(profileUpdate);
