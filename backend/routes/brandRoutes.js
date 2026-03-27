@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, resolveBrandContext } = require('../middleware/auth');
 const { validateRequest } = require('../middleware/validation');
 const { checkTeamMemberLimit } = require('../middleware/subscriptionCheck');
 const { brandValidations, paymentValidations } = require('../middleware/validators');
@@ -17,7 +17,7 @@ router.post('/team/invitations/reject', brandController.rejectInvitation);
 // ─────────────────────────────────────────────────────────────────────────────
 // ALL ROUTES BELOW REQUIRE AUTHENTICATION + BRAND ROLE
 // ─────────────────────────────────────────────────────────────────────────────
-router.use(protect, authorize('brand'));
+router.use(protect, authorize('brand'), resolveBrandContext);
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
 router.get('/dashboard', brandController.getDashboard);

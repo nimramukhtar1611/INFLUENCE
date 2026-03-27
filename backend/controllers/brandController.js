@@ -11,10 +11,50 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { catchAsync } = require('../utils/catchAsync');
 
+const getBrandContextId = (req) => req.brandId || req.user?._id;
+
+const normalizeHandle = (value) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.replace(/^@+/, '').replace(/\/$/, '');
+};
+
+const extractHandleFromUrl = (value, platform) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+
+  if (!trimmed.includes('http://') && !trimmed.includes('https://')) {
+    return normalizeHandle(trimmed);
+  }
+
+  try {
+    const url = new URL(trimmed);
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts.length === 0) return '';
+
+    if (platform === 'instagram') {
+      return normalizeHandle(parts[0]);
+    }
+
+    if (platform === 'twitter') {
+      if (parts[0] === 'intent' || parts[0] === 'share') {
+        return '';
+      }
+      return normalizeHandle(parts[0]);
+    }
+
+    return trimmed;
+  } catch (error) {
+    return normalizeHandle(trimmed);
+  }
+};
+
 // ==================== PROFILE MANAGEMENT ====================
 
 exports.getProfile = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id)
+  const brand = await Brand.findById(getBrandContextId(req))
     .select('-password -refreshToken')
     .populate('teamMembers.userId', 'fullName email profilePicture')
     .populate('teamMembers.invitedBy', 'fullName email')
@@ -34,25 +74,81 @@ exports.getProfile = catchAsync(async (req, res) => {
  */
 exports.updateProfile = async (req, res) => {
   try {
-    const allowedUpdates = ['brandName', 'industry', 'website', 'description', 'founded', 'employees', 'address', 'socialMedia', 'preferences'];
+    const allowedUpdates = [
+      'brandName',
+      'industry',
+      'website',
+      'description',
+      'founded',
+      'employees',
+      'companySize',
+      'businessType',
+      'taxId',
+      'logo',
+      'coverImage',
+      'phone',
+      'email',
+      'address',
+      'socialMedia',
+      'preferences'
+    ];
+
     const updateData = {};
     for (const key of allowedUpdates) {
       if (req.body[key] !== undefined) updateData[key] = req.body[key];
     }
+
+    if (updateData.socialMedia && typeof updateData.socialMedia === 'object') {
+      updateData.socialMedia = {
+        ...updateData.socialMedia,
+        ...(updateData.socialMedia.instagram !== undefined
+          ? { instagram: extractHandleFromUrl(updateData.socialMedia.instagram, 'instagram') }
+          : {}),
+        ...(updateData.socialMedia.twitter !== undefined
+          ? { twitter: extractHandleFromUrl(updateData.socialMedia.twitter, 'twitter') }
+          : {})
+      };
+    }
+
     const brand = await Brand.findByIdAndUpdate(
-      req.user._id,
+      getBrandContextId(req),
       { $set: updateData },
       { new: true, runValidators: true }
     ).select('-password -refreshToken');
 
-  if (!brand) {
-    return res.status(404).json({ success: false, error: 'Brand not found' });
+    if (!brand) {
+      return res.status(404).json({ success: false, error: 'Brand not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      brand
+    });
+  } catch (error) {
+    console.error('Brand update profile error:', error);
+
+    if (error.name === 'ValidationError') {
+      const firstError = Object.values(error.errors || {})[0];
+      return res.status(400).json({
+        success: false,
+        error: firstError?.message || 'Validation failed'
+      });
+    }
+
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyValue || {})[0] || 'field';
+      return res.status(409).json({
+        success: false,
+        error: `${duplicateField} already exists`
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to update brand profile'
+    });
   }
-
-   } catch (error) {
-        return res.status(500).json({ success: false, error: 'error occured ' });
-
-   }
 };
 
 // ==================== DASHBOARD ====================
@@ -63,7 +159,7 @@ exports.updateProfile = async (req, res) => {
  * @access  Private/Brand
  */
 exports.getDashboard = catchAsync(async (req, res) => {
-  const brandId = req.user._id;
+  const brandId = getBrandContextId(req);
 
   const [campaigns, deals, payments, recentActivity] = await Promise.all([
     Campaign.find({ brandId }).sort('-createdAt').limit(5).select('title status budget spent progress'),
@@ -138,7 +234,7 @@ async function getRecentActivity(brandId) {
  */
 exports.getAnalytics = catchAsync(async (req, res) => {
   const { period = '30d' } = req.query;
-  const brandId = req.user._id;
+  const brandId = getBrandContextId(req);
 
   let startDate = new Date();
   switch (period) {
@@ -322,16 +418,75 @@ exports.getCreatorById = catchAsync(async (req, res) => {
     return res.status(404).json({ success: false, error: 'Creator not found' });
   }
 
-  // Get recent deals with this creator
-  const recentDeals = await Deal.find({ creatorId: creator._id, status: 'completed' })
-    .populate('campaignId', 'title')
-    .sort('-completedAt')
-    .limit(5)
-    .lean();
+  const completedDealsQuery = { creatorId: creator._id, status: 'completed' };
+
+  const [recentDeals, completedDealsCount, completedDealsForEngagement] = await Promise.all([
+    Deal.find(completedDealsQuery)
+      .populate('campaignId', 'title')
+      .sort('-completedAt')
+      .limit(5)
+      .lean(),
+    Deal.countDocuments(completedDealsQuery),
+    Deal.find(completedDealsQuery)
+      .select('metrics deliverables')
+      .lean(),
+  ]);
+
+  // Fallback follower total in case aggregate field was not recalculated recently.
+  const computedFollowers = creator.totalFollowers || [
+    creator.socialMedia?.instagram?.followers || 0,
+    creator.socialMedia?.youtube?.subscribers || 0,
+    creator.socialMedia?.tiktok?.followers || 0,
+    creator.socialMedia?.twitter?.followers || 0,
+  ].reduce((sum, value) => sum + Number(value || 0), 0);
+
+  // Derive engagement from completed deal performance metrics when available.
+  let totalImpressions = 0;
+  let totalLikes = 0;
+  let totalComments = 0;
+  let totalShares = 0;
+
+  for (const deal of completedDealsForEngagement) {
+    const metrics = deal.metrics || {};
+    totalImpressions += Number(metrics.impressions || 0);
+    totalLikes += Number(metrics.likes || 0);
+    totalComments += Number(metrics.comments || 0);
+    totalShares += Number(metrics.shares || 0);
+
+    for (const deliverable of deal.deliverables || []) {
+      const performance = deliverable.performance || {};
+      totalImpressions += Number(performance.impressions || 0);
+      totalLikes += Number(performance.likes || 0);
+      totalComments += Number(performance.comments || 0);
+      totalShares += Number(performance.shares || 0);
+    }
+  }
+
+  const engagementFromDeals = totalImpressions > 0
+    ? ((totalLikes + totalComments + totalShares) / totalImpressions) * 100
+    : 0;
+
+  const normalizedEngagement = engagementFromDeals > 0
+    ? Number(engagementFromDeals.toFixed(2))
+    : Number(creator.averageEngagement || 0);
+
+  const normalizedStats = {
+    ...(creator.stats || {}),
+    completedDeals: completedDealsCount,
+    completedCampaigns: Math.max(Number(creator.stats?.completedCampaigns || 0), completedDealsCount),
+    averageRating: Number(creator.stats?.averageRating || 0),
+    totalReviews: Number(creator.stats?.totalReviews || 0),
+  };
 
   res.json({
     success: true,
-    creator: { ...creator, recentDeals },
+    creator: {
+      ...creator,
+      totalFollowers: computedFollowers,
+      averageEngagement: normalizedEngagement,
+      stats: normalizedStats,
+      recentDeals,
+    },
   });
 });
 
@@ -343,7 +498,7 @@ exports.getCreatorById = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getTeamMembers = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id)
+  const brand = await Brand.findById(getBrandContextId(req))
     .populate('teamMembers.userId', 'fullName email profilePicture lastActive')
     .populate('teamMembers.invitedBy', 'fullName email');
 
@@ -362,7 +517,8 @@ exports.getTeamMembers = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getTeamMemberDetails = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id);
+  const brandId = getBrandContextId(req);
+  const brand = await Brand.findById(brandId);
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const member = brand.teamMembers.id(req.params.memberId);
@@ -372,10 +528,10 @@ exports.getTeamMemberDetails = catchAsync(async (req, res) => {
   await member.populate('invitedBy', 'fullName email');
 
   const [campaigns, deals, totalCampaigns, totalDeals] = await Promise.all([
-    Campaign.find({ brandId: req.user._id, createdBy: member.userId._id }).sort('-createdAt').limit(5),
-    Deal.find({ brandId: req.user._id, createdBy: member.userId._id }).sort('-createdAt').limit(5),
-    Campaign.countDocuments({ brandId: req.user._id, createdBy: member.userId._id }),
-    Deal.countDocuments({ brandId: req.user._id, createdBy: member.userId._id }),
+    Campaign.find({ brandId, createdBy: member.userId._id }).sort('-createdAt').limit(5),
+    Deal.find({ brandId, createdBy: member.userId._id }).sort('-createdAt').limit(5),
+    Campaign.countDocuments({ brandId, createdBy: member.userId._id }),
+    Deal.countDocuments({ brandId, createdBy: member.userId._id }),
   ]);
 
   res.json({
@@ -399,7 +555,7 @@ exports.addTeamMember = catchAsync(async (req, res) => {
 
   const normalizedEmail = String(email).trim().toLowerCase();
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Check if user exists
@@ -492,7 +648,7 @@ exports.updateTeamMemberRole = catchAsync(async (req, res) => {
   const { memberId } = req.params;
   const { role } = req.body;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const member = brand.teamMembers.id(memberId);
@@ -517,7 +673,7 @@ exports.updateTeamMemberPermissions = catchAsync(async (req, res) => {
     return res.status(400).json({ success: false, error: 'Permissions must be an array' });
   }
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const member = brand.teamMembers.id(memberId);
@@ -537,7 +693,7 @@ exports.updateTeamMemberPermissions = catchAsync(async (req, res) => {
 exports.removeTeamMember = catchAsync(async (req, res) => {
   const { memberId } = req.params;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const memberIndex = brand.teamMembers.findIndex(m => m._id.toString() === memberId);
@@ -557,7 +713,7 @@ exports.removeTeamMember = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getInvitations = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const pending = brand.teamInvitations.filter(i => i.status === 'pending');
@@ -579,7 +735,7 @@ exports.sendInvitation = exports.addTeamMember;
 exports.resendInvitation = catchAsync(async (req, res) => {
   const { invitationId } = req.params;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const invitation = brand.teamInvitations.id(invitationId);
@@ -608,7 +764,7 @@ exports.resendInvitation = catchAsync(async (req, res) => {
 exports.cancelInvitation = catchAsync(async (req, res) => {
   const { invitationId } = req.params;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const invitation = brand.teamInvitations.id(invitationId);
@@ -762,7 +918,7 @@ exports.rejectInvitation = catchAsync(async (req, res) => {
 exports.getTeamActivity = catchAsync(async (req, res) => {
   const { days = 30, page = 1, limit = 20 } = req.query;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const activities = await brand.getTeamActivityLog(parseInt(days));
@@ -790,7 +946,7 @@ exports.getTeamActivity = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getPermissionsSummary = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Brand owner has all permissions
@@ -842,7 +998,7 @@ exports.checkUserPermission = catchAsync(async (req, res) => {
     return res.status(400).json({ success: false, error: 'Permission name is required' });
   }
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Check the target user (default to the requesting user)
@@ -875,7 +1031,7 @@ exports.checkUserPermission = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getRoleTemplates = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Include built-in defaults alongside custom templates
@@ -935,7 +1091,7 @@ exports.createRoleTemplate = catchAsync(async (req, res) => {
     });
   }
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Check for duplicate name
@@ -973,7 +1129,7 @@ exports.updateRoleTemplate = catchAsync(async (req, res) => {
   const { templateId } = req.params;
   const { name, description, permissions } = req.body;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const template = brand.roleTemplates.id(templateId);
@@ -1016,7 +1172,7 @@ exports.updateRoleTemplate = catchAsync(async (req, res) => {
 exports.deleteRoleTemplate = catchAsync(async (req, res) => {
   const { templateId } = req.params;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const template = brand.roleTemplates.id(templateId);
@@ -1052,7 +1208,7 @@ exports.updateTeamMemberStatus = catchAsync(async (req, res) => {
     });
   }
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const member = brand.teamMembers.id(memberId);
@@ -1094,7 +1250,7 @@ exports.updateTeamMemberStatus = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getPaymentMethods = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id).select('paymentMethods');
+  const brand = await Brand.findById(getBrandContextId(req)).select('paymentMethods');
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   res.json({ success: true, paymentMethods: brand.paymentMethods || [] });
@@ -1106,7 +1262,7 @@ exports.getPaymentMethods = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.addPaymentMethod = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   const newMethod = {
@@ -1130,7 +1286,7 @@ exports.addPaymentMethod = catchAsync(async (req, res) => {
 exports.setDefaultPaymentMethod = catchAsync(async (req, res) => {
   const { methodId } = req.params;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   // Reset default flag on all methods
@@ -1153,7 +1309,7 @@ exports.setDefaultPaymentMethod = catchAsync(async (req, res) => {
 exports.deletePaymentMethod = catchAsync(async (req, res) => {
   const { methodId } = req.params;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   brand.paymentMethods = brand.paymentMethods.filter(m => m._id.toString() !== methodId);
@@ -1172,14 +1328,14 @@ exports.deletePaymentMethod = catchAsync(async (req, res) => {
 exports.getInvoices = catchAsync(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
-  const payments = await Payment.find({ 'from.userId': req.user._id })
+  const payments = await Payment.find({ 'from.userId': getBrandContextId(req) })
     .sort('-createdAt')
     .skip((page - 1) * limit)
     .limit(parseInt(limit))
     .populate('dealId', 'title')
     .lean();
 
-  const total = await Payment.countDocuments({ 'from.userId': req.user._id });
+  const total = await Payment.countDocuments({ 'from.userId': getBrandContextId(req) });
 
   res.json({
     success: true,
@@ -1201,7 +1357,7 @@ exports.getInvoices = catchAsync(async (req, res) => {
  * @access  Private/Brand
  */
 exports.getTaxInfo = catchAsync(async (req, res) => {
-  const brand = await Brand.findById(req.user._id).select('taxInfo businessType taxId');
+  const brand = await Brand.findById(getBrandContextId(req)).select('taxInfo businessType taxId');
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   res.json({
@@ -1220,7 +1376,7 @@ exports.getTaxInfo = catchAsync(async (req, res) => {
 exports.updateTaxInfo = catchAsync(async (req, res) => {
   const { taxId, businessType, taxInfo } = req.body;
 
-  const brand = await Brand.findById(req.user._id);
+  const brand = await Brand.findById(getBrandContextId(req));
   if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
 
   if (taxId !== undefined) brand.taxId = taxId;

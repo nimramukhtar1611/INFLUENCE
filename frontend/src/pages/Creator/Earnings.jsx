@@ -227,8 +227,14 @@ const Earnings = () => {
     .reduce((sum, w) => sum + (w.amount || 0), 0);
 
   const pendingTotal = transactions
-    .filter(t => t.status === 'pending' || t.status === 'in-escrow')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
+    .filter((t) => ['pending', 'in-escrow', 'processing'].includes(t.status))
+    .filter((t) => !['withdrawal', 'refund', 'fee', 'penalty'].includes(t.type))
+    .reduce((sum, t) => sum + Number(t.netAmount ?? t.amount ?? 0), 0);
+
+  const realizedTotal = transactions
+    .filter((t) => ['completed', 'available'].includes(t.status))
+    .filter((t) => !['withdrawal', 'refund', 'fee', 'penalty'].includes(t.type))
+    .reduce((sum, t) => sum + Number(t.netAmount ?? t.amount ?? 0), 0);
 
   const payoutStatusText = payoutAccount.connected
     ? 'Connected'
@@ -317,7 +323,7 @@ const Earnings = () => {
 
         <StatsCard
           title="Lifetime"
-          value={formatCurrency(summary.total)}
+          value={formatCurrency(realizedTotal || summary.total)}
           change={`${transactions.length} transactions`}
           icon={DollarSign}
           color="bg-blue-500"

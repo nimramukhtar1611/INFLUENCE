@@ -31,11 +31,23 @@ import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
+import { useSocket } from '../../context/SocketContext';
+
+const normalizeConversationId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (typeof value._id === 'string') return value._id;
+    if (typeof value.id === 'string') return value.id;
+  }
+  return String(value);
+};
 
 const DealDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { socket, joinConversation, leaveConversation, sendMessage: sendSocketMessage, markAsRead } = useSocket();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,6 +57,7 @@ const DealDetails = () => {
   const [messageInput, setMessageInput] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef(null);
+  const [conversationId, setConversationId] = useState(null);
   const [showCounterModal, setShowCounterModal] = useState(false);
   const [counterData, setCounterData] = useState({ budget: '', deadline: '', message: '' });
   const [submittingCounter, setSubmittingCounter] = useState(false);
@@ -52,6 +65,16 @@ const DealDetails = () => {
   useEffect(() => {
     fetchDeal();
   }, [id]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    joinConversation(conversationId);
+
+    return () => {
+      leaveConversation(conversationId);
+    };
+  }, [conversationId, joinConversation, leaveConversation]);
 
   useEffect(() => {
     if (activeTab === 'messages') {
@@ -65,6 +88,34 @@ const DealDetails = () => {
     }
   }, [messages, activeTab]);
 
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+
+    const handleNewMessage = (message) => {
+      if (normalizeConversationId(message?.conversationId) !== conversationId) {
+        return;
+      }
+
+      setMessages((prev) => {
+        if (prev.some((msg) => msg._id === message._id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+
+      const senderId = message?.senderId?._id || message?.senderId;
+      if (String(senderId) !== String(user?._id) && message?._id) {
+        markAsRead(conversationId, [message._id]);
+      }
+    };
+
+    socket.on('new_message', handleNewMessage);
+
+    return () => {
+      socket.off('new_message', handleNewMessage);
+    };
+  }, [socket, conversationId, user, markAsRead]);
+
   const fetchDeal = async (showToast = false) => {
     try {
       if (showToast) setRefreshing(true);
@@ -74,6 +125,7 @@ const DealDetails = () => {
 
       if (response?.success) {
         setDeal(response.deal);
+        setConversationId(normalizeConversationId(response.deal?.conversationId));
       } else {
         toast.error(response?.error || 'Failed to load deal');
         navigate('/creator/deals');
@@ -104,14 +156,51 @@ const DealDetails = () => {
 
     try {
       setSendingMessage(true);
-      const response = await dealService.sendMessage(id, messageInput.trim());
 
-      if (response?.success) {
-        setMessageInput('');
-        await fetchMessages();
-      } else {
-        toast.error('Failed to send message');
+      const content = messageInput.trim();
+      const socketSent = await new Promise((resolve) => {
+        if (!conversationId) {
+          resolve(false);
+          return;
+        }
+
+        const timeoutId = setTimeout(() => resolve(false), 2000);
+        const emitted = sendSocketMessage({
+          conversationId,
+          content,
+          dealId: id,
+          contentType: 'text'
+        }, (ack) => {
+          clearTimeout(timeoutId);
+          resolve(Boolean(ack?.success));
+        });
+
+        if (!emitted) {
+          clearTimeout(timeoutId);
+          resolve(false);
+        }
+      });
+
+      if (!socketSent) {
+        const response = await dealService.sendMessage(id, content);
+        if (!response?.success) {
+          toast.error('Failed to send message');
+          return;
+        }
+
+        if (response.message) {
+          setMessages((prev) => {
+            if (prev.some((msg) => msg._id === response.message._id)) {
+              return prev;
+            }
+            return [...prev, response.message];
+          });
+        }
+
+        await fetchDeal();
       }
+
+      setMessageInput('');
     } catch (error) {
       console.error('Send message error:', error);
       toast.error('Failed to send message');
@@ -164,18 +253,32 @@ const DealDetails = () => {
     }
   };
 
-  const handleReject = async () => {
-    if (!window.confirm('Are you sure you want to reject this deal?')) return;
+  const handleCancelDeal = async () => {
+    if (!window.confirm('Are you sure you want to cancel this deal?')) return;
     try {
-      const response = await dealService.rejectDeal(id);
+      const response = await dealService.cancelDeal(id, 'Cancelled by creator');
       if (response?.success) {
-        toast.success('Deal rejected');
-        navigate('/creator/deals');
+        toast.success('Deal cancelled');
+        await fetchDeal();
       } else {
-        toast.error(response?.error || 'Failed to reject deal');
+        toast.error(response?.error || 'Failed to cancel deal');
       }
     } catch (error) {
-      toast.error('Failed to reject deal');
+      toast.error('Failed to cancel deal');
+    }
+  };
+
+  const handleAcceptCounterOffer = async () => {
+    try {
+      const response = await dealService.updateDealStatus(id, 'accepted', 'Counter offer accepted');
+      if (response?.success) {
+        toast.success('Counter offer accepted');
+        await fetchDeal();
+      } else {
+        toast.error(response?.error || 'Failed to accept counter offer');
+      }
+    } catch (error) {
+      toast.error('Failed to accept counter offer');
     }
   };
 
@@ -183,6 +286,7 @@ const DealDetails = () => {
     switch (status) {
       case 'completed':   return 'bg-green-100 text-green-800';
       case 'pending':     return 'bg-yellow-100 text-yellow-800';
+      case 'negotiating': return 'bg-indigo-100 text-indigo-800';
       case 'in-progress': return 'bg-blue-100 text-blue-800';
       case 'revision':    return 'bg-orange-100 text-orange-800';
       case 'accepted':    return 'bg-indigo-100 text-indigo-800';
@@ -211,6 +315,17 @@ const DealDetails = () => {
       </div>
     );
   }
+
+  const latestCounter = deal.negotiation?.length
+    ? deal.negotiation[deal.negotiation.length - 1]
+    : null;
+  const latestCounterProposedById = latestCounter?.proposedBy?._id || latestCounter?.proposedBy;
+  const canCreatorAcceptCounter = Boolean(
+    deal.status === 'negotiating' &&
+    latestCounter &&
+    latestCounterProposedById &&
+    String(latestCounterProposedById) !== String(user?._id)
+  );
 
   return (
     <div className="space-y-6">
@@ -362,6 +477,22 @@ const DealDetails = () => {
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+
+              {deal.status === 'negotiating' && latestCounter && (
+                <div className="mb-4 p-3 rounded-lg border border-indigo-100 bg-indigo-50">
+                  <p className="text-xs text-indigo-700 font-medium mb-1">Latest Counter Offer</p>
+                  {latestCounter.budget && (
+                    <p className="text-sm text-indigo-800">Budget: {formatCurrency(latestCounter.budget)}</p>
+                  )}
+                  {latestCounter.deadline && (
+                    <p className="text-sm text-indigo-800">Deadline: {formatDate(latestCounter.deadline)}</p>
+                  )}
+                  {latestCounter.message && (
+                    <p className="text-sm text-indigo-900 mt-1">{latestCounter.message}</p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-3">
                 {deal.status === 'pending' && (
                   <>
@@ -371,9 +502,21 @@ const DealDetails = () => {
                     <Button variant="outline" fullWidth icon={Edit} onClick={() => setShowCounterModal(true)}>
                       Counter Offer
                     </Button>
-                    <Button variant="danger" fullWidth icon={XCircle} onClick={handleReject}>
-                      Reject Deal
-                    </Button>
+                  </>
+                )}
+
+                {deal.status === 'negotiating' && (
+                  <>
+                    {canCreatorAcceptCounter && (
+                      <Button variant="primary" fullWidth icon={ThumbsUp} onClick={handleAcceptCounterOffer}>
+                        Accept Counter Offer
+                      </Button>
+                    )}
+                    {canCreatorAcceptCounter && (
+                      <Button variant="outline" fullWidth icon={Edit} onClick={() => setShowCounterModal(true)}>
+                        Counter Again
+                      </Button>
+                    )}
                   </>
                 )}
 
@@ -397,9 +540,9 @@ const DealDetails = () => {
                   Send Message
                 </Button>
 
-                {deal.negotiating === true && (
-                  <Button variant="outline" fullWidth icon={Edit} onClick={() => setShowCounterModal(true)}>
-                    Negotiate Terms
+                {['pending', 'negotiating'].includes(deal.status) && (
+                  <Button variant="danger" fullWidth icon={XCircle} onClick={handleCancelDeal}>
+                    Cancel Deal
                   </Button>
                 )}
 
@@ -544,8 +687,8 @@ const DealDetails = () => {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length > 0 ? (
               messages.map((msg) => {
-                const isOwn = msg.senderId?._id === user?._id ||
-                              msg.senderId === user?._id;
+                const senderId = msg.senderId?._id || msg.senderId;
+                const isOwn = String(senderId) === String(user?._id);
                 return (
                   <div key={msg._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-lg p-3 ${

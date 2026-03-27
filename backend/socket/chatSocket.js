@@ -65,7 +65,7 @@ const initializeSocket = (socketIo) => {
     });
 
     // ==================== SEND MESSAGE ====================
-    socket.on('send_message', async (data) => {
+    socket.on('send_message', async (data, callback) => {
       try {
         const {
           conversationId,
@@ -80,7 +80,12 @@ const initializeSocket = (socketIo) => {
           _id: conversationId,
           participants: { $elemMatch: { user_id: userId, is_active: true } }
         });
-        if (!conv) return socket.emit('error', { message: 'Conversation not found' });
+        if (!conv) {
+          if (typeof callback === 'function') {
+            callback({ success: false, error: 'Conversation not found' });
+          }
+          return socket.emit('error', { message: 'Conversation not found' });
+        }
 
         // FIX: all camelCase fields
         const message = new Message({
@@ -127,8 +132,15 @@ const initializeSocket = (socketIo) => {
             content:   content?.substring(0, 100)
           });
         }
+
+        if (typeof callback === 'function') {
+          callback({ success: true, message });
+        }
       } catch (err) {
         console.error('Send message socket error:', err.message);
+        if (typeof callback === 'function') {
+          callback({ success: false, error: 'Failed to send message' });
+        }
         socket.emit('error', { message: 'Failed to send message' });
       }
     });

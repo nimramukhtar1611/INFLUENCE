@@ -1,11 +1,11 @@
 // pages/Brand/Settings.js - COMPLETE FIXED VERSION
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   User, Bell, Shield, Eye, Lock, Globe, Save, Loader, ChevronRight,
   Mail, Phone, MapPin, Building2, Instagram, Youtube, Twitter, Facebook, Linkedin,
   AlertCircle, CheckCircle, XCircle, DollarSign, CreditCard, Wallet,
   Key, Smartphone, Monitor, Moon, Sun, Languages, Clock, RefreshCw,
-  Trash2, Edit, Plus, Download, Upload, HelpCircle, FileText, Settings as SettingsIcon
+  Trash2, Edit, Plus, Download, Upload, HelpCircle, FileText, Camera, Settings as SettingsIcon
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import brandService from '../../services/brandService';
@@ -18,8 +18,114 @@ import toast from 'react-hot-toast';
 
 // ==================== SUB-COMPONENTS ====================
 
-const ProfileSettings = ({ settings, setSettings }) => (
+const toSocialUrl = (platform, value) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  const clean = trimmed.replace(/^@+/, '');
+  const map = {
+    instagram: `https://instagram.com/${clean}`,
+    twitter: `https://x.com/${clean}`,
+    facebook: `https://facebook.com/${clean}`,
+    linkedin: `https://linkedin.com/in/${clean}`,
+    youtube: `https://youtube.com/@${clean}`
+  };
+
+  return map[platform] || trimmed;
+};
+
+const ProfilePictureUpload = ({ currentImage, onUpload }) => {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(currentImage || '');
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreview(currentImage || '');
+  }, [currentImage]);
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const previewReader = new FileReader();
+    previewReader.onloadend = () => setPreview(previewReader.result);
+    previewReader.readAsDataURL(file);
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+
+      const response = await api.post('/upload/profile-picture', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Upload failed');
+      }
+
+      const uploadedUrl = response.data.profilePicture || response.data.file?.url;
+      if (!uploadedUrl) {
+        throw new Error('Upload succeeded but no image URL was returned');
+      }
+
+      onUpload(uploadedUrl);
+      toast.success('Profile picture updated');
+    } catch (error) {
+      setPreview(currentImage || '');
+      toast.error(error.response?.data?.error || error.message || 'Failed to upload profile picture');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  return (
+    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <img
+            src={preview || 'https://via.placeholder.com/96?text=Brand'}
+            alt="Brand profile"
+            className="w-24 h-24 rounded-full object-cover border-2 border-white shadow"
+          />
+          {uploading && (
+            <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+              <Loader className="w-5 h-5 text-white animate-spin" />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            icon={Camera}
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? 'Uploading...' : 'Change Photo'}
+          </Button>
+          <p className="text-xs text-gray-500 mt-2">JPG, PNG, WEBP up to 5MB.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProfileSettings = ({ settings, setSettings, profileImage, onProfileImageUpload }) => (
   <div className="space-y-6">
+    <ProfilePictureUpload currentImage={profileImage} onUpload={onProfileImageUpload} />
+
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Input
         label="Brand Name *"
@@ -219,10 +325,11 @@ const SocialSettings = ({ settings, setSettings }) => {
 
 // ==================== MAIN COMPONENT ====================
 const BrandSettings = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [profileImage, setProfileImage] = useState('');
 
   // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -352,6 +459,7 @@ const BrandSettings = () => {
         const res = await brandService.getProfile();
         if (res?.success) {
           const brand = res.brand || res;
+          setProfileImage(brand.logo || brand.profilePicture || user?.profilePicture || '');
           setSettings({
             brandName: brand.brandName || user?.brandName || '',
             industry: brand.industry || 'Other',
@@ -366,8 +474,12 @@ const BrandSettings = () => {
             address: brand.address || {
               street: '', city: '', state: '', country: '', zipCode: ''
             },
-            socialMedia: brand.socialMedia || {
-              instagram: '', twitter: '', facebook: '', linkedin: '', youtube: ''
+            socialMedia: {
+              instagram: toSocialUrl('instagram', brand.socialMedia?.instagram || ''),
+              twitter: toSocialUrl('twitter', brand.socialMedia?.twitter || ''),
+              facebook: toSocialUrl('facebook', brand.socialMedia?.facebook || ''),
+              linkedin: toSocialUrl('linkedin', brand.socialMedia?.linkedin || ''),
+              youtube: toSocialUrl('youtube', brand.socialMedia?.youtube || '')
             }
           });
         }
@@ -380,6 +492,16 @@ const BrandSettings = () => {
     };
     fetchProfileData();
   }, [user]);
+
+  const handleProfileImageUpload = (imageUrl) => {
+    setProfileImage(imageUrl);
+    if (updateUser) {
+      updateUser({ profilePicture: imageUrl });
+    }
+    if (refreshUser) {
+      refreshUser();
+    }
+  };
 
   // ==================== SAVE TO DATABASE (CLEAN) ====================
   const handleSaveSettings = async () => {
@@ -485,7 +607,14 @@ const BrandSettings = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <ProfileSettings settings={settings} setSettings={setSettings} />;
+        return (
+          <ProfileSettings
+            settings={settings}
+            setSettings={setSettings}
+            profileImage={profileImage || user?.profilePicture}
+            onProfileImageUpload={handleProfileImageUpload}
+          />
+        );
       case 'company':
         return <CompanySettings settings={settings} setSettings={setSettings} />;
       case 'social':

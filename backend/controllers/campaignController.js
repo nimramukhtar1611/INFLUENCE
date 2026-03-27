@@ -5,20 +5,24 @@ const Deal = require('../models/Deal');
 const Notification = require('../models/Notification');
 const Creator = require('../models/Creator');
 const { getBrandFinancials } = require('./paymentController');
+
+const getBrandContextId = (req) => req.brandId || req.user?._id;
+
 // ==================== CREATE CAMPAIGN ====================
 exports.createCampaign = async (req, res) => {
   try {
-    console.log('Creating campaign for brand:', req.user._id);
+    const brandId = getBrandContextId(req);
+    console.log('Creating campaign for brand:', brandId);
     
     const campaignData = {
       ...req.body,
-      brandId: req.user._id,
+      brandId,
       createdBy: req.user._id,
       status: 'draft'
     };
 
     // Check brand balance
-    const financials = await getBrandFinancials(req.user._id);
+    const financials = await getBrandFinancials(brandId);
     if (campaignData.budget > financials.available) {
       return res.status(400).json({
         success: false,
@@ -30,7 +34,7 @@ exports.createCampaign = async (req, res) => {
     await campaign.save();
 
     // Update brand stats
-    await Brand.findByIdAndUpdate(req.user._id, {
+    await Brand.findByIdAndUpdate(brandId, {
       $inc: { 'stats.totalCampaigns': 1 }
     });
 
@@ -52,8 +56,9 @@ exports.createCampaign = async (req, res) => {
 exports.getBrandCampaigns = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
+    const brandId = getBrandContextId(req);
     
-    const query = { brandId: req.user._id };
+    const query = { brandId };
     if (status && status !== 'all') {
       query.status = status;
     }
@@ -67,7 +72,7 @@ exports.getBrandCampaigns = async (req, res) => {
         .lean(),
       Campaign.countDocuments(query),
       Campaign.aggregate([
-        { $match: { brandId: req.user._id } },
+        { $match: { brandId } },
         {
           $group: {
             _id: '$status',
@@ -260,6 +265,7 @@ exports.reviewApplication = async (req, res) => {
   try {
     const { campaignId, applicationId } = req.params;
     const { status, feedback } = req.body;
+    const brandId = getBrandContextId(req);
 
     if (!['accepted', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -270,7 +276,7 @@ exports.reviewApplication = async (req, res) => {
 
     const campaign = await Campaign.findOne({
       _id: campaignId,
-      brandId: req.user._id
+      brandId
     });
 
     if (!campaign) {
@@ -315,10 +321,10 @@ exports.reviewApplication = async (req, res) => {
         // Create deal
         const deal = new Deal({
           campaignId,
-          brandId: req.user._id,
+          brandId,
           creatorId: application.creatorId,
           type: 'application',
-          status: 'pending',
+          status: 'accepted',
           budget: application.rate || campaign.budget,
           deliverables: campaign.deliverables,
           deadline: campaign.endDate,
@@ -332,6 +338,11 @@ exports.reviewApplication = async (req, res) => {
           dealId: deal._id
         });
       } else {
+        if (existingDeal.status !== 'accepted') {
+          existingDeal.status = 'accepted';
+          await existingDeal.save();
+        }
+
         campaign.selectedCreators.push({
           creatorId: application.creatorId,
           selectedAt: new Date(),
@@ -416,6 +427,7 @@ exports.getCreatorCampaigns = async (req, res) => {
 exports.getCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findById(id)
       .populate('brandId', 'brandName logo website description')
@@ -430,7 +442,7 @@ exports.getCampaign = async (req, res) => {
     }
 
     // Check authorization
-    if (campaign.brandId._id.toString() !== req.user._id.toString() && 
+    if (campaign.brandId._id.toString() !== brandId.toString() && 
         req.user.userType !== 'admin' &&
         !campaign.applications.some(app => app.creatorId?._id?.toString() === req.user._id.toString())) {
       return res.status(403).json({ 
@@ -456,6 +468,7 @@ exports.getCampaign = async (req, res) => {
 exports.updateCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     // If budget is being updated, check balance
     if (req.body.budget) {
@@ -466,7 +479,7 @@ exports.updateCampaign = async (req, res) => {
 
       const budgetDifference = req.body.budget - currentCampaign.budget;
       if (budgetDifference > 0) {
-        const financials = await getBrandFinancials(req.user._id);
+        const financials = await getBrandFinancials(brandId);
         if (budgetDifference > financials.available) {
           return res.status(400).json({
             success: false,
@@ -477,7 +490,7 @@ exports.updateCampaign = async (req, res) => {
     }
 
     const campaign = await Campaign.findOneAndUpdate(
-      { _id: id, brandId: req.user._id },
+      { _id: id, brandId },
       { $set: req.body },
       { new: true, runValidators: true }
     );
@@ -507,10 +520,11 @@ exports.updateCampaign = async (req, res) => {
 exports.deleteCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOneAndDelete({
       _id: id,
-      brandId: req.user._id
+      brandId
     });
 
     if (!campaign) {
@@ -540,9 +554,10 @@ exports.deleteCampaign = async (req, res) => {
 exports.publishCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOneAndUpdate(
-      { _id: id, brandId: req.user._id },
+      { _id: id, brandId },
       {
         $set: {
           status: 'active',
@@ -577,9 +592,10 @@ exports.publishCampaign = async (req, res) => {
 exports.pauseCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOneAndUpdate(
-      { _id: id, brandId: req.user._id },
+      { _id: id, brandId },
       { $set: { status: 'paused' } },
       { new: true }
     );
@@ -609,9 +625,10 @@ exports.pauseCampaign = async (req, res) => {
 exports.completeCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOneAndUpdate(
-      { _id: id, brandId: req.user._id },
+      { _id: id, brandId },
       {
         $set: {
           status: 'completed',
@@ -646,9 +663,10 @@ exports.completeCampaign = async (req, res) => {
 exports.archiveCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOneAndUpdate(
-      { _id: id, brandId: req.user._id },
+      { _id: id, brandId },
       { $set: { status: 'archived' } },
       { new: true }
     );
@@ -678,10 +696,11 @@ exports.archiveCampaign = async (req, res) => {
 exports.duplicateCampaign = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const original = await Campaign.findOne({
       _id: id,
-      brandId: req.user._id
+      brandId
     });
 
     if (!original) {
@@ -726,10 +745,11 @@ exports.inviteCreator = async (req, res) => {
   try {
     const { id } = req.params;
     const { creatorId, message } = req.body;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOne({
       _id: id,
-      brandId: req.user._id,
+      brandId,
       status: 'active'
     });
 
@@ -790,10 +810,11 @@ exports.inviteCreator = async (req, res) => {
 exports.getCampaignAnalytics = async (req, res) => {
   try {
     const { id } = req.params;
+    const brandId = getBrandContextId(req);
 
     const campaign = await Campaign.findOne({
       _id: id,
-      brandId: req.user._id
+      brandId
     });
 
     if (!campaign) {

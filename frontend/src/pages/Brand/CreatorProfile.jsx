@@ -38,6 +38,11 @@ const CreatorProfile = () => {
   if (loading) return <Loader fullScreen />;
   if (!creator) return null;
 
+  const completedDealsCount =
+    creator.stats?.completedDeals ||
+    creator.stats?.completedCampaigns ||
+    0;
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-gray-900 mb-6">
@@ -76,7 +81,7 @@ const CreatorProfile = () => {
           </div>
           <div className="bg-gray-50 p-4 rounded-lg text-center">
             <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-gray-900">{creator.stats?.completedCampaigns || 0}</p>
+            <p className="text-2xl font-bold text-gray-900">{completedDealsCount}</p>
             <p className="text-sm text-gray-600">Completed Deals</p>
           </div>
         </div>

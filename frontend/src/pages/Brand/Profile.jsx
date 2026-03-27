@@ -16,6 +16,24 @@ import Modal from '../../components/Common/Modal';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
+const toSocialUrl = (platform, value) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  const clean = trimmed.replace(/^@+/, '');
+  const map = {
+    instagram: `https://instagram.com/${clean}`,
+    twitter: `https://x.com/${clean}`,
+    facebook: `https://facebook.com/${clean}`,
+    linkedin: `https://linkedin.com/in/${clean}`,
+    youtube: `https://youtube.com/@${clean}`
+  };
+
+  return map[platform] || trimmed;
+};
+
 const BrandProfile = () => {
   const { user } = useAuth();
   const { profile: profileFromHook, loading: hookLoading, refreshData } = useBrandData();
@@ -93,7 +111,11 @@ const BrandProfile = () => {
           street: '', city: '', state: '', country: '', zipCode: ''
         },
         socialMedia: profileFromHook.socialMedia || {
-          instagram: '', twitter: '', facebook: '', linkedin: '', youtube: ''
+          instagram: toSocialUrl('instagram', profileFromHook.socialMedia?.instagram || ''),
+          twitter: toSocialUrl('twitter', profileFromHook.socialMedia?.twitter || ''),
+          facebook: toSocialUrl('facebook', profileFromHook.socialMedia?.facebook || ''),
+          linkedin: toSocialUrl('linkedin', profileFromHook.socialMedia?.linkedin || ''),
+          youtube: toSocialUrl('youtube', profileFromHook.socialMedia?.youtube || '')
         },
         preferences: profileFromHook.preferences || {
           preferredNiches: [], preferredPlatforms: [], minFollowers: '', maxFollowers: '', minEngagement: ''
@@ -145,7 +167,7 @@ const BrandProfile = () => {
         socialMedia: Object.fromEntries(
           Object.entries(formData.socialMedia)
             .filter(([_, v]) => v?.trim())
-            .map(([k, v]) => [k, v.replace('@', '')])
+            .map(([k, v]) => [k, v.trim()])
         )
       };
 
@@ -218,7 +240,11 @@ const BrandProfile = () => {
           street: '', city: '', state: '', country: '', zipCode: ''
         },
         socialMedia: profile.socialMedia || {
-          instagram: '', twitter: '', facebook: '', linkedin: '', youtube: ''
+          instagram: toSocialUrl('instagram', profile.socialMedia?.instagram || ''),
+          twitter: toSocialUrl('twitter', profile.socialMedia?.twitter || ''),
+          facebook: toSocialUrl('facebook', profile.socialMedia?.facebook || ''),
+          linkedin: toSocialUrl('linkedin', profile.socialMedia?.linkedin || ''),
+          youtube: toSocialUrl('youtube', profile.socialMedia?.youtube || '')
         },
         preferences: profile.preferences || {
           preferredNiches: [], preferredPlatforms: [], minFollowers: '', maxFollowers: '', minEngagement: ''

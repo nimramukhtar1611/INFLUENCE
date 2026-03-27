@@ -63,7 +63,7 @@ const CreatorDeals = () => {
 
       {/* Status filters */}
       <div className="flex flex-wrap gap-2">
-        {['all', 'pending', 'accepted', 'in-progress', 'completed', 'cancelled', 'revision'].map(s => (
+        {['all', 'pending', 'negotiating', 'accepted', 'in-progress', 'completed', 'cancelled', 'revision'].map(s => (
           <button
             key={s}
             onClick={() => { setFilter(s); setPagination(p => ({ ...p, page: 1 })); }}

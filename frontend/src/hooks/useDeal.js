@@ -381,6 +381,38 @@ const fetchDeal = useCallback(async (id) => {
     }
   }, [currentDeal, fetchDeal]);
 
+  // ==================== RATE DEAL ====================
+  const rateDeal = useCallback(async (dealId, score, review = '', criteria = {}) => {
+    try {
+      setLoading(true);
+      const response = await dealService.rateDeal(dealId, {
+        score,
+        review,
+        criteria
+      });
+
+      if (response?.success) {
+        if (currentDeal?._id === dealId) {
+          await fetchDeal(dealId);
+        }
+        return { success: true, data: response };
+      }
+
+      return {
+        success: false,
+        error: response?.error || 'Failed to rate deal'
+      };
+    } catch (error) {
+      console.error('Error rating deal:', error);
+      return {
+        success: false,
+        error: error?.response?.data?.error || 'Failed to rate deal'
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, [currentDeal, fetchDeal]);
+
   return {
     loading,
     deals,
@@ -404,7 +436,8 @@ const fetchDeal = useCallback(async (id) => {
     getDealMessages,
     sendMessage,
     submitDeliverables,
-    approveDeliverable
+    approveDeliverable,
+    rateDeal
   };
 };
 

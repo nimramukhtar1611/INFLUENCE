@@ -41,7 +41,6 @@ import BrandDealDetails from './pages/Brand/DealDetails';
 import BrandAnalytics from './pages/Brand/Analytics';
 import BrandPayments from './pages/Brand/Payments';
 import BrandProfile from './pages/Brand/Profile';
-import BrandTeamMembers from './pages/Brand/TeamMembers';
 import BrandSettings from './pages/Brand/Settings';
 import BrandInbox from './pages/Brand/Inbox';
 
@@ -153,7 +152,6 @@ function App() {
                             <Route path="payments" element={<BrandPayments />} />
                             <Route path="createdeal" element={<CreateDeal />} />
                             <Route path="profile" element={<BrandProfile />} />
-                            <Route path="team" element={<BrandTeamMembers />} />
                             <Route path="settings" element={<BrandSettings />} />
                             <Route path="subscription" element={<SubscriptionManager />} />
                              <Route path="campaigns/:id/edit" element={<BrandCampaignEdit />} />

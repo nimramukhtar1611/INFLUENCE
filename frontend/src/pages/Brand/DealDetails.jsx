@@ -44,6 +44,18 @@ import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 import EmojiPicker from 'emoji-picker-react';
 
+const normalizeConversationId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (typeof value._id === 'string') return value._id;
+    if (typeof value.id === 'string') return value.id;
+  }
+  return String(value);
+};
+
+const getMessageConversationId = (message) => normalizeConversationId(message?.conversationId);
+
 const DealDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,8 +66,6 @@ const DealDetails = () => {
     loading,
     fetchDeal,
     updateDealStatus,
-    acceptDeal,
-    rejectDeal,
     counterOffer,
     requestRevision,
     approveDeliverable,
@@ -95,19 +105,26 @@ const DealDetails = () => {
     if (id) {
       loadDeal();
     }
-    return () => {
-      if (conversationId) leaveConversation(conversationId);
-    };
   }, [id]);
+
+  useEffect(() => () => {
+    if (conversationId) leaveConversation(conversationId);
+  }, [conversationId, leaveConversation]);
 
   useEffect(() => {
     if (!socket || !conversationId) return;
 
     const handleNewMessage = (message) => {
-      if (message.conversationId === conversationId) {
-        setMessages(prev => [...prev, message]);
+      if (getMessageConversationId(message) === conversationId) {
+        setMessages(prev => {
+          if (prev.some((msg) => msg._id === message._id)) {
+            return prev;
+          }
+          return [...prev, message];
+        });
         scrollToBottom();
-        if (message.senderId?._id !== user?._id) {
+        const senderId = message?.senderId?._id || message?.senderId;
+        if (String(senderId) !== String(user?._id)) {
           markMessagesAsRead([message._id]);
         }
       }
@@ -171,9 +188,12 @@ const DealDetails = () => {
   const loadDeal = async () => {
     const data = await fetchDeal(id);
     if (data) {
-      if (data.conversationId) {
-        setConversationId(data.conversationId);
-        joinConversation(data.conversationId);
+      const resolvedConversationId = normalizeConversationId(data.conversationId);
+      if (resolvedConversationId) {
+        setConversationId(resolvedConversationId);
+        joinConversation(resolvedConversationId);
+      } else {
+        setConversationId(null);
       }
       const msgs = await getDealMessages(id);
       setMessages(msgs || []);
@@ -206,10 +226,11 @@ const DealDetails = () => {
   };
 
   const handleSendMessage = async () => {
-    if ((!messageInput.trim() && attachments.length === 0) || !conversationId || sendingMessage) return;
+    if ((!messageInput.trim() && attachments.length === 0) || sendingMessage) return;
 
     setSendingMessage(true);
     try {
+      const content = messageInput.trim();
       let uploadedAttachments = [];
       if (attachments.length > 0) {
         setUploading(true);
@@ -226,28 +247,56 @@ const DealDetails = () => {
         setUploading(false);
       }
 
-      const success = sendSocketMessage({
-        conversationId,
-        content: messageInput,
-        attachments: uploadedAttachments,
-        replyTo: replyingTo?._id,
-        dealId: id,
-        contentType: 'text'
+      const socketSent = await new Promise((resolve) => {
+        if (!conversationId) {
+          resolve(false);
+          return;
+        }
+
+        const timeoutId = setTimeout(() => resolve(false), 2000);
+        const emitted = sendSocketMessage({
+          conversationId,
+          content,
+          attachments: uploadedAttachments,
+          replyTo: replyingTo?._id,
+          dealId: id,
+          contentType: 'text'
+        }, (ack) => {
+          clearTimeout(timeoutId);
+          resolve(Boolean(ack?.success));
+        });
+
+        if (!emitted) {
+          clearTimeout(timeoutId);
+          resolve(false);
+        }
       });
 
-      if (success) {
-        setMessageInput('');
-        setAttachments([]);
-        setReplyingTo(null);
-        if (isTyping && conversationId) {
-          setIsTyping(false);
-          socket?.emit('typing:stop', { conversationId });
+      if (!socketSent) {
+        const sentMessage = await sendMessage(id, content, uploadedAttachments);
+        if (!sentMessage) {
+          throw new Error('Failed to send message');
         }
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      } else {
-        // fallback to HTTP
-        await sendMessage(id, messageInput, uploadedAttachments);
+
+        setMessages((prev) => {
+          if (prev.some((msg) => msg._id === sentMessage._id)) {
+            return prev;
+          }
+          return [...prev, sentMessage];
+        });
+
+        await loadDeal();
       }
+
+      setMessageInput('');
+      setAttachments([]);
+      setReplyingTo(null);
+      if (isTyping && conversationId) {
+        setIsTyping(false);
+        socket?.emit('typing:stop', { conversationId });
+      }
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      scrollToBottom();
     } catch (error) {
       toast.error('Failed to send message');
     } finally {
@@ -319,7 +368,11 @@ const DealDetails = () => {
       return;
     }
     try {
-      await counterOffer(id, counterData);
+      await counterOffer(id, {
+        budget: counterData.budget ? parseFloat(counterData.budget) : undefined,
+        deadline: counterData.deadline || undefined,
+        message: counterData.message
+      });
       toast.success('Counter offer sent');
       setShowCounterModal(false);
       setCounterData({ budget: '', deadline: '', message: '' });
@@ -331,7 +384,12 @@ const DealDetails = () => {
 
   const handleRateDeal = async () => {
     try {
-      await rateDeal(id, ratingScore, ratingReview);
+      const result = await rateDeal(id, ratingScore, ratingReview);
+      if (!result?.success) {
+        toast.error(result?.error || 'Failed to rate deal');
+        return;
+      }
+
       toast.success('Deal rated');
       setShowRatingModal(false);
       loadDeal();
@@ -346,6 +404,7 @@ const DealDetails = () => {
       case 'accepted': return 'bg-blue-100 text-blue-800';
       case 'in-progress': return 'bg-purple-100 text-purple-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'negotiating': return 'bg-indigo-100 text-indigo-800';
       case 'revision': return 'bg-orange-100 text-orange-800';
       case 'cancelled':
       case 'declined': return 'bg-red-100 text-red-800';
@@ -387,6 +446,16 @@ const DealDetails = () => {
   const isBrand = user?.userType === 'brand';
   const otherParty = isBrand ? deal.creatorId : deal.brandId;
   const submittedDeliverables = deal.deliverables?.filter(d => d.status === 'submitted') || [];
+  const latestCounter = deal.negotiation?.length
+    ? deal.negotiation[deal.negotiation.length - 1]
+    : null;
+  const latestCounterProposedById = latestCounter?.proposedBy?._id || latestCounter?.proposedBy;
+  const canBrandAcceptCounter = Boolean(
+    deal.status === 'negotiating' &&
+    latestCounter &&
+    latestCounterProposedById &&
+    String(latestCounterProposedById) !== String(user?._id)
+  );
 
   return (
     <div className="space-y-6">
@@ -553,33 +622,47 @@ const DealDetails = () => {
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+
+              {deal.status === 'negotiating' && latestCounter && (
+                <div className="mb-4 p-3 rounded-lg border border-indigo-100 bg-indigo-50">
+                  <p className="text-xs text-indigo-700 font-medium mb-1">Latest Counter Offer</p>
+                  {latestCounter.budget && (
+                    <p className="text-sm text-indigo-800">Budget: {formatCurrency(latestCounter.budget)}</p>
+                  )}
+                  {latestCounter.deadline && (
+                    <p className="text-sm text-indigo-800">Deadline: {formatDate(latestCounter.deadline)}</p>
+                  )}
+                  {latestCounter.message && (
+                    <p className="text-sm text-indigo-900 mt-1">{latestCounter.message}</p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-3">
-                {deal.status === 'pending' && isBrand && (
+                {deal.status === 'negotiating' && isBrand && (
                   <>
-                    <Button variant="success" fullWidth icon={CheckCircle} onClick={() => acceptDeal(id)}>
-                      Accept Deal
-                    </Button>
-                    <Button variant="outline" fullWidth icon={Edit} onClick={() => setShowCounterModal(true)}>
-                      Counter Offer
-                    </Button>
-                    <Button variant="danger" fullWidth icon={XCircle} onClick={() => rejectDeal(id)}>
-                      Reject Deal
-                    </Button>
+                    {canBrandAcceptCounter && (
+                      <Button
+                        variant="success"
+                        fullWidth
+                        icon={CheckCircle}
+                        onClick={() => updateDealStatus(id, 'accepted', 'Counter offer accepted')}
+                      >
+                        Accept Counter Offer
+                      </Button>
+                    )}
+                    {canBrandAcceptCounter && (
+                      <Button variant="outline" fullWidth icon={Edit} onClick={() => setShowCounterModal(true)}>
+                        Counter Again
+                      </Button>
+                    )}
                   </>
                 )}
 
-                {['accepted', 'in-progress', 'revision'].includes(deal.status) && isBrand && (
+                {['accepted', 'in-progress', 'revision', 'negotiating'].includes(deal.status) && isBrand && (
                   <Button variant="primary" fullWidth icon={MessageSquare} onClick={() => setActiveTab('messages')}>
                     Send Message
                   </Button>
-                )}
-
-                {deal.conversationId && isBrand && (
-                  <Link to={`/brand/inbox?conversationId=${deal.conversationId}`} className="block w-full">
-                    <Button variant="outline" fullWidth icon={MessageSquare}>
-                      Chat with Creator
-                    </Button>
-                  </Link>
                 )}
 
                 {deal.status === 'in-progress' && isBrand && submittedDeliverables.length > 0 && (
@@ -599,7 +682,7 @@ const DealDetails = () => {
                   </Button>
                 )}
 
-                {deal.status !== 'cancelled' && deal.status !== 'completed' && (
+                {['pending', 'negotiating'].includes(deal.status) && (
                   <Button variant="danger" fullWidth icon={Flag} onClick={() => setShowCancelModal(true)}>
                     Cancel Deal
                   </Button>
@@ -772,7 +855,8 @@ const DealDetails = () => {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
             {messages.map((msg) => {
-              const isOwn = msg.senderId?._id === user?._id || msg.senderId === user?._id;
+              const senderId = msg.senderId?._id || msg.senderId;
+              const isOwn = String(senderId) === String(user?._id);
               return (
                 <div key={msg._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[70%] rounded-lg p-3 ${
@@ -856,7 +940,12 @@ const DealDetails = () => {
                   rows="1"
                   value={messageInput}
                   onChange={(e) => handleTyping(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder={uploading ? 'Uploading...' : 'Type your message...'}
                   disabled={uploading}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"

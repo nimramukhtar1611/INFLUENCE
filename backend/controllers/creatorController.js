@@ -6,6 +6,8 @@ const Payment = require('../models/Payment');
 const Campaign = require('../models/Campaign');
 const socialService = require('../services/socialService'); // ✅ FIX: singleton instance
 
+const CREATOR_EXCLUDED_EARNING_TYPES = ['withdrawal', 'refund', 'fee', 'penalty'];
+
 // ==================== GET PROFILE ====================
 exports.getProfile = async (req, res) => {
   try {
@@ -165,11 +167,33 @@ exports.getDashboard = async (req, res) => {
           .limit(5),
         Deal.countDocuments({ creatorId, status: 'completed' }),
         Payment.aggregate([
-          { $match: { 'to.userId': creatorId, status: 'completed' } },
+          {
+            $match: {
+              'to.userId': creatorId,
+              status: { $in: ['completed', 'available'] },
+              type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES }
+            }
+          },
+          {
+            $match: {
+              $expr: { $ne: ['$from.userId', '$to.userId'] }
+            }
+          },
           { $group: { _id: null, total: { $sum: '$netAmount' } } }
         ]),
         Payment.aggregate([
-          { $match: { 'to.userId': creatorId, status: 'in-escrow' } },
+          {
+            $match: {
+              'to.userId': creatorId,
+              status: 'in-escrow',
+              type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES }
+            }
+          },
+          {
+            $match: {
+              $expr: { $ne: ['$from.userId', '$to.userId'] }
+            }
+          },
           { $group: { _id: null, total: { $sum: '$netAmount' } } }
         ]),
         Campaign.countDocuments({
@@ -342,9 +366,41 @@ exports.getEarningsSummary = async (req, res) => {
     const endOfLastMonth  = new Date(); endOfLastMonth.setDate(0); endOfLastMonth.setHours(23, 59, 59, 999);
 
     const [total, thisMonth, lastMonth, avgDeal] = await Promise.all([
-      Payment.aggregate([{ $match: { 'to.userId': creatorId, status: 'completed' } }, { $group: { _id: null, total: { $sum: '$netAmount' } } }]),
-      Payment.aggregate([{ $match: { 'to.userId': creatorId, status: 'completed', createdAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: '$netAmount' } } }]),
-      Payment.aggregate([{ $match: { 'to.userId': creatorId, status: 'completed', createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } } }, { $group: { _id: null, total: { $sum: '$netAmount' } } }]),
+      Payment.aggregate([
+        {
+          $match: {
+            'to.userId': creatorId,
+            status: { $in: ['completed', 'available'] },
+            type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES }
+          }
+        },
+        { $match: { $expr: { $ne: ['$from.userId', '$to.userId'] } } },
+        { $group: { _id: null, total: { $sum: '$netAmount' } } }
+      ]),
+      Payment.aggregate([
+        {
+          $match: {
+            'to.userId': creatorId,
+            status: { $in: ['completed', 'available'] },
+            type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES },
+            createdAt: { $gte: startOfMonth }
+          }
+        },
+        { $match: { $expr: { $ne: ['$from.userId', '$to.userId'] } } },
+        { $group: { _id: null, total: { $sum: '$netAmount' } } }
+      ]),
+      Payment.aggregate([
+        {
+          $match: {
+            'to.userId': creatorId,
+            status: { $in: ['completed', 'available'] },
+            type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES },
+            createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+          }
+        },
+        { $match: { $expr: { $ne: ['$from.userId', '$to.userId'] } } },
+        { $group: { _id: null, total: { $sum: '$netAmount' } } }
+      ]),
       Deal.aggregate([{ $match: { creatorId, status: 'completed' } }, { $group: { _id: null, avg: { $avg: '$budget' } } }])
     ]);
 
@@ -375,7 +431,15 @@ exports.getEarningsHistory = async (req, res) => {
     if (period === '12m') startDate.setFullYear(startDate.getFullYear() - 1);
 
     const history = await Payment.aggregate([
-      { $match: { 'to.userId': creatorId, status: 'completed', createdAt: { $gte: startDate } } },
+      {
+        $match: {
+          'to.userId': creatorId,
+          status: { $in: ['completed', 'available'] },
+          type: { $nin: CREATOR_EXCLUDED_EARNING_TYPES },
+          createdAt: { $gte: startDate }
+        }
+      },
+      { $match: { $expr: { $ne: ['$from.userId', '$to.userId'] } } },
       {
         $group: {
           _id:      { year: { $year: '$createdAt' }, month: { $month: '$createdAt' }, day: { $dayOfMonth: '$createdAt' } },

@@ -361,8 +361,8 @@ const dealValidation = {
 
   // Counter offer
   counterOffer: Joi.object({
-    budget: Joi.number().min(10).max(1000000).required(),
-    deadline: Joi.date().greater('now').required(),
+    budget: Joi.number().min(10).max(1000000).optional(),
+    deadline: Joi.date().greater('now').optional(),
     message: Joi.string().max(500).optional()
   }),
 

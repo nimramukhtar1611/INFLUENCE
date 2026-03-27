@@ -6,6 +6,17 @@ import toast from 'react-hot-toast';
 import { getStorage } from '../utils/storage';
 
 const SocketContext = createContext();
+
+const normalizeId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (typeof value._id === 'string') return value._id;
+    if (typeof value.id === 'string') return value.id;
+  }
+  return String(value);
+};
+
 export const useSocket = () => {
   const context = useContext(SocketContext);
   if (!context) throw new Error('useSocket must be used within a SocketProvider');
@@ -120,29 +131,54 @@ export const SocketProvider = ({ children }) => {
   }, [user, token, isCypressRun]);
 
   const joinConversation = useCallback((conversationId) => {
-    socketRef.current?.emit('join_conversation', { conversationId });
+    const normalizedConversationId = normalizeId(conversationId);
+    if (!normalizedConversationId) return;
+    socketRef.current?.emit('join_conversation', { conversationId: normalizedConversationId });
   }, []);
 
   const leaveConversation = useCallback((conversationId) => {
-    socketRef.current?.emit('leave_conversation', { conversationId });
+    const normalizedConversationId = normalizeId(conversationId);
+    if (!normalizedConversationId) return;
+    socketRef.current?.emit('leave_conversation', { conversationId: normalizedConversationId });
   }, []);
 
-  const sendMessage = useCallback((data) => {
+  const sendMessage = useCallback((data, onAck) => {
     if (!socketRef.current || !isConnected) return false;
-    socketRef.current.emit('send_message', { ...data, senderId: user?._id });
+
+    const normalizedConversationId = normalizeId(data?.conversationId);
+    if (!normalizedConversationId) return false;
+
+    const payload = {
+      ...data,
+      conversationId: normalizedConversationId,
+      senderId: user?._id
+    };
+
+    if (typeof onAck === 'function') {
+      socketRef.current.emit('send_message', payload, onAck);
+    } else {
+      socketRef.current.emit('send_message', payload);
+    }
+
     return true;
   }, [user, isConnected]);
 
   const startTyping = useCallback((conversationId) => {
-    socketRef.current?.emit('typing:start', { conversationId });
+    const normalizedConversationId = normalizeId(conversationId);
+    if (!normalizedConversationId) return;
+    socketRef.current?.emit('typing:start', { conversationId: normalizedConversationId });
   }, []);
 
   const stopTyping = useCallback((conversationId) => {
-    socketRef.current?.emit('typing:stop', { conversationId });
+    const normalizedConversationId = normalizeId(conversationId);
+    if (!normalizedConversationId) return;
+    socketRef.current?.emit('typing:stop', { conversationId: normalizedConversationId });
   }, []);
 
   const markAsRead = useCallback((conversationId, messageIds) => {
-    socketRef.current?.emit('mark_read', { conversationId, messageIds });
+    const normalizedConversationId = normalizeId(conversationId);
+    if (!normalizedConversationId || !Array.isArray(messageIds) || messageIds.length === 0) return;
+    socketRef.current?.emit('mark_read', { conversationId: normalizedConversationId, messageIds });
   }, []);
 
   const addReaction = useCallback((messageId, reaction) => {

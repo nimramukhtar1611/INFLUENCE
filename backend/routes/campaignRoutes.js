@@ -1,22 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, hasPermission, resolveBrandContext } = require('../middleware/auth');
 const campaignController = require('../controllers/campaignController');
-const Campaign = require('../models/Campaign'); // Make sure this import exists
-const { checkOwnership } = require('../middleware/ownership');
+const Campaign = require('../models/Campaign');
 
-router.put('/:id', protect, authorize('brand'), checkOwnership(Campaign, 'brandId'), campaignController.updateCampaign);
 // ==================== PUBLIC ROUTES ====================
 // Get available campaigns for creators
 router.get('/available', protect, authorize('creator'), campaignController.getAvailableCampaigns);
 
 // ==================== PROTECTED ROUTES ====================
-router.use(protect); // All routes below require authentication
+router.use(protect, resolveBrandContext); // All routes below require authentication
 
 // -------------------- BRAND ROUTES --------------------
 
 // Create a campaign
-router.post('/', authorize('brand'), campaignController.createCampaign);
+router.post('/', authorize('brand'), hasPermission('create_campaigns'), campaignController.createCampaign);
 
 // Middleware to check if the campaign belongs to the brand
 async function checkBrandOwnership(req, res, next) {
@@ -24,7 +22,8 @@ async function checkBrandOwnership(req, res, next) {
   if (!campaign) {
     return res.status(404).json({ success: false, error: 'Campaign not found' });
   }
-  if (campaign.brandId.toString() !== req.user._id.toString()) {
+  const activeBrandId = (req.brandId || req.user._id).toString();
+  if (campaign.brandId.toString() !== activeBrandId) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
   req.campaign = campaign; // attach campaign for controller use
@@ -32,29 +31,29 @@ async function checkBrandOwnership(req, res, next) {
 }
 
 // Update a campaign
-router.put('/:id', authorize('brand'), checkBrandOwnership, campaignController.updateCampaign);
+router.put('/:id', authorize('brand'), hasPermission('edit_campaigns'), checkBrandOwnership, campaignController.updateCampaign);
 
 // Get campaigns created by the brand
-router.get('/brand', authorize('brand'), campaignController.getBrandCampaigns);
+router.get('/brand', authorize('brand'), hasPermission('view_campaigns'), campaignController.getBrandCampaigns);
 
 // Delete a campaign
-router.delete('/:id', authorize('brand'), checkBrandOwnership, campaignController.deleteCampaign);
+router.delete('/:id', authorize('brand'), hasPermission('delete_campaigns'), checkBrandOwnership, campaignController.deleteCampaign);
 
 // Publish, pause, complete, archive, duplicate campaigns
-router.post('/:id/publish', authorize('brand'), checkBrandOwnership, campaignController.publishCampaign);
-router.post('/:id/pause', authorize('brand'), checkBrandOwnership, campaignController.pauseCampaign);
-router.post('/:id/complete', authorize('brand'), checkBrandOwnership, campaignController.completeCampaign);
-router.post('/:id/archive', authorize('brand'), checkBrandOwnership, campaignController.archiveCampaign);
-router.post('/:id/duplicate', authorize('brand'), checkBrandOwnership, campaignController.duplicateCampaign);
+router.post('/:id/publish', authorize('brand'), hasPermission('edit_campaigns'), checkBrandOwnership, campaignController.publishCampaign);
+router.post('/:id/pause', authorize('brand'), hasPermission('edit_campaigns'), checkBrandOwnership, campaignController.pauseCampaign);
+router.post('/:id/complete', authorize('brand'), hasPermission('edit_campaigns'), checkBrandOwnership, campaignController.completeCampaign);
+router.post('/:id/archive', authorize('brand'), hasPermission('edit_campaigns'), checkBrandOwnership, campaignController.archiveCampaign);
+router.post('/:id/duplicate', authorize('brand'), hasPermission('create_campaigns'), checkBrandOwnership, campaignController.duplicateCampaign);
 
 // Invite creators
-router.post('/:id/invite', authorize('brand'), checkBrandOwnership, campaignController.inviteCreator);
+router.post('/:id/invite', authorize('brand'), hasPermission('invite_creators'), checkBrandOwnership, campaignController.inviteCreator);
 
 // Review applications
-router.put('/:campaignId/applications/:applicationId', authorize('brand'), campaignController.reviewApplication);
+router.put('/:campaignId/applications/:applicationId', authorize('brand'), hasPermission('edit_campaigns'), campaignController.reviewApplication);
 
 // Campaign analytics
-router.get('/:id/analytics', authorize('brand'), checkBrandOwnership, campaignController.getCampaignAnalytics);
+router.get('/:id/analytics', authorize('brand'), hasPermission('view_analytics'), checkBrandOwnership, campaignController.getCampaignAnalytics);
 
 // -------------------- CREATOR ROUTES --------------------
 

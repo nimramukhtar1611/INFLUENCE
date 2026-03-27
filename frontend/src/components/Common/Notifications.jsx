@@ -196,6 +196,10 @@ const Notifications = () => {
       });
 
       if (response.data?.success) {
+        if (action === 'accept' && notification.data?.brandId) {
+          localStorage.setItem('activeBrandContextId', notification.data.brandId);
+        }
+
         setNotifications((prev) => prev.map((item) => {
           if (item._id !== notification._id) return item;
           return {

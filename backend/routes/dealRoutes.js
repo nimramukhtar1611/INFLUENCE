@@ -8,39 +8,47 @@
 
 const express              = require('express');
 const router               = express.Router({ mergeParams: true });
-const { protect }          = require('../middleware/auth');
+const { protect, authorize, hasPermission, resolveBrandContext } = require('../middleware/auth');
 const { validateRequest }  = require('../middleware/validation');
 const { dealValidations }  = require('../middleware/validators');
 const dealController       = require('../controllers/dealController');
 
+router.use(protect, resolveBrandContext);
+
 // ── Create ────────────────────────────────────────────────────────────────
 router.post('/',
-  protect,
+  authorize('brand'),
+  hasPermission('create_deals'),
   dealValidations.create,
   validateRequest,
   dealController.createDeal
 );
 
 router.post('/performance',
-  protect,
+  authorize('brand'),
+  hasPermission('create_deals'),
   dealController.createPerformanceDeal
 );
 
 // ── Lists / stats (static routes BEFORE dynamic /:id) ────────────────────
-router.get('/brand',   protect, dealController.getBrandDeals);
-router.get('/creator', protect, dealController.getCreatorDeals);
-router.get('/stats',   protect, dealController.getDealStats);
-router.get('/new', protect, (req, res) => {
+router.get('/brand', authorize('brand'), hasPermission('view_deals'), dealController.getBrandDeals);
+router.get('/creator', authorize('creator'), dealController.getCreatorDeals);
+router.get('/stats', dealController.getDealStats);
+router.get('/new', (req, res) => {
   res.json({ message: 'Create new deal page' });
 });
 // ── Single deal ───────────────────────────────────────────────────────────
 router.get('/:id',
-  protect,
   dealController.getDeal
 );
 
+router.put('/:id/status',
+  dealController.updateDealStatus
+);
+
 router.put('/:id',
-  protect,
+  authorize('brand'),
+  hasPermission('edit_deals'),
   dealValidations.update,
   validateRequest,
   dealController.updateDeal
@@ -48,83 +56,81 @@ router.put('/:id',
 
 // ── Status transitions ────────────────────────────────────────────────────
 router.post('/:id/accept',
-  protect,
+  authorize('creator'),
   dealValidations.accept,
   validateRequest,
   dealController.acceptDeal
 );
 
 router.post('/:id/reject',
-  protect,
+  authorize('creator'),
   dealValidations.reject,
   validateRequest,
   dealController.rejectDeal
 );
 
 router.post('/:id/counter',
-  protect,
   dealValidations.counterOffer,
   validateRequest,
   dealController.counterOffer
 );
 
 router.post('/:id/cancel',
-  protect,
   dealValidations.cancel,
   validateRequest,
   dealController.cancelDeal
 );
 
 router.post('/:id/complete',
-  protect,
+  authorize('brand'),
+  hasPermission('approve_deals'),
   dealController.completeDeal
 );
 
 router.post('/:id/revision',
-  protect,
+  authorize('brand'),
+  hasPermission('edit_deals'),
   dealValidations.revision,
   validateRequest,
   dealController.requestRevision
 );
 
 router.post('/:id/mark-in-progress',
-  protect,
+  authorize('creator'),
   dealController.markInProgress
 );
 
 // ── Messages ──────────────────────────────────────────────────────────────
-router.get( '/:id/messages', protect, dealController.getDealMessages);
-router.post('/:id/messages', protect, dealController.sendMessage);
+router.get('/:id/messages', dealController.getDealMessages);
+router.post('/:id/messages', dealController.sendMessage);
 
 // ── Deliverables (from File 1) ────────────────────────────────────────────
 // Creator submits files/links for one or more deliverables
 router.post('/:id/deliverables',
-  protect,
+  authorize('creator'),
   dealController.submitDeliverables
 );
 
 // Brand approves a specific deliverable
 // Auto-completes deal & releases payment if all deliverables approved
 router.post('/:id/deliverables/:deliverableId/approve',
-  protect,
+  authorize('brand'),
+  hasPermission('approve_deals'),
   dealController.approveDeliverable
 );
 
 // ── Rating (from File 1) ──────────────────────────────────────────────────
 // Either party rates the deal after completion
 router.post('/:id/rate',
-  protect,
   dealController.rateDeal
 );
 
 // ── Performance metrics ───────────────────────────────────────────────────
 router.put('/:id/performance-metrics',
-  protect,
   dealController.updatePerformanceMetrics
 );
 
 router.get('/:id/performance-summary',
-  protect,
   dealController.getPerformanceSummary
 );
 

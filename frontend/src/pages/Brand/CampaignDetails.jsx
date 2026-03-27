@@ -57,50 +57,9 @@ import { formatCurrency, formatNumber, timeAgo, formatDate } from '../../utils/h
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import ChartCard from '../../components/Common/ChartCard';
+import Modal from '../../components/Common/Modal';
 import Input from '../../components/UI/Input';
 import toast from 'react-hot-toast';
-
-// Simple Modal Component (inline for simplicity, but you can import from Common if needed)
-const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
-  if (!isOpen) return null;
-
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        {/* Background overlay */}
-        <div
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-          onClick={onClose}
-        />
-
-        {/* Modal panel */}
-        <div
-          className={`inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:w-full ${sizeClasses[size]}`}
-        >
-          <div className="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 focus:outline-none"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            {children}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const CampaignDetails = () => {
   const { id } = useParams();
@@ -128,6 +87,11 @@ const CampaignDetails = () => {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [applicationFeedback, setApplicationFeedback] = useState('');
 
+  const toFixedSafe = (value, digits = 1) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num.toFixed(digits) : '0';
+  };
+
   // Fetch campaign details
   useEffect(() => {
     if (id) {
@@ -146,9 +110,9 @@ const CampaignDetails = () => {
         const campaignData = response.campaign;
         setCampaign(campaignData);
         setDeals(response.deals || []);
-        setApplications(campaignData.applications || []);
-        setInvitedCreators(campaignData.invitedCreators || []);
-        setSelectedCreators(campaignData.selectedCreators || []);
+        setApplications(Array.isArray(campaignData.applications) ? campaignData.applications : []);
+        setInvitedCreators(Array.isArray(campaignData.invitedCreators) ? campaignData.invitedCreators : []);
+        setSelectedCreators(Array.isArray(campaignData.selectedCreators) ? campaignData.selectedCreators : []);
 
         fetchCampaignAnalytics();
 
@@ -322,13 +286,13 @@ const CampaignDetails = () => {
   const totalBudget = campaign.budget || 0;
   const spentBudget = campaign.spent || 0;
   const remaining = totalBudget - spentBudget;
-  const totalDeliverables = campaign.deliverables?.reduce((sum, d) => sum + (d.quantity || 1), 0) || 0;
+  const totalDeliverables = campaign.deliverables?.reduce((sum, d) => sum + (d?.quantity || 1), 0) || 0;
   const completedDeliverables = deals.reduce(
-    (sum, d) => sum + (d.deliverables?.filter(del => del.status === 'approved').length || 0),
+    (sum, d) => sum + (d?.deliverables?.filter(del => del?.status === 'approved').length || 0),
     0
   );
   const progress = totalDeliverables > 0 ? Math.round((completedDeliverables / totalDeliverables) * 100) : 0;
-  const pendingApps = applications.filter(a => a.status === 'pending').length;
+  const pendingApps = applications.filter(a => a?.status === 'pending').length;
 
   return (
     <div className="space-y-6 px-4 sm:px-6 lg:px-8">
@@ -388,7 +352,7 @@ const CampaignDetails = () => {
         <StatsCard
           title="Creators"
           value={selectedCreators.length.toString()}
-          subtitle={`${selectedCreators.filter(c => c.status === 'active').length} active`}
+          subtitle={`${selectedCreators.filter(c => c?.status === 'active').length} active`}
           icon={Users}
           color="bg-green-500"
         />
@@ -603,8 +567,8 @@ const CampaignDetails = () => {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Campaign Creators</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  {selectedCreators.filter(c => c.status === 'active').length} active •{' '}
-                  {selectedCreators.filter(c => c.status === 'completed').length} completed
+                  {selectedCreators.filter(c => c?.status === 'active').length} active •{' '}
+                  {selectedCreators.filter(c => c?.status === 'completed').length} completed
                 </p>
               </div>
               <Button variant="primary" size="sm" icon={Plus} onClick={() => setShowAddCreatorModal(true)}>
@@ -615,7 +579,7 @@ const CampaignDetails = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {selectedCreators.length > 0 ? (
-              selectedCreators.map(creator => (
+              selectedCreators.filter(Boolean).map(creator => (
                 <div key={creator._id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -650,7 +614,7 @@ const CampaignDetails = () => {
                     <div className="bg-gray-50 p-2 rounded">
                       <p className="text-xs text-gray-500">Engagement</p>
                       <p className="text-sm font-bold text-green-600">
-                        {creator.creatorId?.averageEngagement?.toFixed(1) || '0'}%
+                        {toFixedSafe(creator.creatorId?.averageEngagement, 1)}%
                       </p>
                     </div>
                     <div className="bg-gray-50 p-2 rounded">
@@ -693,7 +657,7 @@ const CampaignDetails = () => {
 
           <div className="divide-y divide-gray-200">
             {applications.length > 0 ? (
-              applications.map(app => {
+              applications.filter(Boolean).map(app => {
                 const creator = app.creatorId;
                 return (
                   <div key={app._id} className="p-4 sm:p-6 hover:bg-gray-50">
@@ -792,7 +756,7 @@ const CampaignDetails = () => {
             <div className="bg-white p-4 rounded-xl shadow-sm">
               <p className="text-sm text-gray-500 mb-1">Engagement Rate</p>
               <p className="text-xl sm:text-2xl font-bold text-green-600">
-                {analytics?.avgEngagement?.toFixed(1) || '0'}%
+                {toFixedSafe(analytics?.avgEngagement, 1)}%
               </p>
             </div>
             <div className="bg-white p-4 rounded-xl shadow-sm">
@@ -832,7 +796,7 @@ const CampaignDetails = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-700">ROI</span>
-                  <span className="text-xl font-bold text-green-600">{analytics?.roi?.toFixed(1) || '0'}x</span>
+                  <span className="text-xl font-bold text-green-600">{toFixedSafe(analytics?.roi, 1)}x</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-700">Cost Per Engagement</span>
@@ -844,7 +808,7 @@ const CampaignDetails = () => {
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-700">Conversion Rate</span>
-                  <span className="font-bold text-green-600">{analytics?.conversionRate?.toFixed(1) || '0'}%</span>
+                  <span className="font-bold text-green-600">{toFixedSafe(analytics?.conversionRate, 1)}%</span>
                 </div>
               </div>
             </div>

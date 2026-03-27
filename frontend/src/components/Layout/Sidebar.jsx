@@ -64,7 +64,6 @@ import { useTheme } from '../../hooks/useTheme';
       { to: '/brand/subscription', icon: DollarSign, label: 'Subscription' },
       { to: '/brand/inbox', icon: MessageSquare, label: 'Inbox' },
       { to: '/brand/notifications', icon: Bell, label: 'Notifications' },
-      { to: '/brand/team', icon: Users, label: 'Team' },
       { to: '/brand/settings', icon: Settings, label: 'Settings' }
 
     ];

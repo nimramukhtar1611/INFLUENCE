@@ -15,6 +15,63 @@ const validate = (req, res, next) => {
   next();
 };
 
+const isUrlLike = (value) => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  try {
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(candidate);
+    return Boolean(url.hostname && url.hostname.includes('.'));
+  } catch (error) {
+    return false;
+  }
+};
+
+const isInstagramHandleOrUrl = (value) => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  const handle = trimmed.replace(/^@+/, '');
+  const handleRegex = /^[a-zA-Z0-9._]{1,30}$/;
+  if (handleRegex.test(handle)) return true;
+
+  if (!isUrlLike(trimmed)) return false;
+  try {
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(candidate);
+    const host = url.hostname.replace(/^www\./i, '').toLowerCase();
+    const firstPath = url.pathname.split('/').filter(Boolean)[0];
+    return host === 'instagram.com' && handleRegex.test((firstPath || '').replace(/^@+/, ''));
+  } catch (error) {
+    return false;
+  }
+};
+
+const isTwitterHandleOrUrl = (value) => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  const handle = trimmed.replace(/^@+/, '');
+  const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+  if (handleRegex.test(handle)) return true;
+
+  if (!isUrlLike(trimmed)) return false;
+  try {
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(candidate);
+    const host = url.hostname.replace(/^www\./i, '').toLowerCase();
+    const firstPath = url.pathname.split('/').filter(Boolean)[0];
+    const validHost = host === 'twitter.com' || host === 'x.com';
+    return validHost && handleRegex.test((firstPath || '').replace(/^@+/, ''));
+  } catch (error) {
+    return false;
+  }
+};
+
 // ==================== AUTH VALIDATIONS ====================
 const authValidations = {
   register: [
@@ -336,13 +393,13 @@ const brandValidations = {
     
     body('socialMedia.instagram')
       .optional()
-      .isURL()
-      .withMessage('Please enter a valid Instagram URL'),
+      .custom((value) => isInstagramHandleOrUrl(value))
+      .withMessage('Please enter a valid Instagram URL or handle'),
     
     body('socialMedia.twitter')
       .optional()
-      .isURL()
-      .withMessage('Please enter a valid Twitter URL'),
+      .custom((value) => isTwitterHandleOrUrl(value))
+      .withMessage('Please enter a valid Twitter/X URL or handle'),
     
     body('socialMedia.facebook')
       .optional()
@@ -903,10 +960,12 @@ const dealValidations = {
       .withMessage('Invalid deal ID'),
     
     body('budget')
+      .optional({ nullable: true, checkFalsy: true })
       .isFloat({ min: 10, max: 1000000 })
       .withMessage('Budget must be between $10 and $1,000,000'),
     
     body('deadline')
+      .optional({ nullable: true, checkFalsy: true })
       .isISO8601()
       .withMessage('Invalid deadline format')
       .custom(value => new Date(value) > new Date())

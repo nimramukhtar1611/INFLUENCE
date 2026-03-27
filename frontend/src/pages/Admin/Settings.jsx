@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Globe,
   Shield,
@@ -18,17 +18,114 @@ import {
   EyeOff,
   Moon,
   Sun,
+  Camera,
+  Loader,
   Smartphone,
   Monitor,
   HelpCircle
 } from 'lucide-react';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useAuth } from '../../hooks/useAuth';
+import api from '../../services/api';
 import Button from '../../components/UI/Button';
 import Input from '../../components/UI/Input';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 
+const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(currentImage || '');
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreview(currentImage || '');
+  }, [currentImage]);
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const previewReader = new FileReader();
+    previewReader.onloadend = () => setPreview(previewReader.result);
+    previewReader.readAsDataURL(file);
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+
+      const response = await api.post('/upload/profile-picture', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Upload failed');
+      }
+
+      const uploadedUrl = response.data.profilePicture || response.data.file?.url;
+      if (!uploadedUrl) {
+        throw new Error('Upload succeeded but no image URL was returned');
+      }
+
+      onUpload(uploadedUrl);
+      toast.success('Profile picture updated');
+    } catch (error) {
+      setPreview(currentImage || '');
+      toast.error(error.response?.data?.error || error.message || 'Failed to upload profile picture');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <img
+              src={preview || 'https://via.placeholder.com/96?text=Admin'}
+              alt={fullName || 'Admin'}
+              className="w-20 h-20 rounded-full object-cover border-2 border-white shadow"
+            />
+            {uploading && (
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                <Loader className="w-5 h-5 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">{fullName || 'Admin User'}</p>
+            <p className="text-sm text-gray-500">{email || 'No email available'}</p>
+          </div>
+        </div>
+
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            icon={Camera}
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? 'Uploading...' : 'Change Photo'}
+          </Button>
+          <p className="text-xs text-gray-500 mt-2">JPG, PNG, WEBP up to 5MB.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminSettings = () => {
+  const { user, refreshUser, updateUser } = useAuth();
   const {
     settings,
     fees,
@@ -56,6 +153,7 @@ const AdminSettings = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [backupCodes, setBackupCodes] = useState([]);
   const [disabling2FA, setDisabling2FA] = useState(false);
+  const [profileImage, setProfileImage] = useState('');
   const [formData, setFormData] = useState({
     // General
     platformName: 'InfluenceX',
@@ -124,6 +222,10 @@ const AdminSettings = () => {
       }));
     }
   }, [settings]);
+
+  useEffect(() => {
+    setProfileImage(user?.profilePicture || '');
+  }, [user?.profilePicture]);
 
   useEffect(() => {
     if (activeTab === 'security') {
@@ -279,6 +381,21 @@ const AdminSettings = () => {
 
             {activeTab === 'general' && (
               <div className="space-y-6">
+                <ProfilePictureUpload
+                  currentImage={profileImage}
+                  fullName={user?.fullName}
+                  email={user?.email}
+                  onUpload={(imageUrl) => {
+                    setProfileImage(imageUrl);
+                    if (updateUser) {
+                      updateUser({ profilePicture: imageUrl, profileImage: imageUrl });
+                    }
+                    if (refreshUser) {
+                      refreshUser();
+                    }
+                  }}
+                />
+
                 <Input
                   label="Platform Name"
                   value={formData.platformName}

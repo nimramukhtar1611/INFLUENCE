@@ -20,6 +20,7 @@ const api = axios.create({
 // ==================== TOKEN MANAGEMENT ====================
 const getToken = () => localStorage.getItem('token');
 const getRefreshToken = () => localStorage.getItem('refreshToken');
+const getActiveBrandContextId = () => localStorage.getItem('activeBrandContextId');
 const getStoredUser = () => {
   try {
     const raw = localStorage.getItem('user');
@@ -58,6 +59,15 @@ api.interceptors.request.use(
     // Add refresh token header if it's a refresh request
     if (config.url?.includes('/auth/refresh') && getRefreshToken()) {
       config.headers['x-refresh-token'] = getRefreshToken();
+    }
+
+    // Send selected brand workspace context for team-member operations.
+    const storedUser = getStoredUser();
+    const isBrandUser = (storedUser?.userType || storedUser?.role) === 'brand';
+    const isBrandWorkspace = typeof window !== 'undefined' && window.location.pathname.startsWith('/brand');
+    const activeBrandContextId = getActiveBrandContextId();
+    if (isBrandUser && isBrandWorkspace && activeBrandContextId) {
+      config.headers['x-brand-context'] = activeBrandContextId;
     }
 
     // Add timestamp to GET requests to avoid cache

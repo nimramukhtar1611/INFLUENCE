@@ -6,6 +6,7 @@ const Payment = require('../models/Payment');
 const { Conversation } = require('../models/Conversation');
 const Message = require('../models/Message');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 const { catchAsync } = require('../utils/catchAsync');
 const { isValidObjectId, isValidBudget, isValidFutureDate } = require('../utils/validators');
 const { getBrandFinancials } = require('./paymentController');
@@ -15,18 +16,31 @@ const mongoose = require('mongoose');
 const buildConversationId = (dealId) => `deal_${dealId}_${Date.now()}`;
 
 const buildMessageId = (conversationId) => `msg_${conversationId}_${Date.now()}`;
+const getBrandContextId = (req) => req.brandId || req.user?._id;
 
 // ==================== HELPER FUNCTIONS ====================
 
 /**
  * Check if user can perform action on deal
  */
-const canUserAct = (deal, userId, requiredRole = null) => {
-  const isBrand = deal.brandId.toString() === userId.toString();
+const canUserAct = (deal, userId, requiredRole = null, brandContextId = null) => {
+  const effectiveBrandId = (brandContextId || userId).toString();
+  const isBrand = deal.brandId.toString() === effectiveBrandId;
   const isCreator = deal.creatorId.toString() === userId.toString();
   if (requiredRole === 'brand') return isBrand;
   if (requiredRole === 'creator') return isCreator;
   return isBrand || isCreator;
+};
+
+const getActorRoleOnDeal = (deal, req) => {
+  const brandContextId = getBrandContextId(req);
+  if (canUserAct(deal, req.user._id, 'brand', brandContextId)) {
+    return 'brand';
+  }
+  if (canUserAct(deal, req.user._id, 'creator')) {
+    return 'creator';
+  }
+  return null;
 };
 
 /**
@@ -60,8 +74,62 @@ const addTimelineEvent = (deal, event, description, userId, metadata = {}) => {
   });
 };
 
+const ensureReleasedPaymentRecord = async (deal, releasedByUserId) => {
+  const existingPayment = await Payment.findOne({ dealId: deal._id }).sort('-createdAt');
+  const releasedAt = new Date();
+
+  if (existingPayment) {
+    const wasUnreleased = !['completed', 'available'].includes(existingPayment.status);
+
+    if (wasUnreleased) {
+      existingPayment.status = 'completed';
+      existingPayment.paidAt = releasedAt;
+      existingPayment.description = `Payment released for completed deal ${deal._id}`;
+    }
+
+    existingPayment.description = existingPayment.description || `Payment released for completed deal ${deal._id}`;
+    existingPayment.metadata = {
+      ...(existingPayment.metadata || {}),
+      releaseSource: 'deal_completion',
+      releasedAt,
+      releasedBy: releasedByUserId
+    };
+
+    await existingPayment.save();
+    return existingPayment;
+  }
+
+  const grossAmount = Number(deal.budget || 0);
+  const netAmount = Number(deal.netAmount || deal.budget || 0);
+  const fee = Math.max(grossAmount - netAmount, 0);
+
+  const createdPayment = await Payment.create({
+    transactionId: `PAY-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    type: 'payment',
+    status: 'completed',
+    amount: grossAmount,
+    fee,
+    netAmount,
+    from: { userId: deal.brandId, accountType: 'brand' },
+    to: { userId: deal.creatorId, accountType: 'creator' },
+    dealId: deal._id,
+    campaignId: deal.campaignId,
+    description: `Payment released for completed deal ${deal._id}`,
+    paidAt: releasedAt,
+    metadata: {
+      releaseSource: 'deal_completion',
+      releasedAt,
+      releasedBy: releasedByUserId,
+      createdFromDeal: true
+    }
+  });
+
+  return createdPayment;
+};
+
 // ==================== CREATE DEAL ====================
 exports.createDeal = catchAsync(async (req, res) => {
+  const brandId = getBrandContextId(req);
   const {
     campaignId,
     creatorId,
@@ -97,7 +165,7 @@ exports.createDeal = catchAsync(async (req, res) => {
   }
 
   // Check campaign exists and belongs to brand
-  const campaign = await Campaign.findOne({ _id: campaignId, brandId: req.user._id });
+  const campaign = await Campaign.findOne({ _id: campaignId, brandId });
   if (!campaign) {
     return res.status(404).json({ success: false, error: 'Campaign not found or not owned by you' });
   }
@@ -112,7 +180,7 @@ exports.createDeal = catchAsync(async (req, res) => {
   const existingDeal = await Deal.findOne({
     campaignId,
     creatorId,
-    brandId: req.user._id,
+    brandId,
     status: { $in: ['pending', 'accepted', 'in-progress'] },
   });
   if (existingDeal) {
@@ -122,7 +190,7 @@ exports.createDeal = catchAsync(async (req, res) => {
   // Create deal
   const deal = new Deal({
     campaignId,
-    brandId: req.user._id,
+    brandId,
     creatorId,
     budget,
     deadline,
@@ -203,8 +271,9 @@ exports.createDeal = catchAsync(async (req, res) => {
 // ==================== GET BRAND DEALS ====================
 exports.getBrandDeals = catchAsync(async (req, res) => {
   const { status = 'all', page = 1, limit = 10 } = req.query;
+  const brandId = getBrandContextId(req);
 
-  const query = { brandId: req.user._id };
+  const query = { brandId };
   if (status !== 'all') query.status = status;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -218,7 +287,7 @@ exports.getBrandDeals = catchAsync(async (req, res) => {
       .lean(),
     Deal.countDocuments(query),
     Deal.aggregate([
-      { $match: { brandId: req.user._id } },
+      { $match: { brandId } },
       { $group: { _id: '$status', count: { $sum: 1 }, value: { $sum: '$budget' } } },
     ]),
   ]);
@@ -285,6 +354,7 @@ exports.getCreatorDeals = catchAsync(async (req, res) => {
 // ==================== GET SINGLE DEAL ====================
 exports.getDeal = catchAsync(async (req, res) => {
   const { id } = req.params;
+  const brandContextId = getBrandContextId(req);
   if (!isValidObjectId(id)) {
     return res.status(400).json({ success: false, error: 'Invalid deal ID' });
   }
@@ -305,8 +375,32 @@ exports.getDeal = catchAsync(async (req, res) => {
   const dealBrandId = deal.brandId?._id || deal.brandId;
   const dealCreatorId = deal.creatorId?._id || deal.creatorId;
   const userId = req.user._id.toString();
-  if (dealBrandId.toString() !== userId && dealCreatorId.toString() !== userId) {
+  const effectiveBrandUserId = req.user.userType === 'brand' ? brandContextId.toString() : userId;
+  if (dealBrandId.toString() !== effectiveBrandUserId && dealCreatorId.toString() !== userId) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
+  }
+
+  // Backfill missing conversation for legacy deals so socket chat can join reliably.
+  if (!deal.conversationId) {
+    try {
+      const conversation = new Conversation({
+        conversation_id: buildConversationId(deal._id),
+        type: 'deal',
+        deal_id: deal._id,
+        participants: [
+          { user_id: dealBrandId, user_type: 'brand' },
+          { user_id: dealCreatorId, user_type: 'creator' },
+        ],
+        participant_count: 2,
+        created_by: { user_id: dealBrandId, user_type: 'brand' },
+      });
+
+      await conversation.save();
+      await Deal.findByIdAndUpdate(deal._id, { conversationId: conversation._id });
+      deal.conversationId = conversation._id;
+    } catch (convError) {
+      console.error('Failed to ensure deal conversation:', convError.message);
+    }
   }
 
   // Populate messages if needed (optional, could be separate endpoint)
@@ -325,6 +419,7 @@ exports.getDeal = catchAsync(async (req, res) => {
 exports.updateDealStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { status, reason } = req.body;
+  const brandContextId = getBrandContextId(req);
 
   if (!isValidObjectId(id)) {
     return res.status(400).json({ success: false, error: 'Invalid deal ID' });
@@ -336,7 +431,7 @@ exports.updateDealStatus = catchAsync(async (req, res) => {
   }
 
   // Check authorization
-  if (!canUserAct(deal, req.user._id)) {
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
@@ -348,6 +443,60 @@ exports.updateDealStatus = catchAsync(async (req, res) => {
     });
   }
 
+  const actorRole = getActorRoleOnDeal(deal, req);
+
+  // Business rule: only creator can accept an initial pending offer.
+  if (deal.status === 'pending' && status === 'accepted' && actorRole !== 'creator') {
+    return res.status(403).json({
+      success: false,
+      error: 'Only the creator can accept an initial offer'
+    });
+  }
+
+  // Business rule: during negotiation, only the recipient of the latest counter can accept.
+  if (deal.status === 'negotiating' && status === 'accepted') {
+    const pendingOffers = Array.isArray(deal.negotiation)
+      ? deal.negotiation.filter((n) => n.status === 'pending')
+      : [];
+    const latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    if (!latestPendingOffer) {
+      return res.status(400).json({
+        success: false,
+        error: 'No pending counter offer found to accept'
+      });
+    }
+
+    if (latestPendingOffer.proposedBy?.toString() === req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'You cannot accept your own counter offer'
+      });
+    }
+  }
+
+  // When accepting from negotiating state, apply the latest pending counter terms.
+  if (deal.status === 'negotiating' && status === 'accepted' && Array.isArray(deal.negotiation)) {
+    const pendingOffers = deal.negotiation.filter(n => n.status === 'pending');
+    const latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    if (latestPendingOffer) {
+      if (Number.isFinite(latestPendingOffer.budget)) {
+        deal.budget = latestPendingOffer.budget;
+      }
+      if (latestPendingOffer.deadline) {
+        deal.deadline = latestPendingOffer.deadline;
+      }
+
+      latestPendingOffer.status = 'accepted';
+      deal.negotiation.forEach((offer) => {
+        if (offer._id.toString() !== latestPendingOffer._id.toString() && offer.status === 'pending') {
+          offer.status = 'declined';
+        }
+      });
+    }
+  }
+
   const oldStatus = deal.status;
   deal.status = status;
   addTimelineEvent(deal, `Status Changed to ${status}`, reason || `Status updated to ${status}`, req.user._id, { oldStatus, reason });
@@ -355,7 +504,7 @@ exports.updateDealStatus = catchAsync(async (req, res) => {
   await deal.save();
 
   // Notify other party
-  const notifyUserId = deal.brandId.toString() === req.user._id.toString() ? deal.creatorId : deal.brandId;
+  const notifyUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
   await Notification.create({
     userId: notifyUserId,
     type: 'deal',
@@ -482,7 +631,8 @@ exports.markInProgress = catchAsync(async (req, res) => {
 // ==================== COMPLETE DEAL ====================
 exports.completeDeal = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const deal = await Deal.findOne({ _id: id, brandId: req.user._id, status: 'in-progress' });
+  const brandId = getBrandContextId(req);
+  const deal = await Deal.findOne({ _id: id, brandId, status: 'in-progress' });
 
   if (!deal) {
     return res.status(404).json({ success: false, error: 'Deal not found or cannot be completed' });
@@ -510,14 +660,13 @@ exports.completeDeal = catchAsync(async (req, res) => {
 
   // Update creator earnings
   await Creator.findByIdAndUpdate(deal.creatorId, {
-    $inc: { 'stats.totalEarnings': deal.netAmount || deal.budget },
+    $inc: {
+      'stats.totalEarnings': deal.netAmount || deal.budget,
+      'stats.completedCampaigns': 1,
+    },
   });
 
-  // Release escrow payment
-  await Payment.findOneAndUpdate(
-    { dealId: deal._id, status: 'in-escrow' },
-    { $set: { status: 'completed', paidAt: new Date() } }
-  );
+  await ensureReleasedPaymentRecord(deal, req.user._id);
 
   // Notify creator
   await Notification.create({
@@ -535,10 +684,11 @@ exports.completeDeal = catchAsync(async (req, res) => {
 exports.cancelDeal = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { reason } = req.body;
+  const brandId = getBrandContextId(req);
 
   const deal = await Deal.findOne({
     _id: id,
-    $or: [{ brandId: req.user._id }, { creatorId: req.user._id }],
+    $or: [{ brandId }, { creatorId: req.user._id }],
     status: { $nin: ['completed', 'cancelled'] },
   });
 
@@ -559,7 +709,8 @@ exports.cancelDeal = catchAsync(async (req, res) => {
   }
 
   // Notify other party
-  const notifyUserId = deal.brandId.toString() === req.user._id.toString() ? deal.creatorId : deal.brandId;
+  const actorRole = getActorRoleOnDeal(deal, req);
+  const notifyUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
   await Notification.create({
     userId: notifyUserId,
     type: 'deal',
@@ -575,12 +726,13 @@ exports.cancelDeal = catchAsync(async (req, res) => {
 exports.requestRevision = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { deliverableId, notes } = req.body;
+  const brandId = getBrandContextId(req);
 
   if (!deliverableId || !notes) {
     return res.status(400).json({ success: false, error: 'Deliverable ID and revision notes required' });
   }
 
-  const deal = await Deal.findOne({ _id: id, brandId: req.user._id, status: 'in-progress' });
+  const deal = await Deal.findOne({ _id: id, brandId, status: 'in-progress' });
 
   if (!deal) {
     return res.status(404).json({ success: false, error: 'Deal not found or cannot request revision' });
@@ -616,16 +768,45 @@ exports.requestRevision = catchAsync(async (req, res) => {
 exports.counterOffer = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { budget, deadline, message } = req.body;
+  const brandContextId = getBrandContextId(req);
 
-  const deal = await Deal.findOne({ _id: id, status: 'pending' });
+  const deal = await Deal.findOne({ _id: id, status: { $in: ['pending', 'negotiating'] } });
 
   if (!deal) {
     return res.status(404).json({ success: false, error: 'Deal not found' });
   }
 
   // Only the recipient can counter
-  if (deal.creatorId.toString() !== req.user._id.toString() && deal.brandId.toString() !== req.user._id.toString()) {
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
+  }
+
+  const actorRole = getActorRoleOnDeal(deal, req);
+
+  // Initial direct offers (pending) can only be countered by the creator.
+  if (deal.status === 'pending' && actorRole !== 'creator') {
+    return res.status(403).json({
+      success: false,
+      error: 'Only the creator can counter the initial offer'
+    });
+  }
+
+  if (deal.status === 'negotiating' && Array.isArray(deal.negotiation)) {
+    const pendingOffers = deal.negotiation.filter(n => n.status === 'pending');
+    const latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    // A user cannot send two consecutive counters without the counterparty responding.
+    if (latestPendingOffer && latestPendingOffer.proposedBy?.toString() === req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Wait for the other party to accept or counter your latest offer'
+      });
+    }
+
+    // Previous pending offer is now superseded by this response counter.
+    if (latestPendingOffer && latestPendingOffer.status === 'pending') {
+      latestPendingOffer.status = 'declined';
+    }
   }
 
   deal.negotiation.push({
@@ -642,7 +823,7 @@ exports.counterOffer = catchAsync(async (req, res) => {
   await deal.save();
 
   // Notify other party
-  const notifyUserId = deal.brandId.toString() === req.user._id.toString() ? deal.creatorId : deal.brandId;
+  const notifyUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
   await Notification.create({
     userId: notifyUserId,
     type: 'deal',
@@ -722,10 +903,11 @@ exports.submitDeliverables = catchAsync(async (req, res) => {
 exports.approveDeliverable = catchAsync(async (req, res) => {
   const { id, deliverableId } = req.params;
   const { feedback } = req.body;
+  const brandId = getBrandContextId(req);
 
   const deal = await Deal.findOne({
     _id: id,
-    brandId: req.user._id,
+    brandId,
     status: { $in: ['in-progress', 'revision'] },
   });
 
@@ -757,10 +939,14 @@ exports.approveDeliverable = catchAsync(async (req, res) => {
     deal.paymentStatus = 'released';
     await deal.save();
 
-    await Payment.findOneAndUpdate(
-      { dealId: deal._id, status: 'in-escrow' },
-      { $set: { status: 'completed', paidAt: new Date() } }
-    );
+    await Creator.findByIdAndUpdate(deal.creatorId, {
+      $inc: {
+        'stats.totalEarnings': deal.netAmount || deal.budget,
+        'stats.completedCampaigns': 1,
+      },
+    });
+
+    await ensureReleasedPaymentRecord(deal, req.user._id);
 
     await Notification.create({
       userId: deal.creatorId,
@@ -792,6 +978,7 @@ exports.approveDeliverable = catchAsync(async (req, res) => {
 exports.rateDeal = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { score, review, criteria } = req.body;
+  const brandId = getBrandContextId(req);
 
   if (!score || score < 1 || score > 5) {
     return res.status(400).json({ success: false, error: 'Rating must be between 1 and 5' });
@@ -799,7 +986,7 @@ exports.rateDeal = catchAsync(async (req, res) => {
 
   const deal = await Deal.findOne({
     _id: id,
-    $or: [{ brandId: req.user._id }, { creatorId: req.user._id }],
+    $or: [{ brandId }, { creatorId: req.user._id }],
     status: 'completed',
   });
 
@@ -828,7 +1015,8 @@ exports.rateDeal = catchAsync(async (req, res) => {
   await deal.save();
 
   // Update rated user's average rating
-  const ratedUserId = deal.brandId.toString() === req.user._id.toString() ? deal.creatorId : deal.brandId;
+  const actorRole = getActorRoleOnDeal(deal, req);
+  const ratedUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
   const allRatings = await Deal.find({
     $or: [{ brandId: ratedUserId }, { creatorId: ratedUserId }],
     'rating.score': { $exists: true },
@@ -844,10 +1032,11 @@ exports.rateDeal = catchAsync(async (req, res) => {
 exports.getDealMessages = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { page = 1, limit = 50 } = req.query;
+  const brandContextId = getBrandContextId(req);
 
   const deal = await Deal.findById(id);
   if (!deal) return res.status(404).json({ success: false, error: 'Deal not found' });
-  if (!canUserAct(deal, req.user._id)) {
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
@@ -864,6 +1053,7 @@ exports.getDealMessages = catchAsync(async (req, res) => {
 exports.sendMessage = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { content, attachments = [] } = req.body;
+  const brandContextId = getBrandContextId(req);
 
   if (!content && attachments.length === 0) {
     return res.status(400).json({ success: false, error: 'Message content or attachments required' });
@@ -871,7 +1061,7 @@ exports.sendMessage = catchAsync(async (req, res) => {
 
   const deal = await Deal.findById(id);
   if (!deal) return res.status(404).json({ success: false, error: 'Deal not found' });
-  if (!canUserAct(deal, req.user._id)) {
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
@@ -902,6 +1092,7 @@ exports.sendMessage = catchAsync(async (req, res) => {
     contentType: 'text',
   });
   await message.save();
+  await message.populate('senderId', 'fullName displayName profilePicture brandName');
 
   if (deal.conversationId) {
     await Conversation.findByIdAndUpdate(deal.conversationId, {
@@ -918,7 +1109,8 @@ exports.sendMessage = catchAsync(async (req, res) => {
   }
 
   // Notify other party
-  const notifyUserId = deal.brandId.toString() === req.user._id.toString() ? deal.creatorId : deal.brandId;
+  const actorRole = getActorRoleOnDeal(deal, req);
+  const notifyUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
   await Notification.create({
     userId: notifyUserId,
     type: 'message',
@@ -927,6 +1119,11 @@ exports.sendMessage = catchAsync(async (req, res) => {
     data: { dealId: deal._id },
   });
 
+  const io = req.app.get('io');
+  if (io && deal.conversationId) {
+    io.to(`conversation_${deal.conversationId}`).emit('new_message', message);
+  }
+
   res.json({ success: true, message });
 });
 
@@ -934,10 +1131,11 @@ exports.sendMessage = catchAsync(async (req, res) => {
 exports.updatePerformanceMetrics = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { metrics, finalize = false } = req.body;
+  const brandContextId = getBrandContextId(req);
 
   const deal = await Deal.findById(id);
   if (!deal) return res.status(404).json({ success: false, error: 'Deal not found' });
-  if (!canUserAct(deal, req.user._id)) {
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
@@ -981,10 +1179,11 @@ exports.updatePerformanceMetrics = catchAsync(async (req, res) => {
 
 exports.getPerformanceSummary = catchAsync(async (req, res) => {
   const { id } = req.params;
+  const brandContextId = getBrandContextId(req);
 
   const deal = await Deal.findById(id).populate('performancePaymentId');
   if (!deal) return res.status(404).json({ success: false, error: 'Deal not found' });
-  if (!canUserAct(deal, req.user._id)) {
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
     return res.status(403).json({ success: false, error: 'Not authorized' });
   }
 
@@ -1002,9 +1201,10 @@ exports.getPerformanceSummary = catchAsync(async (req, res) => {
 // ==================== DEAL STATS ====================
 exports.getDealStats = catchAsync(async (req, res) => {
   const userId = req.user._id;
+  const brandId = getBrandContextId(req);
   const userType = req.user.userType;
 
-  const query = userType === 'brand' ? { brandId: userId } : { creatorId: userId };
+  const query = userType === 'brand' ? { brandId } : { creatorId: userId };
 
   const [total, active, completed, pending, performance, value, avgValue] = await Promise.all([
     Deal.countDocuments(query),
@@ -1032,6 +1232,7 @@ exports.getDealStats = catchAsync(async (req, res) => {
 
 // ==================== CREATE PERFORMANCE DEAL ====================
 exports.createPerformanceDeal = catchAsync(async (req, res) => {
+  const brandId = getBrandContextId(req);
   const {
     campaignId,
     creatorId,
@@ -1077,7 +1278,7 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
   }
 
   // Check campaign exists and belongs to brand
-  const campaign = await Campaign.findOne({ _id: campaignId, brandId: req.user._id });
+  const campaign = await Campaign.findOne({ _id: campaignId, brandId });
   if (!campaign) {
     return res.status(404).json({ success: false, error: 'Campaign not found or not owned by you' });
   }
@@ -1092,7 +1293,7 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
   const existingDeal = await Deal.findOne({
     campaignId,
     creatorId,
-    brandId: req.user._id,
+    brandId,
     status: { $in: ['pending', 'accepted', 'in-progress'] },
   });
   if (existingDeal) {
@@ -1140,7 +1341,7 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
   // Create performance deal
   const deal = new Deal({
     campaignId,
-    brandId: req.user._id,
+    brandId,
     creatorId,
     budget,
     deadline,
@@ -1220,6 +1421,7 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
 // ==================== UPDATE DEAL ====================
 exports.updateDeal = catchAsync(async (req, res) => {
   const { id } = req.params;
+  const brandContextId = getBrandContextId(req);
   const {
     budget,
     deadline,
@@ -1244,7 +1446,7 @@ exports.updateDeal = catchAsync(async (req, res) => {
   }
 
   // Only the brand who owns the deal can update it
-  if (!canUserAct(deal, req.user._id, 'brand')) {
+  if (!canUserAct(deal, req.user._id, 'brand', brandContextId)) {
     return res.status(403).json({ success: false, error: 'Only the deal owner (brand) can update this deal' });
   }
 

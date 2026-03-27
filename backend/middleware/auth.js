@@ -2,6 +2,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
+const mongoose = require('mongoose');
+const Brand = require('../models/Brand');
 
 // ==================== GENERATE TOKEN HELPERS (used only within middleware for token creation? no, these are for controller) ====================
 // These are not used in middleware; they are placed in authController.
@@ -212,11 +214,18 @@ const hasPermission = (permission) => {
       }
 
       if (req.user.userType === 'brand') {
-        const Brand = require('../models/Brand');
-        const brand = await Brand.findById(req.user._id);
+        const brandContextId = req.brandId || req.user._id;
+        const isOwnerContext = brandContextId.toString() === req.user._id.toString();
+
+        if (isOwnerContext) {
+          return next();
+        }
+
+        const brand = await Brand.findById(brandContextId);
         if (!brand) {
           return res.status(404).json({ success: false, error: 'Brand not found' });
         }
+
         const hasRequiredPermission = brand.userHasPermission(req.user._id, permission);
         if (!hasRequiredPermission) {
           return res.status(403).json({ success: false, error: `You don't have permission: ${permission}` });
@@ -232,6 +241,77 @@ const hasPermission = (permission) => {
       res.status(500).json({ success: false, error: 'Error checking permissions' });
     }
   };
+};
+
+/**
+ * Resolve active brand workspace context for brand users.
+ * Supports owner context (default) and team context via x-brand-context header.
+ */
+const resolveBrandContext = async (req, res, next) => {
+  try {
+    if (!req.user || req.user.userType !== 'brand') {
+      return next();
+    }
+
+    const ownBrandId = req.user._id.toString();
+    const requestedBrandContext = req.headers['x-brand-context'];
+
+    const applyTeamContext = (teamBrandId) => {
+      req.brandId = teamBrandId;
+      req.brandContext = {
+        brandId: req.brandId,
+        isOwnerContext: false,
+        isTeamContext: true,
+      };
+    };
+
+    req.brandId = req.user._id;
+    req.brandContext = {
+      brandId: req.user._id,
+      isOwnerContext: true,
+      isTeamContext: false,
+    };
+
+    // Explicit context from frontend (preferred when available).
+    if (requestedBrandContext && requestedBrandContext !== ownBrandId && mongoose.Types.ObjectId.isValid(requestedBrandContext)) {
+      const teamBrand = await Brand.findOne({
+        _id: requestedBrandContext,
+        teamMembers: {
+          $elemMatch: {
+            userId: req.user._id,
+            status: 'active',
+          },
+        },
+      }).select('_id');
+
+      if (teamBrand) {
+        applyTeamContext(teamBrand._id);
+        return next();
+      }
+    }
+
+    // Fallback: if user is an active team member anywhere, default to that parent workspace.
+    const fallbackTeamBrand = await Brand.findOne({
+      _id: { $ne: req.user._id },
+      teamMembers: {
+        $elemMatch: {
+          userId: req.user._id,
+          status: 'active',
+        },
+      },
+    })
+      .sort({ updatedAt: -1 })
+      .select('_id');
+
+    if (fallbackTeamBrand) {
+      applyTeamContext(fallbackTeamBrand._id);
+    }
+
+    next();
+  } catch (error) {
+    console.error('Brand context resolution error:', error);
+    res.status(500).json({ success: false, error: 'Error resolving brand context' });
+  }
 };
 
 /**
@@ -256,9 +336,14 @@ const checkOwnership = (resourceModel, idParam = 'id', ownerFields = ['userId', 
         return next();
       }
 
+      const ownershipIds = [req.user._id.toString()];
+      if (req.user.userType === 'brand' && req.brandId) {
+        ownershipIds.push(req.brandId.toString());
+      }
+
       const isOwner = ownerFields.some(field => {
         const fieldValue = resource[field];
-        return fieldValue && fieldValue.toString() === req.user._id.toString();
+        return fieldValue && ownershipIds.includes(fieldValue.toString());
       });
 
       if (!isOwner) {
@@ -282,5 +367,6 @@ module.exports = {
   authorize,
   optionalAuth,
   hasPermission,
+  resolveBrandContext,
   checkOwnership,
 };
