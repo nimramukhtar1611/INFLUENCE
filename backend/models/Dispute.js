@@ -1,11 +1,20 @@
 // server/models/Dispute.js
 const mongoose = require('mongoose');
 
+const generateDisputeId = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const suffix = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+  return `DSP-${year}${month}-${suffix}`;
+};
+
 const disputeSchema = new mongoose.Schema({
   dispute_id: {
     type: String,
     unique: true,
-    required: true
+    required: true,
+    default: generateDisputeId
   },
   deal_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -189,14 +198,15 @@ const disputeSchema = new mongoose.Schema({
   }
 });
 
-// Generate unique dispute ID
-disputeSchema.pre('save', async function(next) {
+// Safety net for legacy records or edge paths where default was not applied
+disputeSchema.pre('validate', function(next) {
   if (!this.dispute_id) {
-    const count = await mongoose.model('Dispute').countDocuments();
-    const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    this.dispute_id = `DSP-${year}${month}-${String(count + 1).padStart(6, '0')}`;
+    this.dispute_id = generateDisputeId();
   }
+  next();
+});
+
+disputeSchema.pre('save', function(next) {
   this.updated_at = Date.now();
   next();
 });

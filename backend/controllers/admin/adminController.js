@@ -413,26 +413,25 @@ exports.getDashboardStats = async (req, res) => {
       
       // Deal stats
       Deal.countDocuments(),
-      Deal.countDocuments({ status: { $in: ['accepted', 'in-progress'] } }),
+      Deal.countDocuments({ status: { $in: ['accepted', 'in-progress', 'in_progress'] } }),
       Deal.countDocuments({ status: 'completed' }),
-      Deal.countDocuments({ status: 'pending' }),
+      Deal.countDocuments({ status: { $in: ['pending', 'negotiating'] } }),
       Deal.countDocuments({ status: 'disputed' }),
       Deal.aggregate([
-        { $match: { status: 'completed' } },
         { $group: { _id: null, total: { $sum: '$budget' } } }
       ]),
       
       // Payment stats
       Payment.aggregate([
-        { $match: { status: 'completed' } },
+        { $match: { status: { $in: ['completed', 'released'] } } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]),
       Payment.aggregate([
-        { $match: { status: 'completed', createdAt: { $gte: startOfDay } } },
+        { $match: { status: { $in: ['completed', 'released'] }, createdAt: { $gte: startOfDay } } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]),
       Payment.aggregate([
-        { $match: { status: 'completed', createdAt: { $gte: startOfMonth } } },
+        { $match: { status: { $in: ['completed', 'released'] }, createdAt: { $gte: startOfMonth } } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]),
       Payment.aggregate([
@@ -440,7 +439,7 @@ exports.getDashboardStats = async (req, res) => {
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]),
       Payment.aggregate([
-        { $match: { status: 'completed' } },
+        { $match: { status: { $in: ['completed', 'released'] } } },
         { $group: { _id: null, total: { $sum: '$fee' } } }
       ]),
       
@@ -462,7 +461,7 @@ exports.getDashboardStats = async (req, res) => {
       User.find().sort('-createdAt').limit(5).select('fullName email userType createdAt'),
       Deal.find().populate('brandId', 'brandName').populate('creatorId', 'displayName').sort('-createdAt').limit(5),
       Payment.find().populate('from.userId', 'fullName').populate('to.userId', 'fullName').sort('-createdAt').limit(5),
-      Dispute.find().populate('raisedBy.userId', 'fullName').sort('-createdAt').limit(5)
+      Dispute.find().populate('raised_by.user_id', 'fullName').sort('-created_at').limit(5)
     ]);
 
     // Calculate derived metrics
@@ -543,6 +542,112 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get dashboard stats'
+    });
+  }
+};
+
+// ==================== GET ALL DEALS ====================
+exports.getAllDeals = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = {};
+    if (status) query.status = status;
+
+    const [deals, total] = await Promise.all([
+      Deal.find(query)
+        .populate('campaignId', 'title')
+        .populate('brandId', 'brandName fullName')
+        .populate('creatorId', 'displayName fullName')
+        .sort('-createdAt')
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Deal.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      deals,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error('Get all deals error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get deals'
+    });
+  }
+};
+
+// ==================== GET ALL PAYMENTS ====================
+exports.getAllPayments = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, type, search, start_date, end_date } = req.query;
+
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = {};
+    if (status) query.status = status;
+    if (type) query.type = type;
+    if (search) query.transactionId = { $regex: search, $options: 'i' };
+    if (start_date || end_date) {
+      query.createdAt = {};
+      if (start_date) query.createdAt.$gte = new Date(start_date);
+      if (end_date) query.createdAt.$lte = new Date(end_date);
+    }
+
+    const [payments, total, summary] = await Promise.all([
+      Payment.find(query)
+        .populate('from.userId', 'fullName brandName email userType')
+        .populate('to.userId', 'fullName displayName email userType')
+        .populate({ path: 'dealId', populate: { path: 'campaignId', select: 'title' } })
+        .sort('-createdAt')
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Payment.countDocuments(query),
+      Payment.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$amount' },
+            totalFees: { $sum: '$fee' },
+            totalNet: { $sum: '$netAmount' },
+            count: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      payments,
+      summary: summary[0] || { totalAmount: 0, totalFees: 0, totalNet: 0, count: 0 },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error('Get all payments error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get payments'
     });
   }
 };

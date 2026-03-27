@@ -206,6 +206,14 @@ const AdminPayments = () => {
   };
 
   const totals = calculateTotals();
+  const cardRevenue = Number(stats.totalRevenue || totals.totalRevenue || 0);
+  const cardFees = Number(stats.totalFees || totals.totalFees || 0);
+  const cardPending = Number(
+    stats.pendingPayouts ||
+    filteredPayments.filter((p) => p.status === 'pending').reduce((sum, p) => sum + Number(p.amount || 0), 0) ||
+    0
+  );
+  const cardWithdrawals = Number(stats.pendingWithdrawalAmount || totals.totalWithdrawals || 0);
 
   // ==================== LOADING STATE ====================
   if (loading) {
@@ -238,25 +246,25 @@ const AdminPayments = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Revenue"
-          value={formatCurrency(totals.totalRevenue)}
+          value={formatCurrency(cardRevenue)}
           icon={DollarSign}
           color="bg-blue-500"
         />
         <StatsCard
           title="Platform Fees"
-          value={formatCurrency(totals.totalFees)}
+          value={formatCurrency(cardFees)}
           icon={TrendingUp}
           color="bg-green-500"
         />
         <StatsCard
           title="Pending"
-          value={formatCurrency(filteredPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0))}
+          value={formatCurrency(cardPending)}
           icon={Clock}
           color="bg-yellow-500"
         />
         <StatsCard
           title="Withdrawals"
-          value={formatCurrency(totals.totalWithdrawals)}
+          value={formatCurrency(cardWithdrawals)}
           icon={Wallet}
           color="bg-purple-500"
         />

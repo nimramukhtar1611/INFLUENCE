@@ -5,6 +5,8 @@ const { body, param, query } = require('express-validator');
 const {
   adminLogin,
   getDashboardStats,
+  getAllDeals,
+  getAllPayments,
   getAllUsers,
   getUserDetails,
   updateUserStatus,
@@ -152,6 +154,28 @@ router.get(
 router.get(
   '/dashboard',
   getDashboardStats
+);
+
+router.get(
+  '/deals',
+  [
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('status').optional().isString().withMessage('Status must be a string')
+  ],
+  getAllDeals
+);
+
+router.get(
+  '/payments',
+  [
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('status').optional().isString().withMessage('Status must be a string'),
+    query('type').optional().isString().withMessage('Type must be a string'),
+    query('search').optional().isString().withMessage('Search must be a string')
+  ],
+  getAllPayments
 );
 
 // ==================== USER MANAGEMENT ====================

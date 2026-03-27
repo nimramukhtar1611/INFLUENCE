@@ -26,6 +26,7 @@ import {
   Activity
 } from 'lucide-react';
 import dealService from '../../services/dealService';
+import disputeService from '../../services/disputeService';
 import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
@@ -61,6 +62,13 @@ const DealDetails = () => {
   const [showCounterModal, setShowCounterModal] = useState(false);
   const [counterData, setCounterData] = useState({ budget: '', deadline: '', message: '' });
   const [submittingCounter, setSubmittingCounter] = useState(false);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [disputeData, setDisputeData] = useState({
+    type: 'payment',
+    title: '',
+    description: ''
+  });
 
   useEffect(() => {
     fetchDeal();
@@ -279,6 +287,42 @@ const DealDetails = () => {
       }
     } catch (error) {
       toast.error('Failed to accept counter offer');
+    }
+  };
+
+  const handleCreateDispute = async () => {
+    if (!deal?._id) {
+      toast.error('Deal is not available');
+      return;
+    }
+
+    if (!disputeData.title.trim() || !disputeData.description.trim()) {
+      toast.error('Please add a title and description');
+      return;
+    }
+
+    try {
+      setSubmittingDispute(true);
+      const response = await disputeService.createDispute({
+        dealId: deal._id,
+        type: disputeData.type,
+        title: disputeData.title.trim(),
+        description: disputeData.description.trim(),
+        evidence: []
+      });
+
+      if (response?.success) {
+        toast.success('Issue reported successfully');
+        setShowDisputeModal(false);
+        setDisputeData({ type: 'payment', title: '', description: '' });
+      } else {
+        toast.error(response?.error || 'Failed to report issue');
+      }
+    } catch (error) {
+      console.error('Create dispute error:', error);
+      toast.error(error?.response?.data?.error || 'Failed to report issue');
+    } finally {
+      setSubmittingDispute(false);
     }
   };
 
@@ -546,7 +590,7 @@ const DealDetails = () => {
                   </Button>
                 )}
 
-                <Button variant="outline" fullWidth icon={Flag}>
+                <Button variant="outline" fullWidth icon={Flag} onClick={() => setShowDisputeModal(true)}>
                   Report Issue
                 </Button>
               </div>
@@ -790,6 +834,66 @@ const DealDetails = () => {
           )}
         </div>
       )}
+
+      <Modal
+        isOpen={showDisputeModal}
+        onClose={() => setShowDisputeModal(false)}
+        title="Report Issue"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Issue Type
+            </label>
+            <select
+              value={disputeData.type}
+              onChange={(e) => setDisputeData({ ...disputeData, type: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="payment">Payment</option>
+              <option value="delivery">Delivery</option>
+              <option value="quality">Quality</option>
+              <option value="communication">Communication</option>
+              <option value="contract_breach">Contract Breach</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              value={disputeData.title}
+              onChange={(e) => setDisputeData({ ...disputeData, title: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Short summary of the issue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <textarea
+              rows="5"
+              value={disputeData.description}
+              onChange={(e) => setDisputeData({ ...disputeData, description: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Describe what happened and what resolution you are expecting"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="secondary" onClick={() => setShowDisputeModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleCreateDispute} loading={submittingDispute}>
+            Submit Issue
+          </Button>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={showCounterModal}

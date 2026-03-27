@@ -10,15 +10,28 @@ const cloudinary = require('../config/cloudinary');
 // @route   POST /api/disputes
 // @access  Private
 const createDispute = asyncHandler(async (req, res) => {
-  const { dealId, type, title, description, evidence } = req.body;
+  const {
+    dealId,
+    deal_id,
+    type,
+    dispute_type,
+    title,
+    reason,
+    description,
+    evidence
+  } = req.body;
+
+  const normalizedDealId = dealId || deal_id;
+  const normalizedType = type || dispute_type;
+  const normalizedReason = (reason || title || '').trim().slice(0, 500);
 
   // Validation
-  if (!dealId || !type || !title || !description) {
+  if (!normalizedDealId || !normalizedType || !normalizedReason || !description) {
     res.status(400);
-    throw new Error('Deal ID, type, title, and description are required');
+    throw new Error('Deal ID, type, reason/title, and description are required');
   }
 
-  const deal = await Deal.findById(dealId);
+  const deal = await Deal.findById(normalizedDealId);
 
   if (!deal) {
     res.status(404);
@@ -33,7 +46,12 @@ const createDispute = asyncHandler(async (req, res) => {
   }
 
   // Check if dispute already exists
-  const existingDispute = await Dispute.findOne({ dealId });
+  const existingDispute = await Dispute.findOne({
+    $or: [
+      { deal_id: normalizedDealId },
+      { dealId: normalizedDealId }
+    ]
+  });
   if (existingDispute) {
     res.status(400);
     throw new Error('A dispute already exists for this deal');
@@ -46,32 +64,47 @@ const createDispute = asyncHandler(async (req, res) => {
   // Process evidence files if any
   let processedEvidence = [];
   if (evidence && evidence.length > 0) {
-    processedEvidence = evidence.map(e => ({
-      ...e,
-      uploadedBy: req.user._id,
-      uploadedAt: new Date()
-    }));
+    processedEvidence = evidence
+      .map((e) => ({
+        file_name: e.file_name || e.fileName || e.filename || 'Evidence file',
+        file_url: e.file_url || e.fileUrl || e.url,
+        file_type: e.file_type || e.fileType || e.type || 'file',
+        uploaded_by: {
+          user_id: req.user._id,
+          user_type: req.user.userType
+        },
+        uploaded_at: new Date()
+      }))
+      .filter((item) => Boolean(item.file_url));
   }
 
   const dispute = await Dispute.create({
-    dealId,
-    campaignId: deal.campaignId,
-    raisedBy: {
-      userId: req.user._id,
-      userType: req.user.userType
+    deal_id: normalizedDealId,
+    campaign_id: deal.campaignId,
+    raised_by: {
+      user_id: req.user._id,
+      user_type: req.user.userType
     },
-    against: {
-      userId: against,
-      userType: req.user.userType === 'brand' ? 'creator' : 'brand'
+    raised_against: {
+      user_id: against,
+      user_type: req.user.userType === 'brand' ? 'creator' : 'brand'
     },
-    type,
-    title,
+    dispute_type: normalizedType,
+    reason: normalizedReason,
     description,
     evidence: processedEvidence,
     status: 'open',
     priority: 'medium',
-    messages: [],
-    createdAt: new Date()
+    timeline: [{
+      action: 'created',
+      description: 'Dispute created',
+      performed_by: {
+        user_id: req.user._id,
+        user_type: req.user.userType
+      },
+      timestamp: new Date()
+    }],
+    created_at: new Date()
   });
 
   // Update deal status
@@ -87,7 +120,7 @@ const createDispute = asyncHandler(async (req, res) => {
     message: `A dispute has been filed regarding your deal "${deal.campaignId?.title || 'Deal'}"`,
     priority: 'high',
     data: {
-      dealId,
+      dealId: normalizedDealId,
       disputeId: dispute._id,
       url: `/disputes/${dispute._id}`
     }
@@ -100,10 +133,10 @@ const createDispute = asyncHandler(async (req, res) => {
       userId: admin._id,
       type: 'alert',
       title: 'New Dispute',
-      message: `A new dispute requires attention: ${title}`,
+      message: `A new dispute requires attention: ${normalizedReason}`,
       priority: 'high',
       data: {
-        dealId,
+        dealId: normalizedDealId,
         disputeId: dispute._id,
         url: `/admin/disputes/${dispute._id}`
       }

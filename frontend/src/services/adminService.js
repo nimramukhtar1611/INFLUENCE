@@ -219,10 +219,11 @@ class AdminService {
   // Get all deals
   async getDeals(params = {}) {
     try {
+      const response = await api.get('/admin/deals', { params });
       return {
-        success: true,
-        deals: [],
-        pagination: emptyPagination(params.page, params.limit),
+        success: response.data?.success ?? true,
+        deals: response.data?.deals || [],
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
       };
     } catch (error) {
       console.error('Get deals error:', error);
@@ -244,10 +245,12 @@ class AdminService {
   // Get all payments
   async getPayments(params = {}) {
     try {
+      const response = await api.get('/admin/payments', { params });
       return {
-        success: true,
-        payments: [],
-        pagination: emptyPagination(params.page, params.limit),
+        success: response.data?.success ?? true,
+        payments: response.data?.payments || [],
+        summary: response.data?.summary || { totalAmount: 0, totalFees: 0, totalNet: 0, count: 0 },
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
       };
     } catch (error) {
       console.error('Get payments error:', error);

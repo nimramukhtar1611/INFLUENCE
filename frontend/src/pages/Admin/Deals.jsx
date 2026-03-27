@@ -9,9 +9,13 @@ import StatsCard from '../../components/Common/StatsCard';
 const AdminDeals = () => {
   const { deals, refreshing, refreshData, stats } = useAdminData();
 
-  const completedDeals = deals.filter((deal) => deal.status === 'completed').length;
-  const pendingDeals = deals.filter((deal) => ['pending', 'in_progress', 'in-progress'].includes(String(deal.status || '').toLowerCase())).length;
-  const totalValue = deals.reduce((sum, deal) => sum + Number(deal.budget || 0), 0);
+  const completedDeals = Number(stats.completedDeals || deals.filter((deal) => deal.status === 'completed').length || 0);
+  const pendingDeals = Number(
+    stats.pendingDeals ||
+    deals.filter((deal) => ['pending', 'in_progress', 'in-progress'].includes(String(deal.status || '').toLowerCase())).length ||
+    0
+  );
+  const totalValue = Number(stats.totalDealValue || deals.reduce((sum, deal) => sum + Number(deal.budget || 0), 0) || 0);
 
   return (
     <div className="space-y-6">
@@ -34,7 +38,7 @@ const AdminDeals = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatsCard
           title="Total Deals"
-          value={String(stats.totalCampaigns || deals.length || 0)}
+          value={String(stats.totalDeals || deals.length || 0)}
           icon={Handshake}
           color="bg-indigo-500"
         />
