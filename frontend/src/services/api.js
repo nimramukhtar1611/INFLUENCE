@@ -2,9 +2,27 @@
 import axios from 'axios';
 
 // ==================== CONFIGURATION ====================
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+const normalizeUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
+
+const resolveApiBaseUrl = () => {
+  const configuredUrl = normalizeUrl(import.meta.env.VITE_API_URL);
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  if (typeof window !== 'undefined' && !import.meta.env.PROD) {
+    const host = window.location.hostname;
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocalHost) {
+      const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      return `${protocol}//${host}:5000/api`;
+    }
+  }
+
+  return import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // Create axios instance
 const api = axios.create({

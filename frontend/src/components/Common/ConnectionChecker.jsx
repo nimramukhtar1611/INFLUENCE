@@ -5,11 +5,33 @@ const ConnectionChecker = () => {
   const [isConnected, setIsConnected] = useState(true);
   const [checking, setChecking] = useState(false);
 
+  const getHealthUrl = () => {
+    const configured = import.meta.env.VITE_API_URL;
+    if (configured) {
+      const base = String(configured).replace(/\/+$/, '');
+      if (base.endsWith('/api')) {
+        return `${base.slice(0, -4)}/health`;
+      }
+      return `${base}/health`;
+    }
+
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+      if (!isLocalHost) {
+        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        return `${protocol}//${host}:5000/health`;
+      }
+    }
+
+    return 'http://localhost:5000/health';
+  };
+
   // ✅ Direct function - no imports needed
   const checkConnection = async () => {
     setChecking(true);
     try {
-      const response = await fetch('http://localhost:5000/health', {
+      const response = await fetch(getHealthUrl(), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         // Short timeout to fail fast

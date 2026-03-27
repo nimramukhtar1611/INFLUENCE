@@ -17,9 +17,26 @@ class SocketManager {
   initialize(token) {
     if (this.socket) return;
 
+    const resolveSocketUrl = () => {
+      const configured = import.meta.env.VITE_SOCKET_URL;
+      if (configured) return configured;
+
+      if (typeof window !== 'undefined') {
+        if (import.meta.env.PROD) return window.location.origin;
+
+        const host = window.location.hostname;
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+        if (!isLocalHost) {
+          const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+          return `${protocol}//${host}:5000`;
+        }
+      }
+
+      return 'http://localhost:5000';
+    };
+
     const SOCKET_URL =
-      import.meta.env.VITE_SOCKET_URL ||
-      (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+      resolveSocketUrl();
 
     this.socket = io(SOCKET_URL, {
       auth: { token },

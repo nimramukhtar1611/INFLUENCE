@@ -35,6 +35,24 @@ export const SocketProvider = ({ children }) => {
   const connectErrorShownRef = useRef(false);
   const isCypressRun = typeof window !== 'undefined' && Boolean(window.Cypress);
 
+  const resolveSocketUrl = useCallback(() => {
+    const configured = import.meta.env.VITE_SOCKET_URL;
+    if (configured) return configured;
+
+    if (typeof window !== 'undefined') {
+      if (import.meta.env.PROD) return window.location.origin;
+
+      const host = window.location.hostname;
+      const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+      if (!isLocalHost) {
+        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        return `${protocol}//${host}:5000`;
+      }
+    }
+
+    return 'http://localhost:5000';
+  }, []);
+
   useEffect(() => {
     const disableSocket = isCypressRun || (typeof window !== 'undefined' && window.localStorage.getItem('disableSocket') === 'true');
 
@@ -47,9 +65,7 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const SOCKET_URL =
-      import.meta.env.VITE_SOCKET_URL ||
-      (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+    const SOCKET_URL = resolveSocketUrl();
     socketRef.current = io(SOCKET_URL, {
       auth: { token, userId: user?._id },
       query: { userId: user?._id },
@@ -128,7 +144,7 @@ export const SocketProvider = ({ children }) => {
       socket.removeAllListeners();
       socket.disconnect();
     };
-  }, [user, token, isCypressRun]);
+  }, [user, token, isCypressRun, resolveSocketUrl]);
 
   const joinConversation = useCallback((conversationId) => {
     const normalizedConversationId = normalizeId(conversationId);

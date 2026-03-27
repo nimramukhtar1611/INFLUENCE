@@ -50,6 +50,40 @@ const { initializeSentry, captureException } = require('./utils/sentry');
 const app = express();
 const server = http.createServer(app);
 const isTestEnv = process.env.NODE_ENV === 'test';
+const isProductionEnv = process.env.NODE_ENV === 'production';
+
+const parseOrigins = (value) => String(value || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const ALLOWED_ORIGINS = Array.from(new Set([
+  ...parseOrigins(process.env.FRONTEND_URL),
+  ...parseOrigins(process.env.ALLOWED_ORIGINS),
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+]));
+
+const validateCorsOrigin = (origin, callback) => {
+  if (!origin) {
+    return callback(null, true);
+  }
+
+  if (!isProductionEnv) {
+    return callback(null, true);
+  }
+
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+};
+
+const corsOptions = {
+  origin: validateCorsOrigin,
+  credentials: true
+};
 
 if (!isTestEnv) {
   initializeSentry();
@@ -94,7 +128,7 @@ if (!isTestEnv) {
   try {
     const io = new Server(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+        origin: validateCorsOrigin,
         credentials: true,
       },
     });
@@ -113,10 +147,7 @@ if (!isTestEnv) {
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}));
+app.use(cors(corsOptions));
 
 // ✅ FIX: Stripe webhook raw body — MUST be before express.json()
 // Stripe signature verify karne ke liye raw Buffer chahiye
