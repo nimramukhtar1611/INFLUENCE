@@ -28,7 +28,7 @@ services:
       MONGODB_URI: mongodb://mongo:27017/influencex
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY is required}
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-local-dev-refresh-secret}
     ports:
