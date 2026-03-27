@@ -26,6 +26,7 @@ router.get('/dashboard', creatorController.getDashboard);
 
 // ==================== ANALYTICS ====================
 router.get('/analytics', creatorController.getAnalytics);
+router.get('/fraud-assessment', creatorController.getFraudAssessment);
 
 // ==================== EARNINGS ====================
 router.get('/earnings/summary', creatorController.getEarningsSummary);

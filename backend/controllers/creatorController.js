@@ -5,8 +5,25 @@ const Deal = require('../models/Deal');
 const Payment = require('../models/Payment');
 const Campaign = require('../models/Campaign');
 const socialService = require('../services/socialService'); // ✅ FIX: singleton instance
+const fraudDetectionService = require('../services/fraudDetectionService');
+const { featureFlags } = require('../config/featureFlags');
 
 const CREATOR_EXCLUDED_EARNING_TYPES = ['withdrawal', 'refund', 'fee', 'penalty'];
+
+const maybeRefreshFraudAssessment = async (creatorId) => {
+  if (!featureFlags.fraudDetection.enabled || !featureFlags.fraudDetection.autoScoreOnSocialSync) {
+    return null;
+  }
+
+  const creator = await Creator.findById(creatorId);
+  if (!creator) return null;
+
+  const assessment = await fraudDetectionService.evaluateCreator(creator);
+  creator.fraudDetection = fraudDetectionService.applySoftEnforcement(creator.fraudDetection, assessment);
+  await creator.save();
+
+  return creator.fraudDetection;
+};
 
 // ==================== GET PROFILE ====================
 exports.getProfile = async (req, res) => {
@@ -117,6 +134,12 @@ exports.verifySocialMedia = async (req, res) => {
       const updatedCreator = await Creator.findById(req.user._id);
       await updatedCreator.save();
 
+      try {
+        await maybeRefreshFraudAssessment(req.user._id);
+      } catch (fraudError) {
+        console.error('Fraud assessment refresh error:', fraudError.message);
+      }
+
       const message = verified
         ? 'Account verified successfully'
         : (socialData.note
@@ -186,10 +209,61 @@ exports.syncSocialMedia = async (req, res) => {
     const updated = await Creator.findById(req.user._id);
     await updated.save();
 
+    try {
+      await maybeRefreshFraudAssessment(req.user._id);
+    } catch (fraudError) {
+      console.error('Fraud assessment refresh error:', fraudError.message);
+    }
+
     res.json({ success: true, message: 'Social media synced', results: syncResults });
   } catch (error) {
     console.error('Sync social media error:', error);
     res.status(500).json({ success: false, error: error.message || 'Failed to sync' });
+  }
+};
+
+// ==================== FRAUD ASSESSMENT ====================
+exports.getFraudAssessment = async (req, res) => {
+  try {
+    const forceRefresh = String(req.query.refresh || '').toLowerCase() === 'true';
+    const creator = await Creator.findById(req.user._id)
+      .select('displayName handle totalFollowers averageEngagement socialMedia lastSocialSync fraudDetection');
+
+    if (!creator) {
+      return res.status(404).json({ success: false, error: 'Creator not found' });
+    }
+
+    if (!featureFlags.fraudDetection.enabled) {
+      return res.json({
+        success: true,
+        enabled: false,
+        message: 'Fraud detection is disabled by feature flag',
+        assessment: creator.fraudDetection || fraudDetectionService.toPersistenceModel(),
+      });
+    }
+
+    if (forceRefresh || !creator.fraudDetection?.lastEvaluatedAt) {
+      const assessment = await fraudDetectionService.evaluateCreator(creator);
+      creator.fraudDetection = fraudDetectionService.applySoftEnforcement(creator.fraudDetection, assessment);
+      await creator.save();
+    }
+
+    res.json({
+      success: true,
+      enabled: true,
+      assessment: creator.fraudDetection,
+      creator: {
+        id: creator._id,
+        displayName: creator.displayName,
+        handle: creator.handle,
+        totalFollowers: creator.totalFollowers,
+        averageEngagement: creator.averageEngagement,
+        lastSocialSync: creator.lastSocialSync || null,
+      },
+    });
+  } catch (error) {
+    console.error('Get fraud assessment error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to load fraud assessment' });
   }
 };
 

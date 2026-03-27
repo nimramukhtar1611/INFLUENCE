@@ -291,7 +291,7 @@ const AdminDashboard = () => {
           </div>
         </Link>
 
-        <Link to="/admin/moderation">
+        <Link to="/admin/fraud-review">
           <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors">

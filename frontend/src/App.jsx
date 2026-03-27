@@ -68,6 +68,7 @@ import AdminPayments from './pages/Admin/Payments';
 import AdminReports from './pages/Admin/Reports';
 import AdminDisputes from './pages/Admin/Disputes';
 import AdminSettings from './pages/Admin/Settings';
+import AdminFraudReview from './pages/Admin/FraudReview';
 import AdminLogin from './pages/Admin/AdminLogin';
 // Common Pages
 import Notifications from './components/Common/Notifications';
@@ -204,6 +205,7 @@ function App() {
   <Route path="reports" element={<AdminReports />} />
   <Route path="settings" element={<AdminSettings />} />
   <Route path="disputes" element={<AdminDisputes />} />
+  <Route path="fraud-review" element={<AdminFraudReview />} />
   <Route path="notifications" element={<Notifications />} />
 </Route>
 

@@ -304,6 +304,105 @@ const creatorSchema = new mongoose.Schema({
     },
     totalReviews: { type: Number, default: 0, min: 0 }
   },
+
+  // AI fraud detection (Phase 1: read-only scoring, feature-flagged)
+  fraudDetection: {
+    riskScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    riskLevel: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'low'
+    },
+    version: {
+      type: String,
+      default: 'v1'
+    },
+    manualReviewRequired: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    holdReason: {
+      type: String,
+      default: ''
+    },
+    holdAppliedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin'
+    },
+    reviewNotes: {
+      type: String,
+      default: ''
+    },
+    lastEvaluatedAt: Date,
+    signals: [{
+      type: {
+        type: String,
+        enum: [
+          'low_engagement',
+          'follow_ratio_anomaly',
+          'rapid_growth',
+          'growth_engagement_divergence',
+          'untrusted_data_source'
+        ]
+      },
+      platform: {
+        type: String,
+        enum: ['instagram', 'youtube', 'tiktok', 'twitter']
+      },
+      severity: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'low'
+      },
+      weight: {
+        type: Number,
+        default: 0
+      },
+      value: Number,
+      threshold: Number,
+      reason: String,
+      detectedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    history: [{
+      platform: {
+        type: String,
+        enum: ['instagram', 'youtube', 'tiktok', 'twitter'],
+        required: true
+      },
+      followers: {
+        type: Number,
+        default: 0,
+        min: 0
+      },
+      following: {
+        type: Number,
+        default: 0,
+        min: 0
+      },
+      engagement: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100
+      },
+      source: String,
+      capturedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
+  },
   
   // Availability
   availability: {
@@ -340,6 +439,9 @@ creatorSchema.index({ averageEngagement: -1 });
 creatorSchema.index({ 'stats.totalEarnings': -1 });
 creatorSchema.index({ 'stats.completedCampaigns': -1 });
 creatorSchema.index({ 'availability.status': 1, 'stats.completedCampaigns': -1 });
+creatorSchema.index({ 'fraudDetection.riskScore': -1 });
+creatorSchema.index({ 'fraudDetection.riskLevel': 1, totalFollowers: -1 });
+creatorSchema.index({ 'fraudDetection.manualReviewRequired': 1, 'fraudDetection.riskScore': -1 });
 creatorSchema.index({ niches: 1 });
 creatorSchema.index({ primaryPlatform: 1, totalFollowers: -1 });
 
@@ -388,6 +490,10 @@ creatorSchema.pre('save', function(next) {
   }
   
   this.averageEngagement = platformCount > 0 ? engagementSum / platformCount : 0;
+
+  if (Array.isArray(this.fraudDetection?.history) && this.fraudDetection.history.length > 300) {
+    this.fraudDetection.history = this.fraudDetection.history.slice(-300);
+  }
   
   next();
 });

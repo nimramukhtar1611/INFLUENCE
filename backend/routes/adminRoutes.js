@@ -25,6 +25,11 @@ const {
   adminRegenerateBackupCodes,
   adminGet2FAStatus
 } = require('../controllers/admin/adminController');
+const {
+  getFraudReviewQueue,
+  getCreatorFraudDetails,
+  updateFraudReviewStatus
+} = require('../controllers/admin/fraudController');
 const { protect, adminProtect, superAdminProtect } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
 
@@ -348,6 +353,36 @@ router.get(
       .withMessage('Group by must be day, week, or month')
   ],
   getPlatformAnalytics
+);
+
+// ==================== FRAUD REVIEW ====================
+router.get(
+  '/fraud/review-queue',
+  [
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('queue').optional().isIn(['manual_review', 'high_risk', 'all_flagged']).withMessage('Invalid queue type'),
+    query('riskLevel').optional().isIn(['low', 'medium', 'high']).withMessage('Invalid risk level')
+  ],
+  getFraudReviewQueue
+);
+
+router.get(
+  '/fraud/creators/:creatorId',
+  [
+    param('creatorId').isMongoId().withMessage('Invalid creator ID')
+  ],
+  getCreatorFraudDetails
+);
+
+router.patch(
+  '/fraud/creators/:creatorId/review',
+  [
+    param('creatorId').isMongoId().withMessage('Invalid creator ID'),
+    body('action').isIn(['clear_hold', 'mark_manual_review']).withMessage('Invalid action'),
+    body('notes').optional().isString().isLength({ max: 1000 }).withMessage('Notes cannot exceed 1000 characters')
+  ],
+  updateFraudReviewStatus
 );
 
 // ==================== SETTINGS (Super Admin only) ====================

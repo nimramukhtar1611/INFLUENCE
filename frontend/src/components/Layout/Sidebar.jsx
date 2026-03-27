@@ -88,6 +88,7 @@ import { useTheme } from '../../hooks/useTheme';
       { to: '/admin/deals', icon: Handshake, label: 'Deals' },
       { to: '/admin/payments', icon: Wallet, label: 'Payments' },
       { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
+      { to: '/admin/fraud-review', icon: Shield, label: 'Fraud Review' },
       { to: '/admin/disputes', icon: AlertCircle, label: 'Disputes' },
       { to: '/admin/settings', icon: Settings, label: 'Settings' }
     ];

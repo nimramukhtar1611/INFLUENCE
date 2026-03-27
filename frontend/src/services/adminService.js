@@ -291,6 +291,47 @@ class AdminService {
     }
   }
 
+  // Get fraud review queue
+  async getFraudReviewQueue(params = {}) {
+    try {
+      const response = await api.get('/admin/fraud/review-queue', { params });
+      return {
+        success: response.data?.success ?? true,
+        queue: response.data?.queue || 'manual_review',
+        creators: response.data?.creators || [],
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
+      };
+    } catch (error) {
+      console.error('Get fraud review queue error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  // Get fraud details for one creator
+  async getFraudCreatorDetails(creatorId) {
+    try {
+      const response = await api.get(`/admin/fraud/creators/${creatorId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get fraud creator details error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
+  // Update fraud review status (clear hold / mark manual review)
+  async updateFraudReviewStatus(creatorId, action, notes = '') {
+    try {
+      const response = await api.patch(`/admin/fraud/creators/${creatorId}/review`, {
+        action,
+        notes,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Update fraud review status error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+
   // Get dispute details
   async getDispute(disputeId) {
     try {

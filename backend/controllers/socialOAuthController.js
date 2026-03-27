@@ -1,6 +1,21 @@
 // controllers/socialOAuthController.js - FULL VERSION
 const Creator = require('../models/Creator');
 const socialService = require('../services/socialService');
+const fraudDetectionService = require('../services/fraudDetectionService');
+const { featureFlags } = require('../config/featureFlags');
+
+const maybeRefreshFraudAssessment = async (creatorId) => {
+  if (!featureFlags.fraudDetection.enabled || !featureFlags.fraudDetection.autoScoreOnSocialSync) {
+    return;
+  }
+
+  const creator = await Creator.findById(creatorId);
+  if (!creator) return;
+
+  const assessment = await fraudDetectionService.evaluateCreator(creator);
+  creator.fraudDetection = fraudDetectionService.applySoftEnforcement(creator.fraudDetection, assessment);
+  await creator.save();
+};
 
 // ==================== INSTAGRAM ====================
 
@@ -58,6 +73,12 @@ exports.instagramCallback = async (req, res) => {
         lastSocialSync:                   new Date()
       }
     });
+
+    try {
+      await maybeRefreshFraudAssessment(userId || req.user._id);
+    } catch (fraudError) {
+      console.error('Fraud assessment refresh error:', fraudError.message);
+    }
 
     // If frontend is expecting redirect
     if (process.env.FRONTEND_URL) {
@@ -118,6 +139,12 @@ exports.youtubeCallback = async (req, res) => {
       }
     });
 
+    try {
+      await maybeRefreshFraudAssessment(userId || req.user._id);
+    } catch (fraudError) {
+      console.error('Fraud assessment refresh error:', fraudError.message);
+    }
+
     if (process.env.FRONTEND_URL) {
       return res.redirect(`${process.env.FRONTEND_URL}/creator/settings?connected=youtube`);
     }
@@ -170,6 +197,12 @@ exports.tikTokCallback = async (req, res) => {
         lastSocialSync:                new Date()
       }
     });
+
+    try {
+      await maybeRefreshFraudAssessment(userId || req.user._id);
+    } catch (fraudError) {
+      console.error('Fraud assessment refresh error:', fraudError.message);
+    }
 
     if (process.env.FRONTEND_URL) {
       return res.redirect(`${process.env.FRONTEND_URL}/creator/settings?connected=tiktok`);
@@ -254,6 +287,12 @@ exports.syncPlatform = async (req, res) => {
           lastSocialSync:              new Date()
         }
       });
+
+      try {
+        await maybeRefreshFraudAssessment(req.user._id);
+      } catch (fraudError) {
+        console.error('Fraud assessment refresh error:', fraudError.message);
+      }
 
       res.json({ success: true, message: `${platform} synced`, data: result.data });
     } else {
