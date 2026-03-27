@@ -15,6 +15,7 @@
     "debug": "nodemon --inspect server.js",
     "seed:admin": "node seeders/adminSeeder.js",
     "seed:qa": "node seeders/qaSeeder.js",
+    "seed:fraud-flagged": "node seeders/fraudFlaggedCreatorSeeder.js",
     "seed:qa:test": "cross-env NODE_ENV=test node seeders/qaSeeder.js",
     "test:reg": "node scripts/test-registration.js",
     "test:load": "k6 run tests/load/k6-script.js",
