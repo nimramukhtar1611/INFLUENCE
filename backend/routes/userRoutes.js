@@ -1,7 +1,7 @@
 // routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/auth');
 const {
   getUsers,
   getUser,
@@ -11,16 +11,18 @@ const {
   suspendUser,
   activateUser,
   getUserStats
-} = require('../controllers/userController');
+} = require('../controllers/admin/userController');
 
 // Admin only routes
-router.get('/', protect, authorize('admin'), getUsers);
-router.get('/stats', protect, authorize('admin'), getUserStats);
-router.get('/:id', protect, authorize('admin'), getUser);
-router.put('/:id', protect, authorize('admin'), updateUser);
-router.delete('/:id', protect, authorize('admin'), deleteUser);
-router.post('/:id/verify', protect, authorize('admin'), verifyUser);
-router.post('/:id/suspend', protect, authorize('admin'), suspendUser);
-router.post('/:id/activate', protect, authorize('admin'), activateUser);
+router.use(adminProtect);
+
+router.get('/', getUsers);
+router.get('/stats', getUserStats);
+router.get('/:id', getUser);
+router.put('/:id', updateUser);
+router.delete('/:id', deleteUser);
+router.post('/:id/verify', verifyUser);
+router.post('/:id/suspend', suspendUser);
+router.post('/:id/activate', activateUser);
 
 module.exports = router;

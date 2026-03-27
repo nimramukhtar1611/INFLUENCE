@@ -10,6 +10,15 @@ const reportSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: [
+      // Current report generation types
+      'users',
+      'campaigns',
+      'deals',
+      'payments',
+      'revenue',
+      'engagement',
+      'creators',
+      'brands',
       'campaign_performance',
       'creator_earnings',
       'brand_spending',
@@ -124,6 +133,18 @@ const reportSchema = new mongoose.Schema({
     min: 0,
     max: 100,
     default: 0
+  },
+
+  metadata: {
+    requestedAt: Date,
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    generatedAt: Date,
+    recordCount: Number,
+    ipAddress: String,
+    userAgent: String
   },
 
   createdAt: {

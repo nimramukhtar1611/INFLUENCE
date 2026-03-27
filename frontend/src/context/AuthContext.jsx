@@ -47,6 +47,19 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUser = useCallback(async () => {
     try {
+      const currentUser = user || api.getCurrentUser();
+      const currentRole = currentUser?.userType || currentUser?.role;
+
+      // /auth/me is guarded by user auth middleware; avoid forcing admin sessions through it.
+      if (currentRole === 'admin' || currentRole === 'super_admin') {
+        const normalizedAdmin = normalizeUser(currentUser);
+        if (normalizedAdmin) {
+          setUser((prev) => ({ ...prev, ...normalizedAdmin }));
+          localStorage.setItem('user', JSON.stringify(normalizedAdmin));
+        }
+        return normalizedAdmin;
+      }
+
       const res = await api.get('/auth/me');
       if (res.data?.success) {
         const normalized = normalizeUser(res.data.user);
@@ -57,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to refresh user', error);
     }
-  }, []);
+  }, [user]);
 
   const login = async (email, password, userType, captchaToken) => {
     setLoading(true);

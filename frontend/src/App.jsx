@@ -66,6 +66,7 @@ import AdminCampaigns from './pages/Admin/Campaigns';
 import AdminDeals from './pages/Admin/Deals';
 import AdminPayments from './pages/Admin/Payments';
 import AdminReports from './pages/Admin/Reports';
+import AdminDisputes from './pages/Admin/Disputes';
 import AdminSettings from './pages/Admin/Settings';
 import AdminLogin from './pages/Admin/AdminLogin';
 // Common Pages
@@ -202,7 +203,7 @@ function App() {
   <Route path="payments" element={<AdminPayments />} />
   <Route path="reports" element={<AdminReports />} />
   <Route path="settings" element={<AdminSettings />} />
-  <Route path="disputes" element={<Disputes />} />
+  <Route path="disputes" element={<AdminDisputes />} />
   <Route path="notifications" element={<Notifications />} />
 </Route>
 

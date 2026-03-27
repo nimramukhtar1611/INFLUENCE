@@ -1,15 +1,18 @@
 // pages/Admin/Creators.jsx
 import React, { useState } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
-import { Search, Filter, Eye, Edit, MoreVertical, CheckCircle, XCircle, Clock, Users, DollarSign, Star, Instagram, Youtube, Twitter, Download } from 'lucide-react';
+import { Search, Eye, CheckCircle, Clock, Users, DollarSign, Star, Instagram, Youtube, Twitter, Download } from 'lucide-react';
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
+import Modal from '../../components/Common/Modal';
 import { formatNumber, formatCurrency, formatDate } from '../../utils/helpers';
 
 const Creators = () => {
   const { creators, loading, refreshData, stats } = useAdminData();
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCreator, setSelectedCreator] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const filteredCreators = creators.filter(c => {
     if (filter !== 'all' && c.status !== filter) return false;
@@ -36,6 +39,11 @@ const Creators = () => {
   };
 
   if (loading) return <div>Loading...</div>;
+
+  const openCreatorDetails = (creator) => {
+    setSelectedCreator(creator);
+    setShowDetailsModal(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -114,11 +122,12 @@ const Creators = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-2">
+                  <button
+                    onClick={() => openCreatorDetails(creator)}
+                    className="text-indigo-600 hover:text-indigo-900"
+                    title="View Details"
+                  >
                     <Eye className="w-4 h-4" />
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <MoreVertical className="w-4 h-4" />
                   </button>
                 </td>
               </tr>
@@ -126,6 +135,65 @@ const Creators = () => {
           </tbody>
         </table>
       </div>
+
+      <Modal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedCreator(null);
+        }}
+        title="Creator Details"
+        size="lg"
+      >
+        {selectedCreator && (
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{selectedCreator.displayName || 'Creator'}</h3>
+              <p className="text-sm text-gray-600">{selectedCreator.email || 'No email available'}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-xs text-gray-500">Status</p>
+                <p className="font-medium capitalize">{selectedCreator.status || 'unknown'}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-xs text-gray-500">Joined</p>
+                <p className="font-medium">{selectedCreator.createdAt ? formatDate(selectedCreator.createdAt) : 'N/A'}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-xs text-gray-500">Followers</p>
+                <p className="font-medium">{formatNumber(selectedCreator.totalFollowers || 0)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-xs text-gray-500">Engagement</p>
+                <p className="font-medium">{selectedCreator.averageEngagement?.toFixed(1) || '0'}%</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-xs text-gray-500">Total Earnings</p>
+                <p className="font-semibold text-green-600">{formatCurrency(selectedCreator.stats?.totalEarnings || 0)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-xs text-gray-500">Campaigns</p>
+                <p className="font-semibold">{selectedCreator.stats?.completedCampaigns || 0}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-xs text-gray-500">Rating</p>
+                <p className="font-semibold">{selectedCreator.stats?.averageRating?.toFixed(1) || '0'}</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

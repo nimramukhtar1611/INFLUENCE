@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query } = require('express-validator');
-const { protect, authorize } = require('.././middleware/auth');
+const { adminProtect } = require('../middleware/auth');
 const {
   generateReport,
   getReports,
@@ -18,7 +18,7 @@ const {
 } = require('../controllers/admin/reportController');
 
 // All routes are protected and require admin access
-router.use(protect, authorize('admin'));
+router.use(adminProtect);
 
 // Validation rules
 const validateDateRange = [

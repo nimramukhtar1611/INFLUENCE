@@ -11,11 +11,9 @@ import {
   CheckCircle,
   XCircle,
   Download,
-  MoreVertical,
   Calendar,
   RefreshCw,
   AlertCircle,
-  CreditCard,
   Wallet,
   ArrowUpRight,
   ArrowDownRight
@@ -24,7 +22,6 @@ import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import Modal from '../../components/Common/Modal';
 import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
-import toast from 'react-hot-toast';
 
 const AdminPayments = () => {
   const { payments, loading, refreshData, stats, approveWithdrawal } = useAdminData();
@@ -36,8 +33,6 @@ const AdminPayments = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showRefundModal, setShowRefundModal] = useState(false);
-  const [refundData, setRefundData] = useState({ amount: '', reason: '' });
 
   // ==================== FILTER PAYMENTS ====================
   useEffect(() => {
@@ -95,23 +90,6 @@ const AdminPayments = () => {
   const handleViewDetails = (payment) => {
     setSelectedPayment(payment);
     setShowDetailsModal(true);
-  };
-
-  // ==================== HANDLE REFUND ====================
-  const handleRefund = async () => {
-    if (!refundData.amount || parseFloat(refundData.amount) <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-
-    try {
-      // This would call admin API to process refund
-      toast.success('Refund processed successfully');
-      setShowRefundModal(false);
-      refreshData();
-    } catch (error) {
-      toast.error('Failed to process refund');
-    }
   };
 
   // ==================== EXPORT CSV ====================
@@ -474,19 +452,6 @@ const AdminPayments = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {payment.status === 'completed' && payment.type !== 'refund' && (
-                          <button
-                            onClick={() => {
-                              setSelectedPayment(payment);
-                              setRefundData({ amount: payment.amount, reason: '' });
-                              setShowRefundModal(true);
-                            }}
-                            className="text-orange-600 hover:text-orange-700"
-                            title="Refund"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </button>
-                        )}
                         {payment.status === 'pending' && payment.type === 'withdrawal' && (
                           <button
                             onClick={() => handleApproveWithdrawal(payment)}
@@ -496,9 +461,6 @@ const AdminPayments = () => {
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         )}
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -618,66 +580,6 @@ const AdminPayments = () => {
             )}
           </div>
         )}
-      </Modal>
-
-      {/* Refund Modal */}
-      <Modal
-        isOpen={showRefundModal}
-        onClose={() => {
-          setShowRefundModal(false);
-          setRefundData({ amount: '', reason: '' });
-        }}
-        title="Process Refund"
-      >
-        {selectedPayment && (
-          <div className="space-y-4">
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                <strong>Warning:</strong> Processing a refund will reverse this transaction. This action cannot be undone.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Refund Amount ($)
-              </label>
-              <input
-                type="number"
-                value={refundData.amount}
-                onChange={(e) => setRefundData({ ...refundData, amount: e.target.value })}
-                max={selectedPayment.amount}
-                step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder={`Max: ${selectedPayment.amount}`}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Maximum refund amount: {formatCurrency(selectedPayment.amount)}
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for Refund
-              </label>
-              <textarea
-                rows="3"
-                value={refundData.reason}
-                onChange={(e) => setRefundData({ ...refundData, reason: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Enter reason for refund..."
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={() => setShowRefundModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleRefund}>
-            Process Refund
-          </Button>
-        </div>
       </Modal>
     </div>
   );

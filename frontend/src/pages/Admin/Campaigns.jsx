@@ -4,7 +4,6 @@ import { useAdminData } from '../../hooks/useAdminData';
 import {
   Search,
   Filter,
-  MoreVertical,
   Eye,
   Edit,
   CheckCircle,
@@ -27,7 +26,7 @@ import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import Modal from '../../components/Common/Modal';
 import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
-import { Link } from 'react-router-dom';
+import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
 
 const Campaigns = () => {
@@ -80,13 +79,18 @@ const Campaigns = () => {
   // ==================== HANDLE STATUS CHANGE ====================
   const handleStatusChange = async () => {
     try {
-      // This would call an admin API to update campaign status
-      // For now, just show success
+      const response = await adminService.updateCampaignStatus(selectedCampaign._id, statusAction.status, statusAction.reason);
+      if (!response?.success) {
+        throw new Error(response?.error || 'Failed to update campaign status');
+      }
+
       toast.success(`Campaign status updated to ${statusAction.status}`);
       setShowStatusModal(false);
+      setSelectedCampaign(null);
+      setStatusAction({ status: '', reason: '' });
       refreshData();
     } catch (error) {
-      toast.error('Failed to update campaign status');
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to update campaign status');
     }
   };
 
@@ -384,13 +388,6 @@ const Campaigns = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <Link
-                          to={`/admin/campaigns/${campaign._id}/edit`}
-                          className="text-gray-400 hover:text-gray-600"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
                         {campaign.status === 'pending' && (
                           <>
                             <button
@@ -417,9 +414,6 @@ const Campaigns = () => {
                             </button>
                           </>
                         )}
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>

@@ -5,6 +5,7 @@ const Creator = require('../../models/Creator');
 const Campaign = require('../../models/Campaign');
 const Deal = require('../../models/Deal');
 const Payment = require('../../models/Payment');
+const Subscription = require('../../models/Subscription');
 const AuditLog = require('../../models/AuditLog');
 const analyticsService = require('../../services/analyticsService');
 const { sendEmail } = require('../../services/emailService');
@@ -195,8 +196,11 @@ async function generateReportInBackground(reportId) {
     report.charts = report.includeCharts ? charts : null;
     report.status = 'completed';
     report.progress = 100;
-    report.metadata.generatedAt = new Date();
-    report.metadata.recordCount = data.length;
+    report.metadata = {
+      ...(report.metadata || {}),
+      generatedAt: new Date(),
+      recordCount: data.length
+    };
     await report.save();
 
     // Log completion
@@ -687,13 +691,17 @@ async function generateRevenueReport(report) {
   const payments = await Payment.find(query).lean();
 
   // Get subscriptions
-  const subscriptions = await Subscription.find({
-    status: 'active',
-    ...(dateRange?.start || dateRange?.end ? {
-      'billingPeriod.start': { $gte: new Date(dateRange.start) },
-      'billingPeriod.end': { $lte: new Date(dateRange.end) }
-    } : {})
-  }).lean();
+  const subscriptionQuery = { status: 'active' };
+  if (dateRange?.start || dateRange?.end) {
+    if (dateRange?.start) {
+      subscriptionQuery['billingPeriod.start'] = { $gte: new Date(dateRange.start) };
+    }
+    if (dateRange?.end) {
+      subscriptionQuery['billingPeriod.end'] = { $lte: new Date(dateRange.end) };
+    }
+  }
+
+  const subscriptions = await Subscription.find(subscriptionQuery).lean();
 
   // Calculate revenue metrics
   const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);

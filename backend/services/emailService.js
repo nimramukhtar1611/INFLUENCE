@@ -422,4 +422,8 @@ class EmailService {
   }
 }
 
-module.exports = new EmailService();
+const emailService = new EmailService();
+
+module.exports = emailService;
+// Backward compatibility for destructured imports: const { sendEmail } = require('.../emailService')
+module.exports.sendEmail = emailService.sendEmail.bind(emailService);

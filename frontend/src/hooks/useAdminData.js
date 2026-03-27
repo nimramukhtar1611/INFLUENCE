@@ -92,24 +92,42 @@ export const useAdminData = () => {
 
         const recentDeals = dashboardData.recent?.deals || [];
         const campaignsFromDeals = Array.from(
-          new Map(
-            recentDeals
-              .map((deal) => {
-                const campaignId = deal?.campaignId?._id || deal?.campaignId || deal?._id;
-                if (!campaignId) return null;
-                return [String(campaignId), {
-                  _id: campaignId,
-                  title: deal?.campaignId?.title || 'Campaign',
-                  brandId: { brandName: deal?.brandId?.brandName || 'Unknown brand' },
-                  status: deal?.status === 'completed' ? 'completed' : 'active',
-                  budget: deal?.budget || 0,
-                  selectedCreators: deal?.creatorId ? [deal.creatorId] : [],
-                  metrics: { engagement: 0, impressions: 0 },
-                  createdAt: deal?.createdAt,
-                }];
-              })
-              .filter(Boolean)
-          ).values()
+          recentDeals.reduce((acc, deal) => {
+            const campaignId = String(deal?.campaignId?._id || deal?.campaignId || deal?._id || '');
+            if (!campaignId) return acc;
+
+            const existing = acc.get(campaignId) || {
+              _id: campaignId,
+              title: deal?.campaignId?.title || 'Campaign',
+              brandId: { brandName: deal?.brandId?.brandName || 'Unknown brand' },
+              status: 'active',
+              budget: 0,
+              spent: 0,
+              selectedCreators: [],
+              metrics: { engagement: 0, impressions: 0 },
+              createdAt: deal?.createdAt,
+            };
+
+            const dealBudget = Number(deal?.budget || 0);
+            const isCompleted = deal?.status === 'completed';
+
+            existing.budget += dealBudget;
+            if (isCompleted) {
+              existing.spent += dealBudget;
+              existing.status = 'completed';
+            }
+
+            if (deal?.creatorId) {
+              existing.selectedCreators.push(deal.creatorId);
+            }
+
+            if (deal?.createdAt && (!existing.createdAt || new Date(deal.createdAt) < new Date(existing.createdAt))) {
+              existing.createdAt = deal.createdAt;
+            }
+
+            acc.set(campaignId, existing);
+            return acc;
+          }, new Map()).values()
         );
 
         setCampaigns(campaignsFromDeals);
@@ -640,4 +658,4 @@ export const useAdminData = () => {
     disable2FA,
     clearCache
   };
-};
+};

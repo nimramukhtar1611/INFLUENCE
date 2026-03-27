@@ -174,10 +174,17 @@ class AdminService {
   // Get all campaigns
   async getCampaigns(params = {}) {
     try {
+      const response = await api.get('/admin/campaigns', { params });
+
+      const campaigns = (response.data?.data || []).map((campaign) => ({
+        ...campaign,
+        spent: toNumber(campaign.spent, toNumber(campaign.stats?.totalSpent, 0)),
+      }));
+
       return {
-        success: true,
-        campaigns: [],
-        pagination: emptyPagination(params.page, params.limit),
+        success: response.data?.success ?? true,
+        campaigns,
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
       };
     } catch (error) {
       console.error('Get campaigns error:', error);
@@ -197,9 +204,11 @@ class AdminService {
   }
 
   // Update campaign status
-  async updateCampaignStatus(campaignId, status) {
+  async updateCampaignStatus(campaignId, status, reason) {
     try {
-      const response = await api.put(`/admin/campaigns/${campaignId}/status`, { status });
+      const payload = { status };
+      if (reason) payload.reason = reason;
+      const response = await api.put(`/admin/campaigns/${campaignId}/status`, payload);
       return response.data;
     } catch (error) {
       console.error('Update campaign status error:', error);
@@ -304,7 +313,7 @@ class AdminService {
   // Resolve dispute
   async resolveDispute(disputeId, resolution) {
     try {
-      const response = await api.post(`/admin/disputes/${disputeId}/resolve`, { resolution });
+      const response = await api.post(`/admin/disputes/${disputeId}/resolve`, resolution);
       return response.data;
     } catch (error) {
       console.error('Resolve dispute error:', error);
@@ -413,10 +422,11 @@ class AdminService {
   // Get reports
   async getReports(params = {}) {
     try {
+      const response = await api.get('/admin/reports', { params });
       return {
-        success: true,
-        reports: [],
-        pagination: emptyPagination(params.page, params.limit),
+        success: response.data?.success ?? true,
+        reports: response.data?.reports || [],
+        pagination: response.data?.pagination || emptyPagination(params.page, params.limit),
       };
     } catch (error) {
       console.error('Get reports error:', error);
@@ -427,7 +437,7 @@ class AdminService {
   // Generate report
   async generateReport(reportType, dateRange, format = 'pdf') {
     try {
-      const response = await api.post('/admin/reports/generate', { reportType, dateRange, format });
+      const response = await api.post('/admin/reports/generate', { type: reportType, dateRange, format });
       return response.data;
     } catch (error) {
       console.error('Generate report error:', error);

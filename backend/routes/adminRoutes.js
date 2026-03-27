@@ -26,7 +26,7 @@ const {
 const { protect, adminProtect, superAdminProtect } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
 
-const adminCampaignRoutes = require('./campaignRoutes');
+const adminCampaignRoutes = require('./adminCampaignRoutes');
 const adminUserRoutes = require('./userRoutes');
 const adminReportRoutes = require('./reportRoutes');
 
