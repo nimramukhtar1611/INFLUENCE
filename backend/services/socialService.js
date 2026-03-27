@@ -12,7 +12,7 @@ class SocialService {
   
   async verifyInstagram(handle) {
     try {
-      const username = handle.replace('@', '').trim();
+      const username = this.normalizeInstagramUsername(handle);
       if (!username) return { success: false, error: 'Invalid username' };
 
       // METHOD 1: Instagram Graph API (if user connected OAuth token)
@@ -33,39 +33,70 @@ class SocialService {
 
           const data = response.data?.data || response.data?.result || response.data;
           if (data) {
-            const followers =
-              data.follower_count ||
-              data.followers_count ||
-              data.followers ||
-              data.edge_followed_by?.count ||
-              0;
-            const following =
-              data.following_count ||
-              data.following ||
-              data.edge_follow?.count ||
-              0;
-            const posts =
-              data.media_count ||
-              data.posts_count ||
-              data.post_count ||
-              data.edge_owner_to_timeline_media?.count ||
-              0;
-            const avgLikes = data.avg_likes || data.average_likes || 0;
+            const profile =
+              data.user ||
+              data.user_info ||
+              data.profile ||
+              data;
+            const stats =
+              data.stats ||
+              data.counts ||
+              data.userInfo?.stats ||
+              profile?.stats ||
+              {};
+
+            const followers = this.pickFirstNumber([
+              profile?.follower_count,
+              profile?.followers_count,
+              profile?.followers,
+              profile?.edge_followed_by?.count,
+              stats?.follower_count,
+              stats?.followers_count,
+              stats?.followers,
+              stats?.followerCount,
+              stats?.fans
+            ]);
+            const following = this.pickFirstNumber([
+              profile?.following_count,
+              profile?.following,
+              profile?.edge_follow?.count,
+              stats?.following_count,
+              stats?.following,
+              stats?.followingCount
+            ]);
+            const posts = this.pickFirstNumber([
+              profile?.media_count,
+              profile?.posts_count,
+              profile?.post_count,
+              profile?.edge_owner_to_timeline_media?.count,
+              stats?.media_count,
+              stats?.posts_count,
+              stats?.post_count,
+              stats?.video_count,
+              stats?.videoCount
+            ]);
+            const avgLikes = this.pickFirstNumber([
+              profile?.avg_likes,
+              profile?.average_likes,
+              stats?.avg_likes,
+              stats?.average_likes
+            ]);
             const engagement = followers > 0 ? parseFloat(((avgLikes / followers) * 100).toFixed(2)) : 0;
+            const resolvedHandle = this.normalizeInstagramUsername(profile?.username || profile?.handle || username) || username;
 
             return {
               success: true,
               data: {
-                handle:         username,
-                fullName:       data.full_name || data.username || username,
+                handle:         resolvedHandle,
+                fullName:       profile?.full_name || profile?.name || resolvedHandle,
                 followers,
                 following,
                 posts,
-                profilePicture: data.profile_pic_url || data.profile_pic_url_hd || this._avatar(username, '833AB4'),
-                isVerified:     data.is_verified || data.verified || false,
-                isBusiness:     data.is_business || data.is_professional_account || false,
+                profilePicture: profile?.profile_pic_url || profile?.profile_pic_url_hd || this._avatar(resolvedHandle, '833AB4'),
+                isVerified:     Boolean(profile?.is_verified || profile?.verified),
+                isBusiness:     Boolean(profile?.is_business || profile?.is_professional_account),
                 engagement,
-                bio:            data.biography || data.bio || '',
+                bio:            profile?.biography || profile?.bio || '',
                 source:         'rapidapi'
               }
             };
@@ -170,8 +201,10 @@ class SocialService {
   // ==================== YOUTUBE ====================
   async verifyYouTube(handle) {
     try {
-      const channelHandle = handle.replace('@', '').trim();
+      const channelHandle = this.normalizeYouTubeIdentifier(handle);
       const apiKey = process.env.YOUTUBE_API_KEY;
+      let apiErrorNote = '';
+      let rapidApiErrorNote = '';
 
       // METHOD 1: YouTube Data API v3 (requires free API key)
       if (apiKey) {
@@ -228,10 +261,25 @@ class SocialService {
           }
         } catch (e) {
           console.log('YouTube API failed:', e.message);
+          apiErrorNote = this.extractApiErrorMessage(e) || 'YouTube API request failed.';
         }
       }
 
-      // METHOD 2: oEmbed (free, no stats)
+      // METHOD 2: RapidAPI YouTube fallback
+      if (process.env.RAPIDAPI_KEY) {
+        try {
+          const rapidResult = await this.verifyYouTubeViaRapidApi(channelHandle);
+          if (rapidResult?.success) {
+            return rapidResult;
+          }
+          rapidApiErrorNote = rapidResult?.error || '';
+        } catch (e) {
+          console.log('RapidAPI YouTube failed:', e.message);
+          rapidApiErrorNote = this.extractRapidApiErrorMessage(e) || 'RapidAPI YouTube request failed.';
+        }
+      }
+
+      // METHOD 3: oEmbed (free, no stats)
       try {
         const res = await axios.get('https://www.youtube.com/oembed', {
           params: { url: `https://www.youtube.com/@${channelHandle}`, format: 'json' },
@@ -265,7 +313,12 @@ class SocialService {
           title:          channelHandle,
           subscribers:    0,
           profilePicture: this._avatar(channelHandle, 'FF0000'),
-          source:         'fallback'
+          source:         'fallback',
+          note:           [
+            apiErrorNote,
+            rapidApiErrorNote,
+            'Add a valid YOUTUBE_API_KEY, subscribe RAPIDAPI_KEY to youtube-v31, or connect YouTube OAuth for full stats'
+          ].filter(Boolean).join(' ')
         }
       };
 
@@ -280,8 +333,7 @@ class SocialService {
       const res = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
         params: {
           part:  'snippet,statistics',
-          mine:  true,
-          key:   process.env.YOUTUBE_API_KEY
+          mine:  true
         },
         headers: { Authorization: `Bearer ${accessToken}` },
         timeout: 8000
@@ -311,6 +363,66 @@ class SocialService {
     } catch (error) {
       return { success: false, error: error.message };
     }
+  }
+
+  async verifyYouTubeViaRapidApi(channelHandle) {
+    const headers = {
+      'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+      'X-RapidAPI-Host': 'youtube-v31.p.rapidapi.com'
+    };
+
+    const searchRes = await axios.get('https://youtube-v31.p.rapidapi.com/search', {
+      params: {
+        part: 'snippet',
+        q: channelHandle,
+        type: 'channel',
+        maxResults: 1
+      },
+      headers,
+      timeout: 8000
+    });
+
+    const channelId = searchRes.data?.items?.[0]?.id?.channelId;
+    if (!channelId) {
+      return { success: false, error: 'RapidAPI YouTube channel not found' };
+    }
+
+    const statsRes = await axios.get('https://youtube-v31.p.rapidapi.com/channels', {
+      params: {
+        part: 'snippet,statistics',
+        id: channelId
+      },
+      headers,
+      timeout: 8000
+    });
+
+    const channel = statsRes.data?.items?.[0];
+    if (!channel) {
+      return { success: false, error: 'RapidAPI YouTube stats not found' };
+    }
+
+    const subscribers = this.parseNumber(channel.statistics?.subscriberCount);
+    const views = this.parseNumber(channel.statistics?.viewCount);
+    const videos = this.parseNumber(channel.statistics?.videoCount);
+    const title = channel.snippet?.title || channelHandle;
+
+    return {
+      success: true,
+      data: {
+        handle: channelHandle,
+        channelId,
+        title,
+        subscribers,
+        views,
+        videos,
+        profilePicture: channel.snippet?.thumbnails?.high?.url || this._avatar(channelHandle, 'FF0000'),
+        country: channel.snippet?.country,
+        joinedDate: channel.snippet?.publishedAt,
+        engagement: subscribers > 0 ? parseFloat(((views / subscribers) / 100).toFixed(2)) : 0,
+        verified: false,
+        source: 'rapidapi'
+      }
+    };
   }
 
   // ==================== TIKTOK ====================
@@ -632,13 +744,136 @@ class SocialService {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff`;
   }
 
-  parseNumber(str) {
-    if (!str) return 0;
-    const num = parseFloat(str);
-    if (str.includes('K')) return Math.round(num * 1000);
-    if (str.includes('M')) return Math.round(num * 1000000);
-    if (str.includes('B')) return Math.round(num * 1000000000);
-    return Math.round(num) || 0;
+  normalizeInstagramUsername(value) {
+    if (!value) return '';
+
+    let input = String(value).trim();
+    if (!input) return '';
+
+    input = input.replace(/^@/, '');
+
+    if (input.toLowerCase().includes('instagram.com')) {
+      const urlString = input.startsWith('http') ? input : `https://${input}`;
+      try {
+        const parsed = new URL(urlString);
+        const segments = parsed.pathname.split('/').filter(Boolean);
+        if (segments.length > 0) {
+          const first = segments[0].toLowerCase();
+          if (first === 'stories' && segments[1]) {
+            input = segments[1];
+          } else if (!['p', 'reel', 'reels', 'tv', 'explore', 'accounts'].includes(first)) {
+            input = segments[0];
+          }
+        }
+      } catch (_) {
+        // Keep best-effort fallback below
+      }
+    }
+
+    const sanitized = input.replace(/^@/, '').replace(/[/?#].*$/, '').trim();
+    return sanitized.toLowerCase();
+  }
+
+  normalizeYouTubeIdentifier(value) {
+    if (!value) return '';
+
+    const raw = String(value).trim();
+    if (!raw) return '';
+
+    const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      const parsed = new URL(withScheme);
+      const host = parsed.hostname.toLowerCase();
+      const isYouTubeHost = host.includes('youtube.com') || host === 'youtu.be';
+
+      if (isYouTubeHost) {
+        const segments = parsed.pathname.split('/').filter(Boolean);
+
+        if (host === 'youtu.be') {
+          return (segments[0] || '').replace(/^@/, '').trim();
+        }
+
+        if (segments[0] && segments[0].startsWith('@')) {
+          return segments[0].slice(1).trim();
+        }
+
+        if ((segments[0] === 'channel' || segments[0] === 'c' || segments[0] === 'user') && segments[1]) {
+          return segments[1].trim();
+        }
+      }
+    } catch (_) {
+      // Keep raw fallback parsing below
+    }
+
+    return raw.replace(/^@/, '').replace(/[?#].*$/, '').trim();
+  }
+
+  extractApiErrorMessage(error) {
+    const status = error?.response?.status;
+    const apiError = error?.response?.data?.error;
+    const message = apiError?.message || error?.message || 'API request failed';
+    const detailReason = Array.isArray(apiError?.details)
+      ? apiError.details.find((d) => d?.reason)?.reason
+      : null;
+
+    if (detailReason === 'API_KEY_SERVICE_BLOCKED') {
+      return 'YOUTUBE_API_KEY project is blocked for YouTube Data API (API_KEY_SERVICE_BLOCKED). Enable YouTube Data API v3 and relax API restrictions for this key.';
+    }
+
+    if (status) {
+      return `YouTube API error ${status}: ${message}`;
+    }
+
+    return message;
+  }
+
+  extractRapidApiErrorMessage(error) {
+    const status = error?.response?.status;
+    const responseMessage = error?.response?.data?.message || error?.response?.data?.error;
+    if (status === 403 && responseMessage) {
+      return `RapidAPI YouTube error 403: ${responseMessage}`;
+    }
+    if (status) {
+      return `RapidAPI YouTube error ${status}: ${responseMessage || error?.message || 'request failed'}`;
+    }
+    return responseMessage || error?.message || '';
+  }
+
+  pickFirstNumber(values) {
+    for (const value of values || []) {
+      const parsed = this.parseNumber(value);
+      if (parsed > 0 || value === 0 || value === '0') {
+        return parsed;
+      }
+    }
+    return 0;
+  }
+
+  parseNumber(value) {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+
+    const raw = String(value).trim();
+    if (!raw) return 0;
+
+    const normalized = raw
+      .replace(/,/g, '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+
+    const suffixMatch = normalized.match(/^([0-9]*\.?[0-9]+)([KMB])$/);
+    if (suffixMatch) {
+      const base = parseFloat(suffixMatch[1]);
+      if (!Number.isFinite(base)) return 0;
+      const multipliers = { K: 1000, M: 1000000, B: 1000000000 };
+      return Math.round(base * multipliers[suffixMatch[2]]);
+    }
+
+    const numericMatch = normalized.match(/[0-9]+(\.[0-9]+)?/);
+    if (!numericMatch) return 0;
+
+    const parsed = parseFloat(numericMatch[0]);
+    return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
   }
 }
 

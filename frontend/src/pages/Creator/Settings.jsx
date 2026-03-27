@@ -231,18 +231,56 @@ const ProfileSettings = ({ settings, setSettings, user, refreshUser }) => {
 // ---------- Social Links ----------
 const SocialLinksSettings = ({ settings, setSettings, onVerify }) => {
   const [verifying, setVerifying] = useState({});
+  const formatStat = (value) => Number(value || 0).toLocaleString();
 
   const updateSocial = (platform, field, value) => {
-    setSettings({
-      ...settings,
+    setSettings((prev) => ({
+      ...prev,
       socialMedia: {
-        ...settings.socialMedia,
+        ...prev.socialMedia,
         [platform]: {
-          ...(settings.socialMedia?.[platform] || {}),
+          ...(prev.socialMedia?.[platform] || {}),
           [field]: value
         }
       }
-    });
+    }));
+  };
+
+  const renderPlatformStats = (platform, socialStats) => {
+    if (!socialStats) return null;
+
+    if (platform === 'youtube') {
+      const hasYoutubeStats =
+        socialStats.subscribers !== undefined ||
+        socialStats.views !== undefined ||
+        socialStats.videos !== undefined;
+
+      if (!hasYoutubeStats) return null;
+
+      return (
+        <div className="text-sm text-gray-600 flex gap-4 mt-2 flex-wrap">
+          <span>Subscribers: {formatStat(socialStats.subscribers)}</span>
+          <span>Views: {formatStat(socialStats.views)}</span>
+          <span>Videos: {formatStat(socialStats.videos)}</span>
+          {socialStats.engagement ? <span>Engagement: {socialStats.engagement}%</span> : null}
+        </div>
+      );
+    }
+
+    if (socialStats.followers === undefined) return null;
+
+    return (
+      <div className="text-sm text-gray-600 flex gap-4 mt-2 flex-wrap">
+        <span>Followers: {formatStat(socialStats.followers)}</span>
+        {platform === 'instagram' && socialStats.posts !== undefined ? (
+          <span>Posts: {formatStat(socialStats.posts)}</span>
+        ) : null}
+        {platform === 'tiktok' && socialStats.likes !== undefined ? (
+          <span>Likes: {formatStat(socialStats.likes)}</span>
+        ) : null}
+        {socialStats.engagement ? <span>Engagement: {socialStats.engagement}%</span> : null}
+      </div>
+    );
   };
 
   const handleVerify = async (platform) => {
@@ -251,21 +289,33 @@ const SocialLinksSettings = ({ settings, setSettings, onVerify }) => {
       toast.error(`Please enter a ${platform} handle`);
       return;
     }
-    setVerifying({ ...verifying, [platform]: true });
+    setVerifying((prev) => ({ ...prev, [platform]: true }));
     const result = await onVerify(platform, handle);
     if (result?.success) {
-      setSettings({
-        ...settings,
+      const payload = result.data || result.stats || {};
+      const verified = Boolean(result.verified ?? payload.verified);
+
+      setSettings((prev) => ({
+        ...prev,
         socialMedia: {
-          ...settings.socialMedia,
-          [platform]: { ...settings.socialMedia[platform], ...result.data, verified: true }
+          ...prev.socialMedia,
+          [platform]: {
+            ...(prev.socialMedia?.[platform] || {}),
+            ...payload,
+            verified
+          }
         }
-      });
-      toast.success(`${platform} verified successfully`);
+      }));
+
+      if (verified) {
+        toast.success(result.message || `${platform} verified successfully`);
+      } else {
+        toast(result.message || `${platform} connected, but full verification is unavailable right now`);
+      }
     } else {
       toast.error(result?.error || `Failed to verify ${platform}`);
     }
-    setVerifying({ ...verifying, [platform]: false });
+    setVerifying((prev) => ({ ...prev, [platform]: false }));
   };
 
   return (
@@ -300,14 +350,11 @@ const SocialLinksSettings = ({ settings, setSettings, onVerify }) => {
             />
           </div>
 
-          {settings.socialMedia?.[platform]?.followers !== undefined && (
-            <div className="text-sm text-gray-600 flex gap-4 mt-2">
-              <span>Followers: {settings.socialMedia[platform].followers.toLocaleString()}</span>
-              {settings.socialMedia[platform].engagement && (
-                <span>Engagement: {settings.socialMedia[platform].engagement}%</span>
-              )}
-            </div>
-          )}
+          {renderPlatformStats(platform, settings.socialMedia?.[platform])}
+
+          {settings.socialMedia?.[platform]?.note ? (
+            <p className="text-xs text-amber-700 mt-2">{settings.socialMedia[platform].note}</p>
+          ) : null}
 
           <Button
             variant="outline"
@@ -457,6 +504,13 @@ const SecuritySettingsComp = ({
   );
 };
 
+const getDefaultSocialMedia = () => ({
+  instagram: { handle: '', url: '', verified: false, followers: 0, engagement: 0 },
+  youtube: { handle: '', url: '', verified: false, subscribers: 0, views: 0, videos: 0 },
+  tiktok: { handle: '', url: '', verified: false, followers: 0, likes: 0, videos: 0 },
+  twitter: { handle: '', url: '', verified: false, followers: 0, following: 0, tweets: 0 }
+});
+
 // ---------- Main Component ----------
 const CreatorSettings = () => {
   const { user, changePassword, deleteAccount, refreshUser } = useAuth();
@@ -559,12 +613,7 @@ const CreatorSettings = () => {
     birthday: '',
     gender: '',
     profilePicture: '',
-    socialMedia: {
-      instagram: { handle: '', url: '', verified: false, followers: 0, engagement: 0 },
-      youtube: { handle: '', url: '', verified: false, subscribers: 0, views: 0, videos: 0 },
-      tiktok: { handle: '', url: '', verified: false, followers: 0, likes: 0, videos: 0 },
-      twitter: { handle: '', url: '', verified: false, followers: 0, following: 0, tweets: 0 }
-    }
+    socialMedia: getDefaultSocialMedia()
   });
 
   const tabs = [
@@ -585,6 +634,32 @@ const CreatorSettings = () => {
         }
       }
 
+      const socialDefaults = getDefaultSocialMedia();
+      const socialFromUser = user.socialMedia || {};
+      const verificationFromUser = user.socialVerification || {};
+      const mergedSocialMedia = {
+        instagram: {
+          ...socialDefaults.instagram,
+          ...(socialFromUser.instagram || {}),
+          verified: Boolean(socialFromUser.instagram?.verified || verificationFromUser.instagram)
+        },
+        youtube: {
+          ...socialDefaults.youtube,
+          ...(socialFromUser.youtube || {}),
+          verified: Boolean(socialFromUser.youtube?.verified || verificationFromUser.youtube)
+        },
+        tiktok: {
+          ...socialDefaults.tiktok,
+          ...(socialFromUser.tiktok || {}),
+          verified: Boolean(socialFromUser.tiktok?.verified || verificationFromUser.tiktok)
+        },
+        twitter: {
+          ...socialDefaults.twitter,
+          ...(socialFromUser.twitter || {}),
+          verified: Boolean(socialFromUser.twitter?.verified || verificationFromUser.twitter)
+        }
+      };
+
       setSettings({
         displayName: user.displayName || '',
         handle: user.handle || '',
@@ -594,12 +669,7 @@ const CreatorSettings = () => {
         birthday: formattedBirthday,
         gender: user.gender || '',
         profilePicture: user.profilePicture || '',
-        socialMedia: user.socialMedia || {
-          instagram: { handle: '', url: '', verified: false, followers: 0, engagement: 0 },
-          youtube: { handle: '', url: '', verified: false, subscribers: 0, views: 0, videos: 0 },
-          tiktok: { handle: '', url: '', verified: false, followers: 0, likes: 0, videos: 0 },
-          twitter: { handle: '', url: '', verified: false, followers: 0, following: 0, tweets: 0 }
-        }
+        socialMedia: mergedSocialMedia
       });
     }
   }, [user]);

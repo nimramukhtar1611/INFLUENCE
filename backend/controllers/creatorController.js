@@ -78,11 +78,20 @@ exports.verifySocialMedia = async (req, res) => {
     }
 
     if (result.success) {
+      const source = (result.data?.source || '').toLowerCase();
+      const trustedSources = new Set(['rapidapi', 'youtube-api', 'tikwm', 'twitter-api', 'oauth']);
+      const verified = trustedSources.has(source);
+      const socialData = {
+        ...result.data,
+        verified,
+        lastSynced: new Date()
+      };
+
       // Save social media data to creator profile
       await Creator.findByIdAndUpdate(req.user._id, {
         $set: {
-          [`socialMedia.${platform}`]:        result.data,
-          [`socialVerification.${platform}`]: true,
+          [`socialMedia.${platform}`]:        socialData,
+          [`socialVerification.${platform}`]: verified,
           lastSocialSync:                     new Date()
         }
       });
@@ -91,7 +100,21 @@ exports.verifySocialMedia = async (req, res) => {
       const updatedCreator = await Creator.findById(req.user._id);
       await updatedCreator.save();
 
-      res.json({ success: true, message: 'Account verified successfully', stats: result.data });
+      const message = verified
+        ? 'Account verified successfully'
+        : (socialData.note
+          ? `Account linked, but live stats could not be fully verified. ${socialData.note}`
+          : 'Account linked, but live stats could not be fully verified. Connect API/OAuth for full verification.');
+
+      res.json({
+        success: true,
+        message,
+        verified,
+        partial: !verified,
+        source,
+        data: socialData,
+        stats: socialData
+      });
     } else {
       res.status(400).json({ success: false, error: result.error || 'Failed to verify account' });
     }
