@@ -34,6 +34,7 @@ import api from '../../services/api';
 const Header = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
   const { unreadCount: messageUnread } = useSocket();
   const navigate = useNavigate();
   const isMessagingUser = ['brand', 'creator'].includes(user?.userType);
@@ -171,26 +172,36 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-30">
+    <header className={`px-6 py-3 sticky top-0 z-30 transition-colors ${
+      isDark ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-200'
+    }`}>
       <div className="flex items-center justify-between">
         {/* Left Section - Logo & Search */}
         <div className="flex items-center flex-1 max-w-2xl">
           {/* Mobile Menu Button (hidden on desktop) */}
-          <button className="lg:hidden mr-4 p-2 hover:bg-gray-100 rounded-lg">
-            <Menu className="w-5 h-5 text-gray-600" />
+          <button className={`lg:hidden mr-4 p-2 rounded-lg transition-colors ${
+            isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+          }`}>
+            <Menu className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
 
           {/* Search Bar */}
           <div className="relative flex-1" ref={searchRef}>
             <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                isDark ? 'text-gray-500' : 'text-gray-400'
+              }`} />
               <input
                 type="text"
                 placeholder="Search campaigns, creators, deals..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowResults(true)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                  isDark
+                    ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400'
+                }`}
               />
               {searchQuery && (
                 <button
@@ -199,7 +210,9 @@ const Header = () => {
                     setSearchQuery('');
                     setShowResults(false);
                   }}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-colors ${
+                    isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                  }`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -268,13 +281,18 @@ const Header = () => {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            className={`p-2 rounded-lg transition-all border ${
+              isDark
+                ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-yellow-300'
+                : 'bg-white border-gray-200 hover:bg-gray-100 text-gray-700'
+            }`}
+            title={theme === 'light' ? 'Theme: Light (switch to dark)' : 'Theme: Dark (switch to light)'}
+            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
             {theme === 'light' ? (
-              <Moon className="w-5 h-5 text-gray-600" />
+              <Moon className="w-5 h-5" />
             ) : (
-              <Sun className="w-5 h-5 text-gray-600" />
+              <Sun className="w-5 h-5" />
             )}
           </button>
 

@@ -277,7 +277,11 @@ const DealDetails = () => {
       });
 
       if (response?.success) {
-        toast.success('Counter offer sent');
+          if (response?.insufficientFunds || response?.aiCounter?.insufficientFunds) {
+            toast.error(response?.message || 'Brand funds are insufficient to auto-accept.');
+          } else {
+            toast.success(response?.message || 'Counter offer sent');
+          }
         setShowCounterModal(false);
         setCounterData({ budget: '', deadline: '', message: '' });
         await fetchDeal();
@@ -297,7 +301,11 @@ const DealDetails = () => {
       setStartingAiCounter(true);
       const response = await dealService.startAiCounterDealing(id);
       if (response?.success) {
-        toast.success('AI Counter Dealing started and counter sent');
+        if (response?.aiCounter?.insufficientFunds || response?.insufficientFunds) {
+          toast.error(response?.message || 'AI could not accept due to insufficient brand funds.');
+        } else {
+          toast.success(response?.message || 'AI Counter Dealing started and counter sent');
+        }
         setShowCounterModal(false);
         await fetchDeal();
       } else {
@@ -502,6 +510,10 @@ const DealDetails = () => {
                 <div>
                   <p className="text-sm text-gray-500">Budget</p>
                   <p className="font-medium text-lg">{formatCurrency(deal.budget || 0)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Platform Fee</p>
+                  <p className="font-medium text-red-600">{formatCurrency(deal.platformFee || 0)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">You Receive</p>

@@ -12,37 +12,52 @@ import authService from '../../services/authService';
 import api from '../../services/api';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 // ---------- Local UI Components ----------
-const Input = ({ label, type = 'text', value, onChange, placeholder, icon: Icon, disabled }) => (
-  <div className="mb-4">
-    {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-    <div className="relative">
-      {Icon && (
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400" />
-        </div>
-      )}
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 ${
-          Icon ? 'pl-10' : ''
-        } ${disabled ? 'bg-gray-100 text-gray-500' : ''}`}
-      />
+const Input = ({ label, type = 'text', value, onChange, placeholder, icon: Icon, disabled }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  return (
+    <div className="mb-4">
+      {label && <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{label}</label>}
+      <div className="relative">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Icon className={`h-5 w-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          </div>
+        )}
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 ${
+            Icon ? 'pl-10' : ''
+          } ${disabled
+            ? (isDark ? 'bg-gray-800 text-gray-500 border-gray-700' : 'bg-gray-100 text-gray-500 border-gray-300')
+            : (isDark ? 'bg-gray-900 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-300')
+          }`}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Button = ({ variant = 'primary', size = 'md', children, onClick, disabled, icon: Icon, loading, className = '' }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg focus:outline-none transition-colors';
   const variants = {
     primary: 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
-    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100',
+    secondary: isDark
+      ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 disabled:bg-gray-800'
+      : 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
+    outline: isDark
+      ? 'border border-gray-700 text-gray-200 hover:bg-gray-800 disabled:bg-gray-800'
+      : 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100',
     danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300'
   };
   const sizes = {
@@ -65,6 +80,8 @@ const Button = ({ variant = 'primary', size = 'md', children, onClick, disabled,
 
 // ---------- Profile Picture Upload Component ----------
 const ProfilePictureUpload = ({ currentImage, onUpload }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(currentImage);
   const fileInputRef = useRef(null);
@@ -112,7 +129,7 @@ const ProfilePictureUpload = ({ currentImage, onUpload }) => {
         <img
           src={preview || 'https://via.placeholder.com/100'}
           alt="Profile"
-          className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+          className={`w-24 h-24 rounded-full object-cover border-4 shadow-lg ${isDark ? 'border-gray-800' : 'border-white'}`}
         />
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
@@ -137,7 +154,7 @@ const ProfilePictureUpload = ({ currentImage, onUpload }) => {
         >
           Change Photo
         </Button>
-        <p className="text-xs text-gray-500 mt-1">JPG, PNG, GIF up to 5MB</p>
+        <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>JPG, PNG, GIF up to 5MB</p>
       </div>
     </div>
   );
@@ -513,6 +530,8 @@ const getDefaultSocialMedia = () => ({
 
 // ---------- Main Component ----------
 const CreatorSettings = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { user, changePassword, deleteAccount, refreshUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -791,12 +810,12 @@ const CreatorSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className={`sticky top-0 z-10 ${isDark ? 'bg-gray-900 border-b border-gray-800' : 'bg-white border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Settings</h1>
             <Button variant="primary" icon={Save} onClick={handleSaveSettings} loading={saving}>
               Save Changes
             </Button>
@@ -806,10 +825,10 @@ const CreatorSettings = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className={`rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
           <div className="flex flex-col md:flex-row">
             {/* Sidebar */}
-            <div className="md:w-72 border-r border-gray-200 bg-gray-50">
+            <div className={`md:w-72 border-r ${isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-gray-50'}`}>
               <nav className="p-4 space-y-1">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -819,8 +838,8 @@ const CreatorSettings = () => {
                       onClick={() => setActiveTab(tab.id)}
                       className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg ${
                         activeTab === tab.id
-                          ? 'bg-indigo-100 text-indigo-600'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? (isDark ? 'bg-indigo-950 text-indigo-300' : 'bg-indigo-100 text-indigo-600')
+                          : (isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100')
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -836,7 +855,7 @@ const CreatorSettings = () => {
 
             {/* Content */}
             <div className="flex-1 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 capitalize">
+              <h2 className={`text-xl font-semibold mb-6 capitalize ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                 {tabs.find(t => t.id === activeTab)?.label} Settings
               </h2>
               {renderTabContent()}
@@ -862,20 +881,20 @@ const CreatorSettings = () => {
         <div className="space-y-6 pt-2">
           {twoFactorStep === 'setup' && (
             <div className="text-center space-y-4">
-              <p className="text-gray-600 text-sm">
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 Scan this QR code with your authenticator app (e.g., Google Authenticator, Authy).
               </p>
-              <div className="flex justify-center p-4 bg-white border rounded-lg">
+              <div className={`flex justify-center p-4 border rounded-lg ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
                 {qrCodeData?.qrCode ? (
                   <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48" />
                 ) : (
-                  <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
+                  <div className={`w-48 h-48 flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
                     <Loader className="w-8 h-8 text-indigo-500 animate-spin" />
                   </div>
                 )}
               </div>
-              <div className="text-left bg-gray-50 p-3 rounded-lg border">
-                <p className="text-xs text-gray-500 font-medium uppercase mb-1 text-center">Manual Entry Key</p>
+              <div className={`text-left p-3 rounded-lg border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                <p className={`text-xs font-medium uppercase mb-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Manual Entry Key</p>
                 <code className="text-sm font-mono break-all text-indigo-600 font-bold block text-center">
                   {qrCodeData?.secret}
                 </code>
@@ -888,14 +907,16 @@ const CreatorSettings = () => {
 
           {twoFactorStep === 'verify' && (
             <div className="space-y-4">
-              <p className="text-center text-gray-600 text-sm">
+              <p className={`text-center text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 Enter the 6-digit code from your app to verify the setup.
               </p>
               <input
                 type="text"
                 maxLength={6}
                 autoFocus
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-4 py-3 border rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark ? 'bg-gray-900 border-gray-700 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder="000000"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
@@ -938,7 +959,7 @@ const CreatorSettings = () => {
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {backupCodes.map((code, idx) => (
-                    <code key={idx} className="bg-white px-2 py-1 rounded border text-xs text-center font-mono font-bold">
+                    <code key={idx} className={`px-2 py-1 rounded border text-xs text-center font-mono font-bold ${isDark ? 'bg-gray-900 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'}`}>
                       {code}
                     </code>
                   ))}

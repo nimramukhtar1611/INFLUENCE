@@ -52,7 +52,7 @@ const getBrandFinancials = async (userId) => {
     };
   }
 
-  const [completedInflows, completedOutflows, reservedOutflows, activeCampaigns, dealCommitmentsRes, spentInActiveRes] = await Promise.all([
+  const [completedInflows, completedOutflows, reservedOutflows] = await Promise.all([
     Payment.aggregate([
       {
         $match: {
@@ -91,88 +91,19 @@ const getBrandFinancials = async (userId) => {
         }
       },
       { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]),
-    Campaign.find({
-      brandId: normalizedUserId,
-      status: { $in: ['draft', 'pending', 'active', 'paused'] }
-    })
-      .select('_id budget')
-      .lean(),
-    Deal.aggregate([
-      {
-        $match: {
-          brandId: normalizedUserId,
-          campaignId: { $exists: true, $ne: null },
-          status: { $nin: ['cancelled', 'declined'] }
-        }
-      },
-      {
-        $group: {
-          _id: '$campaignId',
-          committed: { $sum: { $ifNull: ['$budget', 0] } }
-        }
-      }
-    ]),
-    Payment.aggregate([
-      {
-        $match: {
-          'from.userId': normalizedUserId,
-          status: { $in: ['completed', 'pending', 'processing', 'in-escrow'] },
-          campaignId: { $exists: true, $ne: null }
-        }
-      },
-      {
-        $lookup: {
-          from: 'campaigns',
-          localField: 'campaignId',
-          foreignField: '_id',
-          as: 'campaign'
-        }
-      },
-      { $unwind: '$campaign' },
-      {
-        $match: {
-          'campaign.status': { $in: ['draft', 'pending', 'active', 'paused'] }
-        }
-      },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
     ])
   ]);
 
   const inflows = completedInflows[0]?.total || 0;
   const outflows = completedOutflows[0]?.total || 0;
   const reserved = reservedOutflows[0]?.total || 0;
-  const campaignBudgetById = new Map(
-    (activeCampaigns || []).map((campaign) => [String(campaign._id), Number(campaign.budget || 0)])
-  );
-  const totalCampaignBudgets = Array.from(campaignBudgetById.values()).reduce((sum, value) => sum + value, 0);
+  const totalCampaignBudgets = 0;
+  const noDealCampaignBudgets = 0;
+  const dealCommittedBudgets = 0;
+  const remainingCommitment = 0;
 
-  const dealCommitmentByCampaignId = new Map(
-    (dealCommitmentsRes || []).map((row) => [String(row._id), Number(row.committed || 0)])
-  );
-
-  let noDealCampaignBudgets = 0;
-  let dealCommittedBudgets = 0;
-
-  for (const [campaignId, campaignBudget] of campaignBudgetById.entries()) {
-    const rawCommitted = dealCommitmentByCampaignId.get(campaignId) || 0;
-    const cappedCommitted = Math.min(Math.max(rawCommitted, 0), campaignBudget);
-
-    if (cappedCommitted > 0) {
-      dealCommittedBudgets += cappedCommitted;
-    } else {
-      noDealCampaignBudgets += campaignBudget;
-    }
-  }
-
-  const alreadySpentOrReservedInActive = spentInActiveRes[0]?.total || 0;
-
-  // Keep budgets fully reserved for campaigns without deals, and only lock the unpaid part of committed deals.
-  const unpaidCommittedBudgets = Math.max(dealCommittedBudgets - alreadySpentOrReservedInActive, 0);
-  const remainingCommitment = noDealCampaignBudgets + unpaidCommittedBudgets;
-
-  // Available balance = Cash (Inflows - Outflows - Reserved) - Remaining Commitment
-  const available = Math.max(inflows - outflows - reserved - remainingCommitment, 0);
+  // Available balance now changes only from actual wallet transactions/escrow records.
+  const available = Math.max(inflows - outflows - reserved, 0);
 
   return {
     inflows,

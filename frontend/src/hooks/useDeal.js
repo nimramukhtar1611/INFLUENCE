@@ -41,7 +41,7 @@ export const useDeal = () => {
       console.log('Fetching brand deals with status:', status, 'page:', page);
       
       const response = await dealService.getBrandDeals(
-        status === 'all' ? '' : status,
+        status || 'all',
         page,
         10
       );
@@ -76,7 +76,7 @@ export const useDeal = () => {
       console.log('Fetching creator deals with status:', status, 'page:', page);
       
       const response = await dealService.getCreatorDeals(
-        status === 'all' ? '' : status,
+        status || 'all',
         page,
         10
       );
@@ -281,9 +281,14 @@ const fetchDeal = useCallback(async (id) => {
         if (currentDeal?._id === dealId) {
           setCurrentDeal(prev => ({ ...prev, status: 'negotiating' }));
         }
-        
-        toast.success('Counter offer sent');
-        return response.deal;
+
+        if (response?.insufficientFunds || response?.aiCounter?.insufficientFunds) {
+          toast.error(response?.message || 'Brand funds are insufficient to auto-accept.');
+        } else {
+          toast.success(response?.message || 'Counter offer sent');
+        }
+
+        return response;
       } else {
         toast.error(response?.error || 'Failed to send counter offer');
         return null;

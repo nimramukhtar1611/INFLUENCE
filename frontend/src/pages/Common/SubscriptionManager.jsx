@@ -4,6 +4,7 @@ import { CheckCircle, History, Loader2, RefreshCw, ShieldCheck } from 'lucide-re
 import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { useTheme } from '../../hooks/useTheme';
 
 const formatCurrency = (value, currency = 'usd') => {
   const numeric = Number(value || 0);
@@ -139,6 +140,8 @@ const getRoleSpecificPlanCopy = ({ userType, planId, fallbackDescription, fallba
 const SubscriptionManager = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const {
     plans,
     currentSubscription,
@@ -277,9 +280,9 @@ const SubscriptionManager = () => {
 
   if (!isSubscriptionUser) {
     return (
-      <div className="p-6 bg-white rounded-xl border border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900">Subscription</h1>
-        <p className="mt-2 text-gray-600">Subscriptions are available for brand and creator accounts.</p>
+      <div className={`p-6 rounded-xl border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+        <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Subscription</h1>
+        <p className={`mt-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriptions are available for brand and creator accounts.</p>
       </div>
     );
   }
@@ -288,15 +291,17 @@ const SubscriptionManager = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Subscription & Billing</h1>
-          <p className="text-gray-600">Manage plans, invoices, and billing through Stripe Checkout.</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Subscription & Billing</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage plans, invoices, and billing through Stripe Checkout.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={refreshAll}
             disabled={loading || busy}
-            className="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            className={`inline-flex items-center px-4 py-2 rounded-lg border disabled:opacity-60 transition-colors ${
+              isDark ? 'border-gray-700 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -314,26 +319,26 @@ const SubscriptionManager = () => {
         </div>
       </div>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
+      <section className={`rounded-xl border p-5 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="text-lg font-semibold text-gray-900">Current Subscription</h2>
+          <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Current Subscription</h2>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
             {currentSubscription?.status || 'none'}
           </span>
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="p-4 rounded-lg bg-gray-50">
-            <p className="text-gray-500">Plan</p>
-            <p className="text-gray-900 font-semibold mt-1">{currentSubscription?.planDetails?.name || 'No active plan'}</p>
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Plan</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{currentSubscription?.planDetails?.name || 'No active plan'}</p>
           </div>
-          <div className="p-4 rounded-lg bg-gray-50">
-            <p className="text-gray-500">Billing Period Ends</p>
-            <p className="text-gray-900 font-semibold mt-1">{formatDate(currentSubscription?.billingPeriod?.end)}</p>
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Billing Period Ends</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(currentSubscription?.billingPeriod?.end)}</p>
           </div>
-          <div className="p-4 rounded-lg bg-gray-50">
-            <p className="text-gray-500">Upcoming Invoice</p>
-            <p className="text-gray-900 font-semibold mt-1">
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Upcoming Invoice</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {upcomingInvoice ? formatCurrency(upcomingInvoice.amount, upcomingInvoice.currency) : '-'}
             </p>
           </div>
@@ -351,21 +356,21 @@ const SubscriptionManager = () => {
         </div>
       </section>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
+      <section className={`rounded-xl border p-5 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Choose Plan</h2>
-          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+          <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Choose Plan</h2>
+          <div className={`inline-flex rounded-lg p-1 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
             <button
               type="button"
               onClick={() => setInterval('month')}
-              className={`px-3 py-1.5 rounded-md text-sm ${interval === 'month' ? 'bg-white shadow text-gray-900' : 'text-gray-600'}`}
+              className={`px-3 py-1.5 rounded-md text-sm ${interval === 'month' ? (isDark ? 'bg-gray-700 shadow text-gray-100' : 'bg-white shadow text-gray-900') : (isDark ? 'text-gray-300' : 'text-gray-600')}`}
             >
               Monthly
             </button>
             <button
               type="button"
               onClick={() => setInterval('year')}
-              className={`px-3 py-1.5 rounded-md text-sm ${interval === 'year' ? 'bg-white shadow text-gray-900' : 'text-gray-600'}`}
+              className={`px-3 py-1.5 rounded-md text-sm ${interval === 'year' ? (isDark ? 'bg-gray-700 shadow text-gray-100' : 'bg-white shadow text-gray-900') : (isDark ? 'text-gray-300' : 'text-gray-600')}`}
             >
               Yearly
             </button>
@@ -405,12 +410,12 @@ const SubscriptionManager = () => {
                     : isSelected
                       ? 'border-indigo-500 bg-indigo-50'
                       : isFreePlan
-                        ? 'border-gray-200 bg-gray-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? (isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50')
+                        : (isDark ? 'border-gray-700 hover:border-gray-600 bg-gray-900' : 'border-gray-200 hover:border-gray-300')
                 } ${isFreePlan ? 'cursor-not-allowed opacity-80' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">{plan.name}</h3>
+                  <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{plan.name}</h3>
                   <div className="flex items-center gap-2">
                     {isFreePlan ? (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Included</span>
@@ -418,10 +423,10 @@ const SubscriptionManager = () => {
                     {isActive ? <CheckCircle className="w-5 h-5 text-blue-600" /> : null}
                   </div>
                 </div>
-                <p className="mt-1 text-sm text-gray-600">{roleCopy.description}</p>
-                <p className="mt-3 text-xl font-bold text-gray-900">{formatCurrency(displayPrice, plan.currency)}</p>
-                <p className="text-xs text-gray-500">per {interval}</p>
-                <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                <p className={`mt-1 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{roleCopy.description}</p>
+                <p className={`mt-3 text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(displayPrice, plan.currency)}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>per {interval}</p>
+                <ul className={`mt-3 space-y-1 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
                   {roleCopy.features.map((feature) => (
                     <li key={String(feature)} className="flex items-start">
                       <ShieldCheck className="w-4 h-4 text-indigo-600 mr-2 mt-0.5" />
@@ -455,26 +460,28 @@ const SubscriptionManager = () => {
         </div>
       </section>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+      <section className={`rounded-xl border p-5 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+          <h2 className={`text-lg font-semibold flex items-center ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
             <History className="w-5 h-5 mr-2" />
             Invoices
           </h2>
 
           <div className="mt-4 space-y-2">
             {invoices.length === 0 ? (
-              <p className="text-sm text-gray-500">No invoices available.</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No invoices available.</p>
             ) : (
               invoices.map((invoice) => (
-                <div key={invoice.id || invoice._id} className="p-3 rounded-lg bg-gray-50 flex items-center justify-between">
+                <div key={invoice.id || invoice._id} className={`p-3 rounded-lg flex items-center justify-between ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{invoice.number || invoice.id || invoice._id}</p>
-                    <p className="text-xs text-gray-500">{formatDate(invoice.date || invoice.createdAt)} - {formatCurrency(invoice.amount, invoice.currency)}</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{invoice.number || invoice.id || invoice._id}</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(invoice.date || invoice.createdAt)} - {formatCurrency(invoice.amount, invoice.currency)}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => downloadInvoice(invoice.id || invoice._id)}
-                    className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className={`text-xs px-3 py-1.5 rounded border transition-colors ${
+                      isDark ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     Download
                   </button>
@@ -484,34 +491,34 @@ const SubscriptionManager = () => {
           </div>
       </section>
 
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-900">Plan Usage</h2>
+      <section className={`rounded-xl border p-5 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+        <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Plan Usage</h2>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
           {user?.userType === 'brand' && (
           <>
-          <div className="p-3 rounded bg-gray-50">
-            <p className="text-gray-500">Campaigns</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.campaignsUsed ?? 0} / {formatLimitValue(limits?.campaigns)}</p>
+          <div className={`p-3 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Campaigns</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{usage?.campaignsUsed ?? 0} / {formatLimitValue(limits?.campaigns)}</p>
           </div>
-          <div className="p-3 rounded bg-gray-50">
-            <p className="text-gray-500">Team Members</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.teamMembersUsed ?? 0} / {formatLimitValue(limits?.teamMembers)}</p>
+          <div className={`p-3 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Team Members</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{usage?.teamMembersUsed ?? 0} / {formatLimitValue(limits?.teamMembers)}</p>
           </div>
-          <div className="p-3 rounded bg-gray-50">
-            <p className="text-gray-500">Active Deals</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.activeDealsUsed ?? 0} / {formatLimitValue(limits?.activeDeals)}</p>
+          <div className={`p-3 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Active Deals</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{usage?.activeDealsUsed ?? 0} / {formatLimitValue(limits?.activeDeals)}</p>
           </div>
           </>
           )}
           {user?.userType === 'creator' && (
           <>
-          <div className="p-3 rounded bg-gray-50">
-            <p className="text-gray-500">Active Deals</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.activeDealsUsed ?? 0} / {formatLimitValue(limits?.activeDeals)}</p>
+          <div className={`p-3 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Active Deals</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{usage?.activeDealsUsed ?? 0} / {formatLimitValue(limits?.activeDeals)}</p>
           </div>
-          <div className="p-3 rounded bg-gray-50">
-            <p className="text-gray-500">Completed Deals</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.completedDealsUsed ?? 0} / {formatLimitValue(limits?.completedDeals)}</p>
+          <div className={`p-3 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Completed Deals</p>
+            <p className={`font-semibold mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{usage?.completedDealsUsed ?? 0} / {formatLimitValue(limits?.completedDeals)}</p>
           </div>
           </>
           )}
@@ -525,7 +532,7 @@ const SubscriptionManager = () => {
         </div>
       ) : null}
 
-      <p className="text-xs text-gray-500">Signed in as {user?.email}</p>
+      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Signed in as {user?.email}</p>
     </div>
   );
 };

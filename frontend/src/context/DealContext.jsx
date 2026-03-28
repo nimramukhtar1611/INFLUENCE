@@ -114,7 +114,7 @@ export const DealProvider = ({ children }) => {
       setError(null);
       const response = await api.get('/deals/brand', {
         params: {
-          status: status === 'all' ? '' : status,
+          status: status || 'all',
           page,
           limit: 10,
         },
@@ -152,7 +152,7 @@ export const DealProvider = ({ children }) => {
       setError(null);
       const response = await api.get('/deals/creator', {
         params: {
-          status: status === 'all' ? '' : status,
+          status: status || 'all',
           page,
           limit: 10,
         },

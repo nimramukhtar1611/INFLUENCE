@@ -320,7 +320,8 @@ const runDualAiSettlement = ({
   campaign,
   creator,
   seededRole = null,
-  maxAttemptsPerSide = 5
+  maxAttemptsPerSide = 5,
+  finalize = true
 }) => {
   const brandId = deal?.brandId;
   const creatorId = deal?.creatorId;
@@ -402,9 +403,9 @@ const runDualAiSettlement = ({
   }
 
   if (latestPendingOffer) {
-    latestPendingOffer.status = 'accepted';
     latestPendingOffer.budget = finalBudget;
     latestPendingOffer.message = `AI auto-settlement accepted after ${maxAttemptsPerSide} attempts each. Final budget: ${finalBudget}.`;
+    latestPendingOffer.status = finalize ? 'accepted' : 'pending';
   }
 
   deal.negotiation.forEach((entry) => {
@@ -413,20 +414,7 @@ const runDualAiSettlement = ({
   });
 
   deal.budget = finalBudget;
-  deal.status = 'accepted';
-
-  addTimelineEvent(
-    deal,
-    'AI Dual Settlement Accepted',
-    `AI accepted at ${finalBudget} after ${maxAttemptsPerSide} attempts each`,
-    brandId,
-    {
-      attemptsPerSide: maxAttemptsPerSide,
-      creatorHighestOffer,
-      brandFifthOffer,
-      finalBudget
-    }
-  );
+  deal.status = finalize ? 'accepted' : 'negotiating';
 
   return {
     attemptsPerSide: maxAttemptsPerSide,
@@ -465,6 +453,102 @@ const addTimelineEvent = (deal, event, description, userId, metadata = {}) => {
     metadata,
     createdAt: new Date(),
   });
+};
+
+const getInsufficientFundsPayload = ({ financials, requiredAmount, message }) => {
+  const availableBalance = Number(financials?.available || 0);
+  const required = Number(requiredAmount || 0);
+  const shortfall = Math.max(required - availableBalance, 0);
+
+  return {
+    success: false,
+    code: 'BRAND_INSUFFICIENT_FUNDS',
+    error: message,
+    availableBalance,
+    requiredAmount: required,
+    shortfall,
+    requiresBrandFunding: true
+  };
+};
+
+const ensureBrandCanFundDeal = async ({ deal, message }) => {
+  const financials = await getBrandFinancials(deal.brandId);
+  // Include 10% platform fee in required amount
+  const budgetAmount = Number(deal?.budget || 0);
+  const platformFee = parseFloat((budgetAmount * 0.1).toFixed(2));
+  const requiredAmount = budgetAmount + platformFee;
+
+  if (requiredAmount > Number(financials?.available || 0)) {
+    return {
+      ok: false,
+      payload: getInsufficientFundsPayload({
+        financials,
+        requiredAmount,
+        message
+      })
+    };
+  }
+
+  return { ok: true };
+};
+
+const ensureEscrowForAcceptedDeal = async ({ deal, acceptedByUserId }) => {
+  const existingEscrow = await Payment.findOne({
+    dealId: deal._id,
+    type: 'escrow',
+    status: { $in: ['pending', 'processing', 'in-escrow', 'completed'] }
+  }).sort('-createdAt');
+
+  if (existingEscrow) {
+    deal.paymentId = existingEscrow._id;
+    deal.paymentStatus = existingEscrow.status === 'completed' ? 'released' : 'in-escrow';
+    return existingEscrow;
+  }
+
+  // Calculate 10% platform fee
+  const platformFee = parseFloat((deal.budget * 0.1).toFixed(2));
+  deal.platformFee = platformFee;
+
+  // Total amount to charge brand (budget + platform fee)
+  const totalAmount = deal.budget + platformFee;
+
+  // Calculate transaction fees on total amount
+  const fees = await PaymentCalculator.calculateFees(totalAmount, 'brand');
+
+  const payment = new Payment({
+    transactionId: `ESC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    type: 'escrow',
+    status: 'in-escrow',
+    amount: totalAmount,
+    fee: fees.total,
+    netAmount: totalAmount - fees.total,
+    from: { userId: deal.brandId, accountType: 'brand' },
+    to: { userId: deal.creatorId, accountType: 'creator' },
+    dealId: deal._id,
+    campaignId: deal.campaignId,
+    description: `Escrow payment for deal ${deal._id} (includes 10% platform fee)`,
+    metadata: {
+      fees,
+      platformFee,
+      budgetAmount: deal.budget,
+      totalChargedAmount: totalAmount
+    }
+  });
+
+  await payment.save();
+
+  deal.paymentStatus = 'in-escrow';
+  deal.paymentId = payment._id;
+
+  addTimelineEvent(
+    deal,
+    'Payment Escrowed',
+    `Funds ($${deal.budget} + $${platformFee} platform fee) secured in escrow`,
+    acceptedByUserId,
+    { paymentId: payment._id }
+  );
+
+  return payment;
 };
 
 const ensureReleasedPaymentRecord = async (deal, releasedByUserId) => {
@@ -665,9 +749,10 @@ exports.createDeal = catchAsync(async (req, res) => {
 exports.getBrandDeals = catchAsync(async (req, res) => {
   const { status = 'all', page = 1, limit = 10 } = req.query;
   const brandId = getBrandContextId(req);
+  const normalizedStatus = String(status || 'all').trim();
 
   const query = { brandId };
-  if (status !== 'all') query.status = status;
+  if (normalizedStatus && normalizedStatus !== 'all') query.status = normalizedStatus;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const [deals, total, counts] = await Promise.all([
@@ -706,9 +791,10 @@ exports.getBrandDeals = catchAsync(async (req, res) => {
 // ==================== GET CREATOR DEALS ====================
 exports.getCreatorDeals = catchAsync(async (req, res) => {
   const { status = 'all', page = 1, limit = 10 } = req.query;
+  const normalizedStatus = String(status || 'all').trim();
 
   const query = { creatorId: req.user._id };
-  if (status !== 'all') query.status = status;
+  if (normalizedStatus && normalizedStatus !== 'all') query.status = normalizedStatus;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const [deals, total, counts] = await Promise.all([
@@ -907,6 +993,19 @@ exports.updateDealStatus = catchAsync(async (req, res) => {
     }
   }
 
+  if (status === 'accepted') {
+    const insufficientMessage = actorRole === 'creator'
+      ? 'Brand has insufficient balance. Note: The offer amount includes a 10% platform fee. Please contact the brand to add funds before accepting this offer.'
+      : 'Insufficient balance to accept this offer. Note: The offer amount includes a 10% platform fee. Please add funds and try again.';
+
+    const fundingCheck = await ensureBrandCanFundDeal({ deal, message: insufficientMessage });
+    if (!fundingCheck.ok) {
+      return res.status(400).json(fundingCheck.payload);
+    }
+
+    await ensureEscrowForAcceptedDeal({ deal, acceptedByUserId: req.user._id });
+  }
+
   const oldStatus = deal.status;
   deal.status = status;
   addTimelineEvent(deal, `Status Changed to ${status}`, reason || `Status updated to ${status}`, req.user._id, { oldStatus, reason });
@@ -950,42 +1049,19 @@ exports.acceptDeal = catchAsync(async (req, res) => {
     });
   }
 
-  // Check if brand has enough balance for escrow
-  const financials = await getBrandFinancials(deal.brandId);
-  if (deal.budget > financials.available) {
-    return res.status(400).json({
-      success: false,
-      error: `Brand has insufficient balance to start this deal. Available: $${financials.available.toFixed(2)}, Required: $${deal.budget.toFixed(2)}.`
-    });
+  const fundingCheck = await ensureBrandCanFundDeal({
+    deal,
+    message: 'Brand has insufficient balance. Note: The deal amount includes a 10% platform fee. Please contact the brand to add funds before accepting this offer.'
+  });
+  if (!fundingCheck.ok) {
+    return res.status(400).json(fundingCheck.payload);
   }
 
-  // Create escrow payment
-  const fees = await PaymentCalculator.calculateFees(deal.budget, 'brand');
-  const payment = new Payment({
-    transactionId: `ESC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-    type: 'escrow',
-    status: 'in-escrow',
-    amount: deal.budget,
-    fee: fees.total,
-    netAmount: deal.budget - fees.total,
-    from: { userId: deal.brandId, accountType: 'brand' },
-    to: { userId: deal.creatorId, accountType: 'creator' },
-    dealId: deal._id,
-    campaignId: deal.campaignId,
-    description: `Escrow payment for deal ${deal._id}`,
-    metadata: { fees }
-  });
-
-  await payment.save();
+  const payment = await ensureEscrowForAcceptedDeal({ deal, acceptedByUserId: req.user._id });
 
   deal.status = 'accepted';
-  deal.paymentStatus = 'in-escrow';
-  deal.paymentId = payment._id;
   
   addTimelineEvent(deal, 'Deal Accepted', 'Creator accepted the deal', req.user._id);
-  
-  // Create first timeline event for escrow
-  addTimelineEvent(deal, 'Payment Escrowed', `Funds ($${deal.budget}) secured in escrow`, req.user._id, { paymentId: payment._id });
   
   await deal.save();
 
@@ -1355,8 +1431,144 @@ exports.startAiCounterDealing = catchAsync(async (req, res) => {
       campaign,
       creator,
       seededRole: actorRole,
-      maxAttemptsPerSide: 5
+      maxAttemptsPerSide: 5,
+      finalize: false
     });
+
+    let pendingOffers = Array.isArray(deal.negotiation)
+      ? deal.negotiation.filter((entry) => entry.status === 'pending')
+      : [];
+    let latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    if (latestPendingOffer && String(latestPendingOffer.proposedBy) === String(deal.brandId)) {
+      latestPendingOffer.status = 'declined';
+      const creatorPendingOffer = {
+        proposedBy: deal.creatorId,
+        budget: settlement.finalBudget,
+        deadline: latestPendingOffer.deadline,
+        message: `AI final counter ready at ${settlement.finalBudget}.`,
+        source: 'ai',
+        status: 'pending',
+        createdAt: new Date()
+      };
+      deal.negotiation.push(creatorPendingOffer);
+      latestPendingOffer = creatorPendingOffer;
+    }
+
+    const fundingCheck = await ensureBrandCanFundDeal({
+      deal,
+      message: 'AI settlement paused because brand funds are insufficient. Note: The deal includes a 10% platform fee. Brand must add funds and accept manually.'
+    });
+
+    if (!fundingCheck.ok) {
+      if (latestPendingOffer) {
+        latestPendingOffer.status = 'pending';
+        latestPendingOffer.message = 'AI settlement paused: insufficient brand funds. Brand should add funds and accept manually.';
+      }
+
+      deal.status = 'negotiating';
+      deal.negotiationSettings = {
+        ...(deal.negotiationSettings || {}),
+        mode: 'manual',
+        aiEnabledByBrand: false,
+        aiEnabledByCreator: false
+      };
+
+      addTimelineEvent(
+        deal,
+        'AI Dual Settlement Paused',
+        'AI could not auto-accept due to insufficient brand funds; switched to manual acceptance',
+        req.user._id,
+        {
+          attemptsPerSide: settlement.attemptsPerSide,
+          finalBudget: settlement.finalBudget,
+          insufficientFunds: true
+        }
+      );
+
+      await deal.save();
+
+      await Notification.create({
+        userId: deal.brandId,
+        type: 'deal',
+        title: 'Insufficient Funds to Accept Offer',
+        message: 'AI negotiation reached final terms, but your balance is insufficient. Add funds and accept manually.',
+        data: {
+          dealId: deal._id,
+          insufficientFunds: true,
+          requiresBrandFunding: true,
+          finalBudget: settlement.finalBudget
+        }
+      });
+
+      await Notification.create({
+        userId: deal.creatorId,
+        type: 'deal',
+        title: 'Brand Funding Required',
+        message: 'AI negotiation reached final terms, but brand has insufficient funds. Please contact the brand.',
+        data: {
+          dealId: deal._id,
+          insufficientFunds: true,
+          finalBudget: settlement.finalBudget
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'AI reached final terms, but brand funds are insufficient. Manual acceptance is now enabled.',
+        suggestion,
+        aiCounter: {
+          canUse: true,
+          plan: aiAccess.plan,
+          isActive: false,
+          dualAiActive: false,
+          autoAccepted: false,
+          insufficientFunds: true,
+          attemptsPerSide: settlement.attemptsPerSide,
+          creatorHighestOffer: settlement.creatorHighestOffer,
+          brandFifthOffer: settlement.brandFifthOffer,
+          finalBudget: settlement.finalBudget,
+          requiresBrandFunding: true
+        }
+      });
+    }
+
+    pendingOffers = Array.isArray(deal.negotiation)
+      ? deal.negotiation.filter((entry) => entry.status === 'pending')
+      : [];
+    latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    if (latestPendingOffer?.deadline) {
+      deal.deadline = latestPendingOffer.deadline;
+    }
+
+    if (latestPendingOffer) {
+      latestPendingOffer.status = 'accepted';
+      latestPendingOffer.budget = settlement.finalBudget;
+      latestPendingOffer.message = `AI auto-settlement accepted after ${settlement.attemptsPerSide} attempts each. Final budget: ${settlement.finalBudget}.`;
+    }
+
+    deal.negotiation.forEach((entry) => {
+      if (latestPendingOffer && entry._id.toString() === latestPendingOffer._id.toString()) return;
+      if (entry.status === 'pending') entry.status = 'declined';
+    });
+
+    deal.status = 'accepted';
+    deal.budget = settlement.finalBudget;
+    await ensureEscrowForAcceptedDeal({ deal, acceptedByUserId: req.user._id });
+
+    addTimelineEvent(
+      deal,
+      'AI Dual Settlement Accepted',
+      `AI accepted at ${settlement.finalBudget} after ${settlement.attemptsPerSide} attempts each`,
+      deal.brandId,
+      {
+        attemptsPerSide: settlement.attemptsPerSide,
+        creatorHighestOffer: settlement.creatorHighestOffer,
+        brandFifthOffer: settlement.brandFifthOffer,
+        finalBudget: settlement.finalBudget
+      }
+    );
 
     await deal.save();
 
@@ -1537,6 +1749,95 @@ exports.counterOffer = catchAsync(async (req, res) => {
           deal.deadline = latestPendingOffer.deadline;
         }
 
+        const insufficientMessage = aiResponderRole === 'brand'
+          ? 'AI could not accept because brand funds are insufficient. Note: The deal includes a 10% platform fee. Please add funds and accept manually.'
+          : 'AI could not accept because brand funds are insufficient. Note: The deal includes a 10% platform fee. Please contact the brand to add funds.';
+
+        const fundingCheck = await ensureBrandCanFundDeal({
+          deal,
+          message: insufficientMessage
+        });
+
+        if (!fundingCheck.ok) {
+          latestPendingOffer.status = 'pending';
+          latestPendingOffer.message = insufficientMessage;
+
+          if (aiResponderRole === 'brand') {
+            deal.negotiationSettings = {
+              ...(deal.negotiationSettings || {}),
+              aiEnabledByBrand: false,
+              mode: deal?.negotiationSettings?.aiEnabledByCreator ? 'ai' : 'manual'
+            };
+          } else {
+            deal.negotiationSettings = {
+              ...(deal.negotiationSettings || {}),
+              aiEnabledByCreator: false,
+              mode: deal?.negotiationSettings?.aiEnabledByBrand ? 'ai' : 'manual'
+            };
+          }
+
+          addTimelineEvent(
+            deal,
+            'AI Auto Accept Paused',
+            'AI auto-accept failed due to insufficient brand funds',
+            aiResponderId,
+            {
+              totalCounters,
+              requiredAmount: Number(deal.budget || 0)
+            }
+          );
+
+          await deal.save();
+
+          await Notification.create({
+            userId: req.user._id,
+            type: 'deal',
+            title: 'AI Auto Accept Paused',
+            message: insufficientMessage,
+            data: {
+              dealId: deal._id,
+              insufficientFunds: true,
+              autoAccepted: false
+            },
+          });
+
+          if (aiResponderRole === 'brand') {
+            await Notification.create({
+              userId: deal.brandId,
+              type: 'deal',
+              title: 'Insufficient Funds to Accept Offer',
+              message: 'Your AI could not accept because your available balance is insufficient. Add funds and accept manually.',
+              data: {
+                dealId: deal._id,
+                insufficientFunds: true,
+                requiresBrandFunding: true
+              }
+            });
+          } else {
+            await Notification.create({
+              userId: deal.creatorId,
+              type: 'deal',
+              title: 'AI Auto Accept Paused',
+              message: 'Brand funds are insufficient. Please contact the brand and accept manually once funds are added.',
+              data: {
+                dealId: deal._id,
+                insufficientFunds: true,
+                requiresBrandFunding: true
+              }
+            });
+          }
+
+          return res.json({
+            success: true,
+            message: insufficientMessage,
+            aiAutoResponded: true,
+            autoAccepted: false,
+            insufficientFunds: true,
+            dealStatus: deal.status,
+            requiresBrandFunding: true
+          });
+        }
+
         latestPendingOffer.status = 'accepted';
         deal.negotiation.forEach((entry) => {
           if (entry._id.toString() !== latestPendingOffer._id.toString() && entry.status === 'pending') {
@@ -1546,6 +1847,7 @@ exports.counterOffer = catchAsync(async (req, res) => {
       }
 
       deal.status = 'accepted';
+      await ensureEscrowForAcceptedDeal({ deal, acceptedByUserId: aiResponderId });
       addTimelineEvent(
         deal,
         'AI Auto Accepted Offer',

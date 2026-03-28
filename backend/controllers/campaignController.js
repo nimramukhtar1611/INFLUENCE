@@ -2,9 +2,11 @@
 const Campaign = require('../models/Campaign');
 const Brand = require('../models/Brand');
 const Deal = require('../models/Deal');
+const Payment = require('../models/Payment');
 const Notification = require('../models/Notification');
 const Creator = require('../models/Creator');
 const Subscription = require('../models/Subscription');
+const PaymentCalculator = require('../services/paymentCalculator');
 const { getBrandFinancials } = require('./paymentController');
 
 const getBrandContextId = (req) => req.brandId || req.user?._id;
@@ -30,6 +32,52 @@ const getCreatorCompletedDealsLimitByPlan = (planId = 'free') => {
   return 2;
 };
 
+const buildInsufficientFundsPayload = ({ availableBalance, requiredAmount }) => ({
+  success: false,
+  code: 'BRAND_INSUFFICIENT_FUNDS',
+  error: `Insufficient balance to accept this application. Available: $${availableBalance.toFixed(2)}, Required: $${requiredAmount.toFixed(2)}.`,
+  availableBalance,
+  requiredAmount,
+  shortfall: Math.max(requiredAmount - availableBalance, 0),
+  requiresBrandFunding: true
+});
+
+const ensureEscrowForDeal = async ({ deal, acceptedByUserId }) => {
+  const existingEscrow = await Payment.findOne({
+    dealId: deal._id,
+    type: 'escrow',
+    status: { $in: ['pending', 'processing', 'in-escrow', 'completed'] }
+  }).sort('-createdAt');
+
+  if (existingEscrow) {
+    deal.paymentId = existingEscrow._id;
+    deal.paymentStatus = existingEscrow.status === 'completed' ? 'released' : 'in-escrow';
+    return existingEscrow;
+  }
+
+  const fees = await PaymentCalculator.calculateFees(deal.budget, 'brand');
+  const payment = new Payment({
+    transactionId: `ESC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    type: 'escrow',
+    status: 'in-escrow',
+    amount: deal.budget,
+    fee: fees.total,
+    netAmount: deal.budget - fees.total,
+    from: { userId: deal.brandId, accountType: 'brand' },
+    to: { userId: deal.creatorId, accountType: 'creator' },
+    dealId: deal._id,
+    campaignId: deal.campaignId,
+    description: `Escrow payment for deal ${deal._id}`,
+    metadata: { fees, source: 'campaign_application_acceptance', acceptedBy: acceptedByUserId }
+  });
+
+  await payment.save();
+
+  deal.paymentId = payment._id;
+  deal.paymentStatus = 'in-escrow';
+  return payment;
+};
+
 // ==================== CREATE CAMPAIGN ====================
 exports.createCampaign = async (req, res) => {
   try {
@@ -42,15 +90,6 @@ exports.createCampaign = async (req, res) => {
       createdBy: req.user._id,
       status: 'draft'
     };
-
-    // Check brand balance
-    const financials = await getBrandFinancials(brandId);
-    if (campaignData.budget > financials.available) {
-      return res.status(400).json({
-        success: false,
-        error: `Insufficient balance. Available: $${financials.available.toFixed(2)}. Requested budget: $${campaignData.budget.toFixed(2)}.`
-      });
-    }
 
     const campaign = new Campaign(campaignData);
     await campaign.save();
@@ -348,6 +387,18 @@ exports.reviewApplication = async (req, res) => {
 
     // If accepted, create a deal
     if (status === 'accepted') {
+      const acceptanceBudget = Number(application.rate || campaign.budget || 0);
+      const financials = await getBrandFinancials(brandId);
+
+      if (acceptanceBudget > Number(financials?.available || 0)) {
+        return res.status(400).json(
+          buildInsufficientFundsPayload({
+            availableBalance: Number(financials?.available || 0),
+            requiredAmount: acceptanceBudget
+          })
+        );
+      }
+
       // Check if deal already exists
       const existingDeal = await Deal.findOne({
         campaignId,
@@ -363,11 +414,14 @@ exports.reviewApplication = async (req, res) => {
           creatorId: application.creatorId,
           type: 'application',
           status: 'accepted',
+          paymentStatus: 'pending',
           budget: application.rate || campaign.budget,
           deliverables: campaign.deliverables,
           deadline: campaign.endDate,
           createdBy: req.user._id
         });
+
+        await ensureEscrowForDeal({ deal, acceptedByUserId: req.user._id });
         await deal.save();
 
         campaign.selectedCreators.push({
@@ -376,10 +430,13 @@ exports.reviewApplication = async (req, res) => {
           dealId: deal._id
         });
       } else {
-        if (existingDeal.status !== 'accepted') {
-          existingDeal.status = 'accepted';
-          await existingDeal.save();
+        existingDeal.status = 'accepted';
+        existingDeal.budget = application.rate || existingDeal.budget || campaign.budget;
+        if (!existingDeal.deadline && campaign.endDate) {
+          existingDeal.deadline = campaign.endDate;
         }
+        await ensureEscrowForDeal({ deal: existingDeal, acceptedByUserId: req.user._id });
+        await existingDeal.save();
 
         campaign.selectedCreators.push({
           creatorId: application.creatorId,
@@ -507,25 +564,6 @@ exports.updateCampaign = async (req, res) => {
   try {
     const { id } = req.params;
     const brandId = getBrandContextId(req);
-
-    // If budget is being updated, check balance
-    if (req.body.budget) {
-      const currentCampaign = await Campaign.findById(id);
-      if (!currentCampaign) {
-        return res.status(404).json({ success: false, error: 'Campaign not found' });
-      }
-
-      const budgetDifference = req.body.budget - currentCampaign.budget;
-      if (budgetDifference > 0) {
-        const financials = await getBrandFinancials(brandId);
-        if (budgetDifference > financials.available) {
-          return res.status(400).json({
-            success: false,
-            error: `Insufficient balance to increase budget. Additional required: $${budgetDifference.toFixed(2)}, Available: $${financials.available.toFixed(2)}.`
-          });
-        }
-      }
-    }
 
     const campaign = await Campaign.findOneAndUpdate(
       { _id: id, brandId },

@@ -66,7 +66,7 @@ class DealService {
   async getBrandDeals(status = 'all', page = 1, limit = 10) {
     try {
       const params = { page, limit };
-      if (status !== 'all') params.status = status;
+      if (status && status !== 'all') params.status = status;
       const response = await api.get('/deals/brand', { params });
       return response.data;
     } catch (error) {
@@ -87,7 +87,7 @@ class DealService {
   async getCreatorDeals(status = 'all', page = 1, limit = 10) {
     try {
       const params = { page, limit };
-      if (status !== 'all') params.status = status;
+      if (status && status !== 'all') params.status = status;
       const response = await api.get('/deals/creator', { params });
       return response.data;
     } catch (error) {

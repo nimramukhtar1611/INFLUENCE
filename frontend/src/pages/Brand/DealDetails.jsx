@@ -414,12 +414,12 @@ const DealDetails = () => {
       return;
     }
     try {
-      await counterOffer(id, {
+      const response = await counterOffer(id, {
         budget: counterData.budget ? parseFloat(counterData.budget) : undefined,
         deadline: counterData.deadline || undefined,
         message: counterData.message
       });
-      toast.success('Counter offer sent');
+      if (!response) return;
       setShowCounterModal(false);
       setCounterData({ budget: '', deadline: '', message: '' });
       loadDeal();
@@ -433,7 +433,11 @@ const DealDetails = () => {
       setStartingAiCounter(true);
       const response = await dealService.startAiCounterDealing(id);
       if (response?.success) {
-        toast.success('AI Counter Dealing started and counter sent');
+        if (response?.aiCounter?.insufficientFunds || response?.insufficientFunds) {
+          toast.error(response?.message || 'AI could not accept due to insufficient brand funds.');
+        } else {
+          toast.success(response?.message || 'AI Counter Dealing started and counter sent');
+        }
         setShowCounterModal(false);
         await loadDeal();
       } else {
@@ -549,12 +553,19 @@ const DealDetails = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Budget</p>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(deal.budget)}</p>
           {deal.netAmount && (
             <p className="text-xs text-green-600 mt-1">Net: {formatCurrency(deal.netAmount)}</p>
+          )}
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm">
+          <p className="text-sm text-gray-500 mb-1">Platform Fee</p>
+          <p className="text-2xl font-bold text-red-600">{formatCurrency(deal.platformFee || 0)}</p>
+          {deal.platformFee && (
+            <p className="text-xs text-gray-500 mt-1">(10% of budget)</p>
           )}
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm">
