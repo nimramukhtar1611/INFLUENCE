@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../context/SubscriptionContext';
 import { 
   MagnifyingGlassIcon, 
   ChartBarIcon, 
@@ -30,9 +32,210 @@ import {
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
+const normalizePlanId = (value) => {
+  if (value === null || value === undefined) return '';
+
+  if (typeof value === 'string') {
+    return value.trim().toLowerCase();
+  }
+
+  if (typeof value === 'object') {
+    if (typeof value.planId === 'string') return value.planId.trim().toLowerCase();
+    if (typeof value.id === 'string') return value.id.trim().toLowerCase();
+    if (typeof value._id === 'string') return value._id.trim().toLowerCase();
+  }
+
+  return String(value).trim().toLowerCase();
+};
+
+const BRAND_PRICING_TIERS = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: '$49',
+    period: '/month',
+    description: 'Perfect for small brands testing influencer marketing',
+    features: [
+      'Up to 3 active campaigns',
+      'Search 1000+ creators',
+      'Basic analytics',
+      'Email support',
+      'Standard contracts'
+    ],
+    cta: 'Start Free Trial',
+    popular: false,
+    gradient: 'from-gray-600 to-gray-800'
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    price: '$149',
+    period: '/month',
+    description: 'Ideal for growing brands with regular campaigns',
+    features: [
+      'Unlimited campaigns',
+      'Advanced AI matching',
+      'Real-time analytics',
+      'Priority support',
+      'Custom contracts',
+      'API access'
+    ],
+    cta: 'Get Started',
+    popular: true,
+    gradient: 'from-indigo-600 to-purple-600'
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    description: 'For agencies and large brands with custom needs',
+    features: [
+      'Unlimited everything',
+      'Dedicated account manager',
+      'Custom integrations',
+      'SLA guarantee',
+      'Bulk creator invites',
+      'Advanced reporting'
+    ],
+    cta: 'Contact Sales',
+    popular: false,
+    gradient: 'from-purple-600 to-pink-600'
+  }
+];
+
+const CREATOR_PRICING_TIERS = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: '$0',
+    period: '/month',
+    description: 'Perfect for creators getting started',
+    features: [
+      'Completed deals cap: 2',
+      'Basic discovery visibility',
+      'Core deal collaboration tools',
+      'Standard support'
+    ],
+    cta: 'Get Started',
+    popular: false,
+    gradient: 'from-gray-500 to-gray-700'
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: '$29',
+    period: '/month',
+    description: 'For creators building paid-collab momentum',
+    features: [
+      'Completed deals cap: 10',
+      'Higher visibility for brand invites',
+      'Expanded collaboration capacity',
+      'Performance tracking insights'
+    ],
+    cta: 'Upgrade',
+    popular: false,
+    gradient: 'from-cyan-600 to-blue-700'
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    price: '$79',
+    period: '/month',
+    description: 'For creators focused on predictable growth',
+    features: [
+      'Completed deals cap: 30',
+      'Creator Growth OS access',
+      'Priority support',
+      'Advanced performance intelligence'
+    ],
+    cta: 'Go Pro',
+    popular: true,
+    gradient: 'from-indigo-600 to-purple-600'
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    description: 'For top creators and teams running at scale',
+    features: [
+      'Completed deals cap: Infinite',
+      'AI Counter Dealing access',
+      'Enterprise workflow controls',
+      'Dedicated success support'
+    ],
+    cta: 'Contact Sales',
+    popular: false,
+    gradient: 'from-purple-600 to-pink-600'
+  }
+];
+
 export default function Home() {
+  const { user, isAuthenticated } = useAuth();
+  const { currentSubscription } = useSubscription();
   const [scrolled, setScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  const userType = String(user?.userType || user?.role || '').toLowerCase();
+  const isBrandUser = isAuthenticated && userType === 'brand';
+  const isCreatorUser = isAuthenticated && userType === 'creator';
+  const isPricingUser = isBrandUser || isCreatorUser;
+
+  const pricingTiers = useMemo(() => {
+    if (isCreatorUser) return CREATOR_PRICING_TIERS;
+    return BRAND_PRICING_TIERS;
+  }, [isCreatorUser]);
+
+  const currentPlanId = useMemo(() => {
+    if (!isPricingUser || !currentSubscription) return '';
+
+    const planIdCandidates = [
+      currentSubscription.planDetails?.planId,
+      currentSubscription.planDetails?.id,
+      currentSubscription.planId?.planId,
+      currentSubscription.planId,
+      currentSubscription.planDetails?._id,
+      currentSubscription.planId?._id,
+      currentSubscription.plan
+    ];
+
+    for (const candidate of planIdCandidates) {
+      const normalized = normalizePlanId(candidate);
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    const currentPlanName = String(currentSubscription.planDetails?.name || '').trim().toLowerCase();
+    if (!currentPlanName) return '';
+
+    const matchedTier = pricingTiers.find((tier) => String(tier.name || '').trim().toLowerCase() === currentPlanName);
+    return matchedTier?.id || '';
+  }, [currentSubscription, isPricingUser, pricingTiers]);
+
+  const currentPlanIndex = useMemo(() => {
+    if (!currentPlanId) return -1;
+    return pricingTiers.findIndex((tier) => normalizePlanId(tier.id) === normalizePlanId(currentPlanId));
+  }, [currentPlanId, pricingTiers]);
+
+  const subscriptionPath = isBrandUser
+    ? '/brand/subscription'
+    : isCreatorUser
+      ? '/creator/subscription'
+      : '/signup';
+
+  const hasKnownCurrentPlan = currentPlanIndex >= 0;
+
+  const getDashboardPath = () => {
+    const userType = String(user?.userType || user?.role || '').toLowerCase();
+    if (userType === 'brand') return '/brand/dashboard';
+    if (userType === 'creator') return '/creator/dashboard';
+    if (userType === 'admin' || userType === 'super_admin') return '/admin/dashboard';
+    return '/';
+  };
+
+  const dashboardPath = getDashboardPath();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -162,58 +365,46 @@ export default function Home() {
     { icon: FaLinkedin, name: 'LinkedIn', color: 'text-blue-700', bg: 'bg-blue-100' }
   ];
 
-  const pricingTiers = [
-    {
-      name: 'Starter',
-      price: '$49',
-      period: '/month',
-      description: 'Perfect for small brands testing influencer marketing',
-      features: [
-        'Up to 3 active campaigns',
-        'Search 1000+ creators',
-        'Basic analytics',
-        'Email support',
-        'Standard contracts'
-      ],
-      cta: 'Start Free Trial',
-      popular: false,
-      gradient: 'from-gray-600 to-gray-800'
-    },
-    {
-      name: 'Professional',
-      price: '$149',
-      period: '/month',
-      description: 'Ideal for growing brands with regular campaigns',
-      features: [
-        'Unlimited campaigns',
-        'Advanced AI matching',
-        'Real-time analytics',
-        'Priority support',
-        'Custom contracts',
-        'API access'
-      ],
-      cta: 'Get Started',
-      popular: true,
-      gradient: 'from-indigo-600 to-purple-600'
-    },
-    {
-      name: 'Enterprise',
-      price: 'Custom',
-      period: '',
-      description: 'For agencies and large brands with custom needs',
-      features: [
-        'Unlimited everything',
-        'Dedicated account manager',
-        'Custom integrations',
-        'SLA guarantee',
-        'Bulk creator invites',
-        'Advanced reporting'
-      ],
-      cta: 'Contact Sales',
-      popular: false,
-      gradient: 'from-purple-600 to-pink-600'
+  const getPricingAction = (tier, index) => {
+    if (!isPricingUser) {
+      return {
+        label: tier.cta,
+        to: '/signup',
+        disabled: false
+      };
     }
-  ];
+
+    if (!hasKnownCurrentPlan) {
+      return {
+        label: 'Subscribe',
+        to: `${subscriptionPath}?plan=${tier.id}`,
+        disabled: false
+      };
+    }
+
+    const normalizedTierId = normalizePlanId(tier.id);
+    if (normalizedTierId === normalizePlanId(currentPlanId)) {
+      return {
+        label: 'Manage Billing',
+        to: subscriptionPath,
+        disabled: false
+      };
+    }
+
+    if (index < currentPlanIndex) {
+      return {
+        label: 'Current Plan Locked',
+        to: '#',
+        disabled: true
+      };
+    }
+
+    return {
+      label: 'Change Plan',
+      to: `${subscriptionPath}?plan=${tier.id}`,
+      disabled: false
+    };
+  };
 
   const faqs = [
     {
@@ -262,18 +453,29 @@ export default function Home() {
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="hidden sm:inline-block text-gray-700 hover:text-indigo-600 font-medium transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/signup"
-                className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
-              >
-                Get Started
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to={dashboardPath}
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
+                >
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="hidden sm:inline-block text-gray-700 hover:text-indigo-600 font-medium transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -323,23 +525,38 @@ export default function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link
-                to="/signup?type=brand"
-                className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
-              >
-                <span className="relative z-10 flex items-center justify-center">
-                  Find Creators 
-                  <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </Link>
-              <Link
-                to="/signup?type=creator"
-                className="px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg border-2 border-gray-200 hover:border-indigo-600 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
-              >
-                Start Earning Today
-                <ArrowTrendingUpIcon className="w-5 h-5 ml-2" />
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to={dashboardPath}
+                  className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    Open Dashboard
+                    <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/signup?type=brand"
+                    className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      Find Creators 
+                      <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+                  <Link
+                    to="/signup?type=creator"
+                    className="px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg border-2 border-gray-200 hover:border-indigo-600 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
+                  >
+                    Start Earning Today
+                    <ArrowTrendingUpIcon className="w-5 h-5 ml-2" />
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Platform icons */}
@@ -632,15 +849,20 @@ export default function Home() {
           </div>
 
           {/* Pricing cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className={`grid grid-cols-1 ${isCreatorUser ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'} gap-8`}>
             {pricingTiers.map((tier, index) => (
+              (() => {
+                const action = getPricingAction(tier, index);
+                return (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 ${
+                className={`relative bg-white rounded-2xl p-8 shadow-xl transition-all duration-300 ${
+                  action.disabled ? 'opacity-60' : 'hover:shadow-2xl'
+                } ${
                   tier.popular ? 'ring-2 ring-indigo-600 scale-105' : ''
                 }`}
               >
@@ -673,17 +895,27 @@ export default function Home() {
                 </ul>
 
                 {/* CTA */}
-                <Link
-                  to="/register"
-                  className={`block w-full py-3 px-6 text-center rounded-xl font-semibold transition-all duration-300 ${
-                    tier.popular
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {tier.cta}
-                </Link>
+                {action.disabled ? (
+                  <span
+                    className="block w-full py-3 px-6 text-center rounded-xl font-semibold bg-gray-200 text-gray-500 cursor-not-allowed"
+                  >
+                    {action.label}
+                  </span>
+                ) : (
+                  <Link
+                    to={action.to}
+                    className={`block w-full py-3 px-6 text-center rounded-xl font-semibold transition-all duration-300 ${
+                      tier.popular
+                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    }`}
+                  >
+                    {action.label}
+                  </Link>
+                )}
               </motion.div>
+                );
+              })()
             ))}
           </div>
         </div>
@@ -752,19 +984,21 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/register?role=brand"
+                to={isBrandUser ? '/brand/search' : isCreatorUser ? '/creator/available-deals' : '/signup?type=brand'}
                 className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
               >
-                Find Creators
+                {isCreatorUser ? 'Find Deals' : 'Find Creators'}
                 <ChevronRightIcon className="w-5 h-5 ml-2" />
               </Link>
-              <Link
-                to="/register?role=creator"
-                className="px-8 py-4 bg-transparent text-white rounded-xl font-semibold text-lg border-2 border-white hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center justify-center"
-              >
-                Start Earning
-                <ArrowTrendingUpIcon className="w-5 h-5 ml-2" />
-              </Link>
+              {!isBrandUser && !isCreatorUser && (
+                <Link
+                  to="/signup?type=creator"
+                  className="px-8 py-4 bg-transparent text-white rounded-xl font-semibold text-lg border-2 border-white hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center justify-center"
+                >
+                  Start Earning
+                  <ArrowTrendingUpIcon className="w-5 h-5 ml-2" />
+                </Link>
+              )}
             </div>
 
             {/* Trust indicator */}

@@ -2,6 +2,9 @@
 const Subscription = require('../models/Subscription');
 const Plan = require('../models/Plan');
 const User = require('../models/User');
+const Deal = require('../models/Deal');
+const Campaign = require('../models/Campaign');
+const Brand = require('../models/Brand');
 const stripe = require('../config/stripe');
 const stripeService = require('../services/stripeService');
 const subscriptionPlans = require('../config/subscriptionPlans');
@@ -39,6 +42,22 @@ const getSubscriptionPathByUserType = (userType) => {
   if (userType === 'brand') return '/brand/subscription';
   if (userType === 'creator') return '/creator/subscription';
   return '/pricing';
+};
+
+const getCreatorCompletedDealsLimitByPlan = (planId = 'free') => {
+  const normalizedPlan = String(planId || 'free').toLowerCase();
+  if (normalizedPlan === 'starter') return 10;
+  if (normalizedPlan === 'professional') return 30;
+  if (normalizedPlan === 'enterprise') return -1;
+  return 2;
+};
+
+const ACTIVE_DEAL_STATUSES = ['pending', 'negotiating', 'accepted', 'in-progress', 'revision', 'overdue', 'disputed'];
+
+const isLimitReached = (limit, used) => {
+  const normalizedLimit = Number(limit);
+  if (!Number.isFinite(normalizedLimit) || normalizedLimit === -1) return false;
+  return Number(used || 0) >= normalizedLimit;
 };
 
 let managedPlanChangePortalConfigId = process.env.STRIPE_PLAN_CHANGE_PORTAL_CONFIG_ID || null;
@@ -1360,6 +1379,22 @@ const updateTaxInfo = asyncHandler(async (req, res) => {
 // @route   GET /api/subscriptions/limits
 // @access  Private
 const checkLimits = asyncHandler(async (req, res) => {
+  const brandContextId = req.brandId || req.user._id;
+  const isCreator = req.user.userType === 'creator';
+  const isBrand = req.user.userType === 'brand';
+
+  const [creatorCompletedDeals, creatorActiveDeals, brandCampaignsUsed, brandActiveDealsUsed, brandDoc] = await Promise.all([
+    isCreator ? Deal.countDocuments({ creatorId: req.user._id, status: 'completed' }) : Promise.resolve(0),
+    isCreator ? Deal.countDocuments({ creatorId: req.user._id, status: { $in: ACTIVE_DEAL_STATUSES } }) : Promise.resolve(0),
+    isBrand ? Campaign.countDocuments({ brandId: brandContextId }) : Promise.resolve(0),
+    isBrand ? Deal.countDocuments({ brandId: brandContextId, status: { $in: ACTIVE_DEAL_STATUSES } }) : Promise.resolve(0),
+    isBrand ? Brand.findById(brandContextId).select('teamMembers').lean() : Promise.resolve(null)
+  ]);
+
+  const brandTeamMembersUsed = isBrand
+    ? ((brandDoc?.teamMembers || []).filter((member) => String(member?.status || '') !== 'removed').length)
+    : 0;
+
   const subscription = await Subscription.findOne({
     userId: req.user._id,
     status: { $in: ['active', 'trialing'] }
@@ -1367,17 +1402,60 @@ const checkLimits = asyncHandler(async (req, res) => {
 
   if (!subscription) {
     const freePlan = await Plan.findOne({ planId: 'free' });
+    const freePlanLimits = freePlan?.limits || subscriptionPlans.plans[0].limits;
+    const resolvedFreeLimits = {
+      ...freePlanLimits,
+      completedDeals: isCreator ? 2 : -1
+    };
+
+    const usage = {
+      campaignsUsed: isBrand ? brandCampaignsUsed : 0,
+      activeDealsUsed: isBrand ? brandActiveDealsUsed : (isCreator ? creatorActiveDeals : 0),
+      completedDealsUsed: isCreator ? creatorCompletedDeals : 0,
+      teamMembersUsed: isBrand ? brandTeamMembersUsed : 0,
+      storageUsed: 0,
+      apiCallsUsed: 0
+    };
+
+    const canAcceptDeals = !isCreator || creatorCompletedDeals < 2;
+
     return res.json({
       success: true,
       hasSubscription: false,
-      limits: freePlan?.limits || subscriptionPlans.plans[0].limits,
-      usage: { campaignsUsed: 0, activeDealsUsed: 0, teamMembersUsed: 0, storageUsed: 0, apiCallsUsed: 0 },
-      can: { createCampaign: true, createDeal: true, inviteTeam: false, useAnalytics: false, useAPI: false }
+      limits: resolvedFreeLimits,
+      usage,
+      can: {
+        createCampaign: !isBrand || !isLimitReached(resolvedFreeLimits.campaigns, usage.campaignsUsed),
+        createDeal: !isBrand || !isLimitReached(resolvedFreeLimits.activeDeals, usage.activeDealsUsed),
+        acceptDeals: canAcceptDeals,
+        applyDeals: canAcceptDeals,
+        inviteTeam: !isBrand || !isLimitReached(resolvedFreeLimits.teamMembers, usage.teamMembersUsed),
+        useAnalytics: Boolean(resolvedFreeLimits.analytics),
+        useAPI: Boolean(resolvedFreeLimits.api_access)
+      }
     });
   }
 
-  const limits = subscription.planDetails.limits;
-  const usage = subscription.usage;
+  const planId = String(subscription.planId || subscription.planDetails?.planId || 'free').toLowerCase();
+  const limits = {
+    ...(subscription.planDetails?.limits || {}),
+    completedDeals: req.user.userType === 'creator'
+      ? getCreatorCompletedDealsLimitByPlan(planId)
+      : -1
+  };
+  const completedDealsLimit = Number(limits.completedDeals);
+  const canAcceptDeals = !isCreator
+    || completedDealsLimit === -1
+    || creatorCompletedDeals < completedDealsLimit;
+
+  const usage = {
+    campaignsUsed: isBrand ? brandCampaignsUsed : 0,
+    activeDealsUsed: isBrand ? brandActiveDealsUsed : (isCreator ? creatorActiveDeals : 0),
+    completedDealsUsed: isCreator ? creatorCompletedDeals : 0,
+    teamMembersUsed: isBrand ? brandTeamMembersUsed : 0,
+    storageUsed: Number(subscription.usage?.storageUsed || 0),
+    apiCallsUsed: Number(subscription.usage?.apiCallsUsed || 0)
+  };
 
   res.json({
     success: true,
@@ -1386,9 +1464,11 @@ const checkLimits = asyncHandler(async (req, res) => {
     limits,
     usage,
     can: {
-      createCampaign: !subscription.hasReachedLimit('campaigns'),
-      createDeal: !subscription.hasReachedLimit('activeDeals'),
-      inviteTeam: !subscription.hasReachedLimit('teamMembers'),
+      createCampaign: !isBrand || !isLimitReached(limits.campaigns, usage.campaignsUsed),
+      createDeal: !isBrand || !isLimitReached(limits.activeDeals, usage.activeDealsUsed),
+      acceptDeals: canAcceptDeals,
+      applyDeals: canAcceptDeals,
+      inviteTeam: !isBrand || !isLimitReached(limits.teamMembers, usage.teamMembersUsed),
       useAnalytics: limits.analytics,
       useAPI: limits.api_access
     },

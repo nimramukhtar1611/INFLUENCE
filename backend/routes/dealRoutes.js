@@ -75,6 +75,14 @@ router.post('/:id/counter',
   dealController.counterOffer
 );
 
+router.get('/:id/negotiation-suggestion',
+  dealController.getNegotiationSuggestion
+);
+
+router.post('/:id/ai-counter/start',
+  dealController.startAiCounterDealing
+);
+
 router.post('/:id/cancel',
   dealValidations.cancel,
   validateRequest,

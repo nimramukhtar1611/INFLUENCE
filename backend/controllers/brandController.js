@@ -7,11 +7,268 @@ const Deal = require('../models/Deal');
 const Payment = require('../models/Payment');
 const Notification = require('../models/Notification');
 const Invitation = require('../models/Invitation');
+const Subscription = require('../models/Subscription');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { catchAsync } = require('../utils/catchAsync');
 
 const getBrandContextId = (req) => req.brandId || req.user?._id;
+
+const getBrandSubscriptionPlan = async (brandUserId) => {
+  if (!brandUserId) return 'free';
+
+  const subscription = await Subscription.findOne({
+    userId: brandUserId,
+    status: { $in: ['active', 'trialing'] }
+  })
+    .select('planId')
+    .lean();
+
+  return String(subscription?.planId || 'free').toLowerCase();
+};
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const normalizeText = (value = '') => String(value || '').trim().toLowerCase();
+
+const normalizeList = (values = []) => {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((value) => normalizeText(value))
+    .filter(Boolean);
+};
+
+const getCampaignMatchingProfile = (campaign, filters = {}) => {
+  const budget = Number(campaign?.budget || 0);
+  const deriveFollowerRangeFromBudget = () => {
+    if (budget <= 0) return { min: 5000, max: 200000, source: 'default' };
+
+    // Continuous mapping so each campaign budget can produce a different follower target band.
+    const idealFollowers = clamp(Math.round(budget * 120), 1500, 5000000);
+    const min = clamp(Math.round(idealFollowers * 0.45), 1000, 4000000);
+    const max = clamp(Math.round(idealFollowers * 1.9), min + 1000, 7000000);
+
+    return { min, max, source: 'budget_continuous' };
+  };
+
+  const targetMinFollowers = Number(campaign?.targetAudience?.minFollowers || filters.minFollowers || 0);
+  const targetMaxFollowers = Number(campaign?.targetAudience?.maxFollowers || filters.maxFollowers || 0);
+  const derivedRange = deriveFollowerRangeFromBudget();
+
+  const minFollowers = targetMinFollowers > 0 ? targetMinFollowers : derivedRange.min;
+  const maxFollowers = targetMaxFollowers > 0 ? targetMaxFollowers : derivedRange.max;
+
+  const targetNiches = normalizeList([
+    campaign?.category,
+    ...(campaign?.targetAudience?.niches || []),
+    ...(filters.niche ? [filters.niche] : [])
+  ]);
+
+  const targetPlatforms = normalizeList([
+    ...(campaign?.targetAudience?.platforms || []),
+    ...(filters.platform ? [filters.platform] : [])
+  ]);
+
+  return {
+    primaryCategory: normalizeText(campaign?.category || ''),
+    niches: [...new Set(targetNiches)],
+    platforms: [...new Set(targetPlatforms)],
+    minEngagement: Number(campaign?.targetAudience?.minEngagement || filters.minEngagement || 0),
+    minFollowers,
+    maxFollowers,
+    followerRangeSource: (targetMinFollowers > 0 || targetMaxFollowers > 0) ? 'target_audience' : derivedRange.source
+  };
+};
+
+const computeNicheScore = (creator, profile) => {
+  const creatorNiches = new Set(normalizeList(creator?.niches || []));
+  const primaryCategory = normalizeText(profile?.primaryCategory || '');
+
+  // Exact campaign category match gets full niche component.
+  if (primaryCategory && creatorNiches.has(primaryCategory)) {
+    return { score: 100, overlap: [primaryCategory] };
+  }
+
+  const targetNiches = profile.niches;
+  if (!targetNiches.length) {
+    return { score: creatorNiches.size > 0 ? 70 : 50, overlap: [] };
+  }
+
+  const overlap = targetNiches.filter((niche) => creatorNiches.has(niche));
+  if (overlap.length === 0) {
+    // Explicit niche/type mismatch should still score low, not zero.
+    return { score: 20, overlap: [] };
+  }
+
+  const coverage = overlap.length / targetNiches.length;
+  return {
+    score: Math.round(clamp(coverage * 100, 0, 100)),
+    overlap
+  };
+};
+
+const computeEngagementScore = (creator, profile) => {
+  const avgEngagement = Number(creator?.averageEngagement || 0);
+  const followers = Number(creator?.totalFollowers || 0);
+  const target = Math.max(Number(profile.minEngagement || 0), 0);
+
+  let engagementScore = 0;
+  if (target > 0) {
+    engagementScore = clamp((avgEngagement / target) * 100, 0, 100);
+  } else {
+    engagementScore = clamp(avgEngagement * 20, 0, 100);
+  }
+
+  if (profile.minFollowers > 0 && followers < profile.minFollowers) {
+    engagementScore *= 0.85;
+  }
+
+  if (profile.maxFollowers > 0 && followers > profile.maxFollowers) {
+    engagementScore *= 0.9;
+  }
+
+  return Math.round(clamp(engagementScore, 0, 100));
+};
+
+const computeFollowerScore = (creator, profile) => {
+  const followers = Number(creator?.totalFollowers || 0);
+  const minFollowers = Number(profile?.minFollowers || 0);
+  const maxFollowers = Number(profile?.maxFollowers || 0);
+  const reachStrength = clamp(Math.log10(Math.max(followers, 10)) / 7, 0, 1);
+  const reachBonus = Math.round(reachStrength * 25);
+
+  if (minFollowers <= 0 && maxFollowers <= 0) {
+    // Log-scaled score for no constraints.
+    const logScore = Math.log10(Math.max(followers, 10)) * 20;
+    return Math.round(clamp(logScore, 0, 100));
+  }
+
+  if (maxFollowers > 0 && followers > maxFollowers) {
+    const overshootRatio = (followers - maxFollowers) / Math.max(maxFollowers, 1);
+    const fitScore = clamp(100 - (overshootRatio * 20), 45, 100);
+    return Math.round(clamp((fitScore * 0.75) + reachBonus, 0, 100));
+  }
+
+  if (minFollowers > 0 && followers < minFollowers) {
+    const shortfallRatio = (minFollowers - followers) / Math.max(minFollowers, 1);
+    const fitScore = clamp(100 - (shortfallRatio * 90), 0, 100);
+    return Math.round(clamp((fitScore * 0.8) + (reachBonus * 0.5), 0, 100));
+  }
+
+  // Inside target range: reward proximity to range midpoint.
+  const low = minFollowers > 0 ? minFollowers : 0;
+  const high = maxFollowers > 0 ? maxFollowers : Math.max(low * 3, 100000);
+  const midpoint = (low + high) / 2;
+  const halfRange = Math.max((high - low) / 2, 1);
+  const distance = Math.abs(followers - midpoint);
+  const proximity = 1 - (distance / halfRange);
+
+  const fitScore = clamp(75 + (proximity * 25), 60, 100);
+  return Math.round(clamp((fitScore * 0.8) + reachBonus, 0, 100));
+};
+
+const computeBehavioralScore = (creator, creatorDealStats = {}) => {
+  const completed = Number(creatorDealStats.completed || 0);
+  const cancelled = Number(creatorDealStats.cancelled || 0);
+  const disputed = Number(creatorDealStats.disputed || 0);
+  const revision = Number(creatorDealStats.revision || 0);
+  const totalDeals = Number(creatorDealStats.total || 0);
+  const rating = Number(creator?.stats?.averageRating || 0);
+
+  if (totalDeals === 0) {
+    const coldStart = 65 + clamp(rating, 0, 5) * 4;
+    return Math.round(clamp(coldStart, 0, 100));
+  }
+
+  const completionRate = completed / totalDeals;
+  const cancellationRate = cancelled / totalDeals;
+  const disputeRate = disputed / totalDeals;
+  const revisionRate = revision / totalDeals;
+
+  const completionScore = completionRate * 100;
+  const reliabilityPenalty = (cancellationRate * 30) + (disputeRate * 40) + (revisionRate * 15);
+  const ratingScore = clamp((rating / 5) * 100, 0, 100);
+
+  const weighted = (completionScore * 0.6) + (ratingScore * 0.25) + ((100 - reliabilityPenalty) * 0.15);
+  return Math.round(clamp(weighted, 0, 100));
+};
+
+const computeDataQualityScore = (creator = {}) => {
+  const followers = Number(creator?.totalFollowers || 0);
+  const engagement = Number(creator?.averageEngagement || 0);
+  const socialMedia = creator?.socialMedia || {};
+  const platforms = ['instagram', 'youtube', 'tiktok', 'twitter'];
+
+  const connectedPlatforms = platforms.filter((platform) => {
+    const social = socialMedia?.[platform] || {};
+    const handle = typeof social?.handle === 'string' ? social.handle.trim() : '';
+    const url = typeof social?.url === 'string' ? social.url.trim() : '';
+    const followersCount = Number(social?.followers || social?.subscribers || 0);
+    return Boolean(handle || url || followersCount > 0);
+  }).length;
+
+  let score = 0;
+  if (followers > 0) score += 50;
+  if (engagement > 0) score += 25;
+  score += (connectedPlatforms / platforms.length) * 25;
+
+  return Math.round(clamp(score, 0, 100));
+};
+
+const buildAiMatch = (creator, profile, creatorDealStats = {}) => {
+  const niche = computeNicheScore(creator, profile);
+  const engagement = computeEngagementScore(creator, profile);
+  const followers = computeFollowerScore(creator, profile);
+  const behavioral = computeBehavioralScore(creator, creatorDealStats);
+  const dataQuality = computeDataQualityScore(creator);
+  const otherSignals = Math.round(
+    clamp((engagement * 0.4) + (behavioral * 0.4) + (dataQuality * 0.2), 0, 100)
+  );
+
+  const matchScore = Math.round(
+    clamp(
+      (followers * 0.4) +
+      (niche.score * 0.4) +
+      (otherSignals * 0.2),
+      0,
+      100
+    )
+  );
+  let successProbability = Math.round(
+    clamp((matchScore * 0.7) + (otherSignals * 0.3), 5, 95)
+  );
+
+  // Low data confidence should never appear as strong success odds.
+  if (dataQuality < 30) {
+    successProbability = Math.min(successProbability, 28);
+  }
+
+  const reasons = [];
+  if (dataQuality < 35) {
+    reasons.push('Limited verified audience data lowers confidence');
+  }
+  if (niche.overlap.length > 0) {
+    reasons.push(`Niche overlap: ${niche.overlap.slice(0, 2).join(', ')}`);
+  }
+  if (followers >= 80) reasons.push('Follower range strongly aligns with campaign scale');
+  if (engagement >= 75) reasons.push('Strong engagement fit for campaign goals');
+  if (behavioral >= 75) reasons.push('Reliable past delivery behavior');
+  if (!reasons.length) reasons.push('Balanced fit across campaign constraints');
+
+  return {
+    score: matchScore,
+    successProbability,
+    components: {
+      niche: niche.score,
+      engagement,
+      followers,
+      behavioral,
+      dataQuality,
+      otherSignals
+    },
+    reasons
+  };
+};
 
 const normalizeHandle = (value) => {
   if (typeof value !== 'string') return value;
@@ -334,7 +591,16 @@ exports.searchCreators = catchAsync(async (req, res) => {
     available,
     q,
     sort = 'relevance',
+    aiMatching = 'false',
+    campaignId,
   } = req.query;
+
+  const aiMatchingEnabled = String(aiMatching).toLowerCase() === 'true';
+  const brandId = getBrandContextId(req);
+  const currentPlan = await getBrandSubscriptionPlan(brandId);
+  const canUseAiMatching = ['professional', 'enterprise'].includes(currentPlan);
+  const aiMatchingRequested = aiMatchingEnabled || sort === 'ai_match' || Boolean(campaignId);
+  const aiMatchingAllowed = aiMatchingRequested && canUseAiMatching;
 
   const query = { userType: 'creator', status: 'active' };
 
@@ -374,27 +640,90 @@ exports.searchCreators = catchAsync(async (req, res) => {
 
   // Sorting
   let sortOption = {};
-  switch (sort) {
+  const effectiveSort = sort === 'ai_match' && !canUseAiMatching ? 'relevance' : sort;
+  switch (effectiveSort) {
     case 'followers_desc': sortOption = { totalFollowers: -1 }; break;
     case 'followers_asc': sortOption = { totalFollowers: 1 }; break;
     case 'engagement_desc': sortOption = { averageEngagement: -1 }; break;
     case 'rating_desc': sortOption = { 'stats.averageRating': -1 }; break;
     case 'newest': sortOption = { createdAt: -1 }; break;
+    case 'ai_match': sortOption = { totalFollowers: -1 }; break;
     default: sortOption = { totalFollowers: -1 };
   }
 
+  let campaign = null;
+  if (campaignId && canUseAiMatching) {
+    campaign = await Campaign.findOne({ _id: campaignId, brandId })
+      .select('title category targetAudience budget')
+      .lean();
+
+    if (!campaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found for this brand context' });
+    }
+  }
+
+  const matchingProfile = getCampaignMatchingProfile(campaign, { niche, platform, minEngagement, minFollowers, maxFollowers });
+
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const total = await Creator.countDocuments(query);
-  const creators = await Creator.find(query)
+  let creators = await Creator.find(query)
     .select('displayName handle profilePicture niches totalFollowers averageEngagement stats location socialMedia')
     .sort(sortOption)
     .skip(skip)
     .limit(parseInt(limit))
     .lean();
 
+  if (aiMatchingAllowed) {
+    const creatorIds = creators.map((creator) => creator._id).filter(Boolean);
+    const creatorDealStats = await Deal.aggregate([
+      { $match: { creatorId: { $in: creatorIds } } },
+      {
+        $group: {
+          _id: '$creatorId',
+          total: { $sum: 1 },
+          completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+          cancelled: { $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] } },
+          disputed: { $sum: { $cond: [{ $eq: ['$status', 'disputed'] }, 1, 0] } },
+          revision: { $sum: { $cond: [{ $eq: ['$status', 'revision'] }, 1, 0] } }
+        }
+      }
+    ]);
+
+    const statsByCreator = new Map(
+      creatorDealStats.map((entry) => [String(entry._id), entry])
+    );
+
+    creators = creators.map((creator) => {
+      const aiMatch = buildAiMatch(creator, matchingProfile, statsByCreator.get(String(creator._id)) || {});
+      return { ...creator, aiMatch };
+    });
+
+    creators.sort((a, b) => {
+      const scoreDiff = Number(b.aiMatch?.score || 0) - Number(a.aiMatch?.score || 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      return Number(b.totalFollowers || 0) - Number(a.totalFollowers || 0);
+    });
+  }
+
   res.json({
     success: true,
     creators,
+    aiMatching: aiMatchingAllowed,
+    aiMatchingEntitlement: {
+      canUse: canUseAiMatching,
+      currentPlan,
+      requiredPlan: 'professional',
+      reason: canUseAiMatching
+        ? ''
+        : 'AI Creator Matching Engine is available on Professional plan and above'
+    },
+    campaignContext: campaign
+      ? {
+          id: campaign._id,
+          title: campaign.title,
+          category: campaign.category
+        }
+      : null,
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),

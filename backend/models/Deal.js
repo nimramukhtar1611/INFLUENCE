@@ -279,6 +279,11 @@ const dealSchema = new mongoose.Schema({
     deadline: Date,
     deliverables: String,
     message: String,
+    source: {
+      type: String,
+      enum: ['manual', 'ai'],
+      default: 'manual'
+    },
     status: { 
       type: String, 
       enum: ['pending', 'accepted', 'declined'],
@@ -286,6 +291,29 @@ const dealSchema = new mongoose.Schema({
     },
     createdAt: { type: Date, default: Date.now }
   }],
+
+  negotiationSettings: {
+    mode: {
+      type: String,
+      enum: ['manual', 'ai'],
+      default: 'manual'
+    },
+    aiInitialBudget: Number,
+    aiReferenceBudget: Number,
+    aiEnabledAt: Date,
+    aiEnabledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    aiEnabledByBrand: {
+      type: Boolean,
+      default: false
+    },
+    aiEnabledByCreator: {
+      type: Boolean,
+      default: false
+    }
+  },
   
   messages: [{
     type: mongoose.Schema.Types.ObjectId,

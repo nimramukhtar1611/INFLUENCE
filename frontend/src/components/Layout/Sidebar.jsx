@@ -24,6 +24,7 @@ import {
   Award,
   Briefcase,
   TrendingUp,
+  Lightbulb,
   Star,
   Clock,
   AlertCircle,
@@ -34,13 +35,25 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../context/SubscriptionContext';
+
+const normalizePlanId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim().toLowerCase();
+  if (typeof value.planId === 'string') return value.planId.trim().toLowerCase();
+  if (typeof value.id === 'string') return value.id.trim().toLowerCase();
+  return '';
+};
 
  const Sidebar = ({ userType: propUserType }) => {
   const { user, logout } = useAuth();
   const { sidebarCollapsed, toggleSidebar } = useTheme();
+    const { currentSubscription } = useSubscription();
   const location = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('');
+    const currentPlanId = normalizePlanId(currentSubscription?.planId || currentSubscription?.plan || currentSubscription);
+    const canAccessGrowthOS = ['professional', 'enterprise'].includes(currentPlanId);
 
   // ==================== DETERMINE USER TYPE ====================
   const currentUserType = propUserType || user?.userType ||
@@ -72,6 +85,7 @@ import { useTheme } from '../../hooks/useTheme';
       { to: '/creator/available-deals', icon: Search, label: 'Find Deals' },
       { to: '/creator/deals', icon: Handshake, label: 'My Deals' },
       { to: '/creator/analytics', icon: BarChart3, label: 'Analytics' },
+      ...(canAccessGrowthOS ? [{ to: '/creator/growth-os', icon: Lightbulb, label: 'Growth OS' }] : []),
       { to: '/creator/earnings', icon: Wallet, label: 'Earnings' },
       { to: '/creator/subscription', icon: DollarSign, label: 'Subscription' },
       { to: '/creator/inbox', icon: MessageSquare, label: 'Inbox' },

@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useDeal } from '../../hooks/useDeal';
 import { useSocket } from '../../context/SocketContext';
+import dealService from '../../services/dealService';
 import {
   ArrowLeft,
   User,
@@ -92,6 +93,10 @@ const DealDetails = () => {
   const [revisionNotes, setRevisionNotes] = useState('');
   const [cancelReason, setCancelReason] = useState('');
   const [counterData, setCounterData] = useState({ budget: '', deadline: '', message: '' });
+  const [startingAiCounter, setStartingAiCounter] = useState(false);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [counterSuggestion, setCounterSuggestion] = useState(null);
+  const [aiCounterAccess, setAiCounterAccess] = useState({ canUse: false, reason: '', plan: 'free', isActive: false });
   const [ratingScore, setRatingScore] = useState(5);
   const [ratingReview, setRatingReview] = useState('');
 
@@ -197,6 +202,26 @@ const DealDetails = () => {
       }
       const msgs = await getDealMessages(id);
       setMessages(msgs || []);
+      await loadNegotiationSuggestion();
+    }
+  };
+
+  const loadNegotiationSuggestion = async () => {
+    try {
+      setSuggestionLoading(true);
+      const response = await dealService.getNegotiationSuggestion(id);
+      if (response?.success) {
+        setCounterSuggestion(response.suggestion || null);
+        setAiCounterAccess(response.aiCounter || { canUse: false, reason: '', plan: 'free', isActive: false });
+      } else {
+        setCounterSuggestion(null);
+        setAiCounterAccess({ canUse: false, reason: response?.error || '', plan: 'free', isActive: false });
+      }
+    } catch (error) {
+      setCounterSuggestion(null);
+      setAiCounterAccess({ canUse: false, reason: 'Failed to load AI suggestion', plan: 'free', isActive: false });
+    } finally {
+      setSuggestionLoading(false);
     }
   };
 
@@ -362,7 +387,28 @@ const DealDetails = () => {
     }
   };
 
+  const isManualCounterDisabledForActor = (dealState, actorRole) => {
+    const settings = dealState?.negotiationSettings || {};
+    if (settings?.mode !== 'ai') return false;
+
+    if (actorRole === 'brand') {
+      if (typeof settings.aiEnabledByBrand === 'boolean') return settings.aiEnabledByBrand;
+      const aiEnabledBy = settings.aiEnabledBy?._id || settings.aiEnabledBy;
+      return !aiEnabledBy || String(aiEnabledBy) === String(user?._id);
+    }
+
+    if (typeof settings.aiEnabledByCreator === 'boolean') return settings.aiEnabledByCreator;
+    return false;
+  };
+
   const handleCounterOffer = async () => {
+    const manualLockedForActor = isManualCounterDisabledForActor(deal, 'brand');
+
+    if (manualLockedForActor) {
+      toast.error('Manual counter offer is disabled for the user who started AI Counter Dealing');
+      return;
+    }
+
     if (!counterData.message) {
       toast.error('Please add a message');
       return;
@@ -379,6 +425,24 @@ const DealDetails = () => {
       loadDeal();
     } catch (error) {
       toast.error('Failed to send counter offer');
+    }
+  };
+
+  const handleStartAiCounter = async () => {
+    try {
+      setStartingAiCounter(true);
+      const response = await dealService.startAiCounterDealing(id);
+      if (response?.success) {
+        toast.success('AI Counter Dealing started and counter sent');
+        setShowCounterModal(false);
+        await loadDeal();
+      } else {
+        toast.error(response?.error || 'Failed to start AI counter dealing');
+      }
+    } catch (error) {
+      toast.error('Failed to start AI counter dealing');
+    } finally {
+      setStartingAiCounter(false);
     }
   };
 
@@ -456,6 +520,8 @@ const DealDetails = () => {
     latestCounterProposedById &&
     String(latestCounterProposedById) !== String(user?._id)
   );
+  const manualCounterDisabled = isManualCounterDisabledForActor(deal, 'brand');
+  const canBrandCounter = deal.status === 'negotiating' && canBrandAcceptCounter;
 
   return (
     <div className="space-y-6">
@@ -652,11 +718,42 @@ const DealDetails = () => {
                       </Button>
                     )}
                     {canBrandAcceptCounter && (
-                      <Button variant="outline" fullWidth icon={Edit} onClick={() => setShowCounterModal(true)}>
+                      <Button
+                        variant="outline"
+                        fullWidth
+                        icon={Edit}
+                        onClick={() => setShowCounterModal(true)}
+                        disabled={manualCounterDisabled}
+                      >
                         Counter Again
                       </Button>
                     )}
                   </>
+                )}
+
+                {canBrandCounter && aiCounterAccess?.canUse && (
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    icon={RefreshCw}
+                    onClick={handleStartAiCounter}
+                    loading={startingAiCounter}
+                    disabled={manualCounterDisabled}
+                  >
+                    AI Counter Dealing
+                  </Button>
+                )}
+
+                {canBrandCounter && !aiCounterAccess?.canUse && aiCounterAccess?.reason && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                    {aiCounterAccess.reason}
+                  </p>
+                )}
+
+                {manualCounterDisabled && (
+                  <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg p-2">
+                    You started AI Counter Dealing, so your manual counter offer is disabled.
+                  </p>
                 )}
 
                 {['accepted', 'in-progress', 'revision', 'negotiating'].includes(deal.status) && isBrand && (
@@ -1088,6 +1185,29 @@ const DealDetails = () => {
 
       <Modal isOpen={showCounterModal} onClose={() => setShowCounterModal(false)} title="Counter Offer">
         <div className="space-y-4">
+          {counterSuggestion && (
+            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+              <p className="text-xs font-semibold text-indigo-800 mb-1">Suggested Offer</p>
+              <p className="text-sm text-indigo-900">Budget: {formatCurrency(counterSuggestion.suggestedBudget || 0)}</p>
+              {counterSuggestion.suggestedDeadline && (
+                <p className="text-sm text-indigo-900">Deadline: {formatDate(counterSuggestion.suggestedDeadline)}</p>
+              )}
+              <p className="text-xs text-indigo-700 mt-1">Confidence: {counterSuggestion.confidence || 0}%</p>
+            </div>
+          )}
+
+          {suggestionLoading && (
+            <p className="text-xs text-gray-500">Loading AI suggestion...</p>
+          )}
+
+          {manualCounterDisabled && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm text-amber-800">
+                Manual counter is disabled because you started AI Counter Dealing.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Proposed Budget (optional)
@@ -1098,6 +1218,7 @@ const DealDetails = () => {
               onChange={(e) => setCounterData({ ...counterData, budget: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               placeholder={`Current: ${formatCurrency(deal.budget)}`}
+              disabled={manualCounterDisabled}
             />
           </div>
           <div>
@@ -1109,6 +1230,7 @@ const DealDetails = () => {
               value={counterData.deadline}
               onChange={(e) => setCounterData({ ...counterData, deadline: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              disabled={manualCounterDisabled}
             />
           </div>
           <div>
@@ -1121,12 +1243,13 @@ const DealDetails = () => {
               onChange={(e) => setCounterData({ ...counterData, message: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               placeholder="Explain your proposed changes..."
+              disabled={manualCounterDisabled}
             />
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="secondary" onClick={() => setShowCounterModal(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleCounterOffer}>Send Counter Offer</Button>
+          <Button variant="primary" onClick={handleCounterOffer} disabled={manualCounterDisabled}>Send Counter Offer</Button>
         </div>
       </Modal>
 

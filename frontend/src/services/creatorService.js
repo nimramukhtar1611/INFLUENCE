@@ -98,6 +98,21 @@ class CreatorService {
     }
   }
 
+  /**
+   * Get Creator Growth OS suggestions
+   * @param {Object} params - Optional query params (contentType, refreshToken)
+   * @returns {Promise<Object>}
+   */
+  async getGrowthOS(params = {}) {
+    try {
+      const response = await api.get('/creators/growth-os', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Growth OS error:', error);
+      return this._handleError(error, 'Failed to load growth suggestions');
+    }
+  }
+
   // ==================== EARNINGS ====================
 
   /**

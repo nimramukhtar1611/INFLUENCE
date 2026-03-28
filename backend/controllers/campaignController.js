@@ -4,9 +4,31 @@ const Brand = require('../models/Brand');
 const Deal = require('../models/Deal');
 const Notification = require('../models/Notification');
 const Creator = require('../models/Creator');
+const Subscription = require('../models/Subscription');
 const { getBrandFinancials } = require('./paymentController');
 
 const getBrandContextId = (req) => req.brandId || req.user?._id;
+
+const getSubscriptionPlanForUser = async (userId) => {
+  if (!userId) return 'free';
+
+  const subscription = await Subscription.findOne({
+    userId,
+    status: { $in: ['active', 'trialing'] }
+  })
+    .select('planId')
+    .lean();
+
+  return String(subscription?.planId || 'free').toLowerCase();
+};
+
+const getCreatorCompletedDealsLimitByPlan = (planId = 'free') => {
+  const normalizedPlan = String(planId || 'free').toLowerCase();
+  if (normalizedPlan === 'starter') return 10;
+  if (normalizedPlan === 'professional') return 30;
+  if (normalizedPlan === 'enterprise') return Number.POSITIVE_INFINITY;
+  return 2;
+};
 
 // ==================== CREATE CAMPAIGN ====================
 exports.createCampaign = async (req, res) => {
@@ -188,6 +210,22 @@ exports.applyToCampaign = async (req, res) => {
   try {
     const { id } = req.params;
     const { proposal, rate, portfolio } = req.body;
+
+    const plan = await getSubscriptionPlanForUser(req.user._id);
+    const completedDeals = await Deal.countDocuments({ creatorId: req.user._id, status: 'completed' });
+    const completedDealsLimit = getCreatorCompletedDealsLimitByPlan(plan);
+
+    if (completedDeals >= completedDealsLimit) {
+      const maxText = Number.isFinite(completedDealsLimit) ? completedDealsLimit : 'Infinite';
+      return res.status(403).json({
+        success: false,
+        error: `Completed deal limit reached for your ${plan} plan (${completedDeals}/${maxText}). Upgrade to apply for more deals.`,
+        code: 'CREATOR_DEAL_LIMIT_REACHED',
+        plan,
+        completedDeals,
+        completedDealsLimit: Number.isFinite(completedDealsLimit) ? completedDealsLimit : -1
+      });
+    }
 
     const campaign = await Campaign.findById(id);
     

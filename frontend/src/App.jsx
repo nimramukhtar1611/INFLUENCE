@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './context/ThemeContext';
 import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -12,6 +13,7 @@ import { MessageProvider } from './context/MessageContext';
 import { PaymentProvider } from './context/PaymentContext';
 import { SearchProvider } from './context/SearchContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { useSubscription } from './context/SubscriptionContext';
 
 // Layout Components
 import Layout from './components/Layout/Layout';
@@ -56,6 +58,7 @@ import CreatorWithdrawals from './pages/Creator/Withdrawals';
 import CreatorProfile from './pages/Creator/Profile';
 import CreatorSettings from './pages/Creator/Settings';
 import CreatorInbox from './pages/Creator/Inbox';
+import CreatorGrowthOS from './pages/Creator/GrowthOS';
 
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -79,6 +82,26 @@ import Pricing from './pages/Pricing';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import SubscriptionManager from './pages/Common/SubscriptionManager';
+
+const normalizePlanId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim().toLowerCase();
+  if (typeof value.planId === 'string') return value.planId.trim().toLowerCase();
+  if (typeof value.id === 'string') return value.id.trim().toLowerCase();
+  return '';
+};
+
+const CreatorGrowthOSGate = ({ children }) => {
+  const { user } = useAuth();
+  const { currentSubscription, loading } = useSubscription();
+  const currentPlanId = normalizePlanId(currentSubscription?.planId || currentSubscription?.plan || currentSubscription);
+  const canAccess = ['professional', 'enterprise'].includes(currentPlanId);
+
+  if (loading) return null;
+  if (user?.userType !== 'creator') return <Navigate to="/brand/dashboard" replace />;
+  if (!canAccess) return <Navigate to="/creator/subscription" replace />;
+  return children;
+};
 
 function App() {
   const isCypressRun = typeof window !== 'undefined' && Boolean(window.Cypress);
@@ -176,6 +199,7 @@ function App() {
                             <Route path="deals/:id" element={<CreatorDealDetails />} />
                             <Route path="deliverables/:dealId" element={<CreatorDeliverables />} />
                             <Route path="analytics" element={<CreatorAnalytics />} />
+                            <Route path="growth-os" element={<CreatorGrowthOSGate><CreatorGrowthOS /></CreatorGrowthOSGate>} />
                             <Route path="earnings" element={<CreatorEarnings />} />
                             <Route path="withdrawals" element={<CreatorWithdrawals />} />
                             <Route path="profile" element={<CreatorProfile />} />

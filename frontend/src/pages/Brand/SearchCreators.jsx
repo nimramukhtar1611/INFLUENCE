@@ -1,16 +1,35 @@
 // pages/Brand/SearchCreators.js - FULL FIXED VERSION
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, Star, Instagram, Youtube, Globe, ChevronDown, Loader, User } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Star, Instagram, Youtube, Globe, ChevronDown, Loader, User, Sparkles } from 'lucide-react';
 import brandService from '../../services/brandService';
+import campaignService from '../../services/campaignService';
 import { formatNumber } from '../../utils/helpers';
+import { useSubscription } from '../../context/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
+
+const normalizePlanId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim().toLowerCase();
+  if (typeof value.planId === 'string') return value.planId.trim().toLowerCase();
+  if (typeof value.id === 'string') return value.id.trim().toLowerCase();
+  return '';
+};
+
 const SearchCreators = () => {
   const [loading,    setLoading]    = useState(true);
   const [showFilters,setShowFilters]= useState(false);
   const [creators,   setCreators]   = useState([]);
+  const [campaigns,  setCampaigns]  = useState([]);
+  const [aiMatchingActive, setAiMatchingActive] = useState(false);
+  const [aiMatchingCanUse, setAiMatchingCanUse] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const requestIdRef = useRef(0);
 const navigate = useNavigate();
+  const { currentSubscription } = useSubscription();
+
+  const currentPlanId = normalizePlanId(currentSubscription?.planId || currentSubscription?.plan || currentSubscription);
+  const canUseAiMatchingByPlan = ['professional', 'enterprise'].includes(currentPlanId);
 
   const hasPlatformAccount = (creator, platform) => {
     const social = creator?.socialMedia?.[platform];
@@ -37,21 +56,77 @@ const navigate = useNavigate();
     location:      '',
     verified:      '',
     available:     '',
-    sort:          'relevance'
+    sort:          'relevance',
+    aiMatching:    false,
+    campaignId:    ''
   });
 
   useEffect(() => { fetchCreators(); }, [filters, pagination.page]);
+  useEffect(() => {
+    if (canUseAiMatchingByPlan) {
+      fetchCampaignOptions();
+      return;
+    }
+
+    setCampaigns([]);
+    setAiMatchingCanUse(false);
+  }, [canUseAiMatchingByPlan]);
+
+  useEffect(() => {
+    if (canUseAiMatchingByPlan) return;
+
+    setFilters((prev) => ({
+      ...prev,
+      aiMatching: false,
+      campaignId: '',
+      sort: prev.sort === 'ai_match' ? 'relevance' : prev.sort,
+    }));
+  }, [canUseAiMatchingByPlan]);
+
+  const fetchCampaignOptions = async () => {
+    try {
+      const res = await campaignService.getBrandCampaigns('all', 1, 100);
+      const list = Array.isArray(res?.campaigns) ? res.campaigns : [];
+      setCampaigns(list);
+    } catch (error) {
+      console.error('Failed to load campaign options for AI matching:', error);
+      setCampaigns([]);
+    }
+  };
 
   const fetchCreators = async () => {
+    const requestId = ++requestIdRef.current;
+
     try {
       setLoading(true);
       const res = await brandService.searchCreators(filters, pagination.page, pagination.limit);
+
+      if (requestId !== requestIdRef.current) return;
+
       if (res?.success || res?.creators) {
         setCreators(res.creators || []);
+        setAiMatchingActive(Boolean(res.aiMatching));
+        const entitlementCanUse = typeof res?.aiMatchingEntitlement?.canUse === 'boolean'
+          ? res.aiMatchingEntitlement.canUse
+          : canUseAiMatchingByPlan;
+        setAiMatchingCanUse(entitlementCanUse);
+
+        if (!entitlementCanUse && filters.aiMatching) {
+          setFilters((prev) => ({
+            ...prev,
+            aiMatching: false,
+            campaignId: '',
+            sort: prev.sort === 'ai_match' ? 'relevance' : prev.sort,
+          }));
+        }
         setPagination(res.pagination || { page: 1, limit: 10, total: 0, pages: 1 });
       }
     } catch (e) { console.error('Search error:', e); }
-    finally { setLoading(false); }
+    finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
+    }
   };
 
   const handleFilterChange = (key, value) => {
@@ -61,7 +136,8 @@ const navigate = useNavigate();
 
   // FIX 30: q: '' included in reset
   const clearFilters = () => {
-    setFilters({ q: '', niche: '', minFollowers: '', maxFollowers: '', minEngagement: '', platform: '', location: '', verified: '', available: '', sort: 'relevance' });
+    setFilters({ q: '', niche: '', minFollowers: '', maxFollowers: '', minEngagement: '', platform: '', location: '', verified: '', available: '', sort: 'relevance', aiMatching: false, campaignId: '' });
+    setAiMatchingActive(false);
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -136,6 +212,54 @@ const navigate = useNavigate();
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
             </div>
+
+            {aiMatchingCanUse && (
+            <div className="mt-4 p-4 rounded-lg border border-indigo-200 bg-indigo-50/60">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-indigo-900">AI Creator Matching Engine</p>
+                  <p className="text-xs text-indigo-700">Behavioral + engagement + niche scoring with campaign success probability.</p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-indigo-900">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(filters.aiMatching)}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      setFilters((prev) => ({
+                        ...prev,
+                        aiMatching: enabled,
+                        sort: enabled ? 'ai_match' : 'relevance',
+                        campaignId: enabled ? prev.campaignId : ''
+                      }));
+                      setPagination((prev) => ({ ...prev, page: 1 }));
+                    }}
+                    className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Enable AI Matching
+                </label>
+              </div>
+
+              {filters.aiMatching && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Context (optional but recommended)</label>
+                  <select
+                    value={filters.campaignId}
+                    onChange={(e) => handleFilterChange('campaignId', e.target.value)}
+                    className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  >
+                    <option value="">No campaign context</option>
+                    {campaigns.map((campaign) => (
+                      <option key={campaign._id} value={campaign._id}>
+                        {campaign.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            )}
+
             <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-200">
               <button onClick={clearFilters} className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Clear All</button>
               <button onClick={() => setShowFilters(false)} className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">Apply Filters</button>
@@ -147,6 +271,12 @@ const navigate = useNavigate();
       {/* Results header */}
       <div className="flex justify-between items-center">
         <p className="text-gray-600">Showing {creators.length} of {pagination.total} creators</p>
+        {aiMatchingActive && (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5" />
+            AI Matching Active
+          </div>
+        )}
    
       </div>
 
@@ -195,6 +325,22 @@ const navigate = useNavigate();
                   )}
                 </div>
               </div>
+
+              {creator.aiMatch && (
+                <div className="mb-4 p-3 rounded-lg border border-indigo-200 bg-indigo-50">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide">AI Match</p>
+                    <span className="text-xs font-bold text-indigo-800">{creator.aiMatch.score}%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-indigo-800 mb-2">
+                    <span>Success Probability</span>
+                    <span className="font-semibold">{creator.aiMatch.successProbability}%</span>
+                  </div>
+                  <div className="text-[11px] text-indigo-700">
+                    {(creator.aiMatch.reasons || []).slice(0, 1).join('')}
+                  </div>
+                </div>
+              )}
 
               {/* Platforms */}
               <div className="flex items-center gap-2 mb-4">

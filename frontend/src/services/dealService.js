@@ -256,6 +256,36 @@ class DealService {
     }
   }
 
+  /**
+   * Get negotiation suggestion (always available, used for manual suggested offer too)
+   * @param {string} dealId
+   * @returns {Promise<Object>}
+   */
+  async getNegotiationSuggestion(dealId) {
+    try {
+      const response = await api.get(`/deals/${dealId}/negotiation-suggestion`);
+      return response.data;
+    } catch (error) {
+      console.error('Get negotiation suggestion error:', error);
+      return this._handleError(error, 'Failed to get negotiation suggestion');
+    }
+  }
+
+  /**
+   * Start AI counter dealing and send AI-generated counter offer
+   * @param {string} dealId
+   * @returns {Promise<Object>}
+   */
+  async startAiCounterDealing(dealId) {
+    try {
+      const response = await api.post(`/deals/${dealId}/ai-counter/start`);
+      return response.data;
+    } catch (error) {
+      console.error('Start AI counter dealing error:', error);
+      return this._handleError(error, 'Failed to start AI counter dealing');
+    }
+  }
+
   // ==================== SUBMIT DELIVERABLES ====================
 
   /**

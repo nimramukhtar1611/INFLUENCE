@@ -21,6 +21,12 @@ const formatDate = (value) => {
   return date.toLocaleDateString();
 };
 
+const formatLimitValue = (value) => {
+  const numeric = Number(value);
+  if (numeric === -1) return 'Infinite';
+  return Number.isFinite(numeric) ? String(numeric) : '-';
+};
+
 const normalizePlanId = (value) => {
   if (value === null || value === undefined) return '';
 
@@ -35,6 +41,99 @@ const normalizePlanId = (value) => {
   }
 
   return String(value).trim().toLowerCase();
+};
+
+const ROLE_PLAN_COPY = {
+  brand: {
+    starter: {
+      description: 'For early-stage brands launching creator campaigns',
+      features: [
+        'Campaign launch workflows for small teams',
+        'Advanced creator search and filtering',
+        'Basic collaboration and deal tracking',
+        'Performance visibility for active deals'
+      ]
+    },
+    professional: {
+      description: 'For scaling brand teams running performance campaigns',
+      features: [
+        'AI Creator Matching Engine with campaign context',
+        'Priority support and faster campaign operations',
+        'Higher collaboration limits for growing teams',
+        'Advanced ROI and performance intelligence'
+      ]
+    },
+    enterprise: {
+      description: 'For enterprise brands and agencies with complex operations',
+      features: [
+        'AI Counter Dealing for negotiation automation',
+        'High-volume workflow support for large portfolios',
+        'Advanced account controls and service guarantees',
+        'Custom integrations and enterprise-scale operations'
+      ]
+    }
+  },
+  creator: {
+    free: {
+      description: 'Perfect for getting started as a creator',
+      features: [
+        'Completed deals cap: 2 total',
+        'Basic creator visibility',
+        'Core deal collaboration tools',
+        'Standard support'
+      ]
+    },
+    starter: {
+      description: 'For creators building paid-collab momentum',
+      features: [
+        'Completed deals cap: 10 total',
+        'More active deals and collaboration capacity',
+        'Improved campaign visibility and discoverability',
+        'Better performance tracking for ongoing work',
+        'Core tools to grow recurring brand partnerships'
+      ]
+    },
+    professional: {
+      description: 'For creators focused on predictable growth and premium deals',
+      features: [
+        'Completed deals cap: 30 total',
+        'Creator Growth OS access for strategic content direction',
+        'Deeper performance insights to optimize outcomes',
+        'Priority support for faster issue resolution',
+        'Expanded professional toolkit for higher-value partnerships'
+      ]
+    },
+    enterprise: {
+      description: 'For top creators and teams running at scale',
+      features: [
+        'Completed deals cap: Infinite',
+        'AI Counter Dealing for enterprise negotiation workflows',
+        'Maximum collaboration scale and workflow headroom',
+        'Enterprise-level support and reliability',
+        'Advanced controls for high-volume campaign execution'
+      ]
+    }
+  }
+};
+
+const getRoleSpecificPlanCopy = ({ userType, planId, fallbackDescription, fallbackFeatures }) => {
+  const role = String(userType || '').toLowerCase();
+  const normalizedPlanId = normalizePlanId(planId);
+  const roleCopy = ROLE_PLAN_COPY[role]?.[normalizedPlanId];
+
+  if (!roleCopy) {
+    return {
+      description: fallbackDescription,
+      features: fallbackFeatures
+    };
+  }
+
+  return {
+    description: roleCopy.description || fallbackDescription,
+    features: Array.isArray(roleCopy.features) && roleCopy.features.length
+      ? roleCopy.features
+      : fallbackFeatures
+  };
 };
 
 const SubscriptionManager = () => {
@@ -280,9 +379,15 @@ const SubscriptionManager = () => {
             const isActive = activePlanId === planId;
             const isFreePlan = planId === 'free';
             const displayPrice = interval === 'year' ? Number(plan.price || 0) * 12 : Number(plan.price || 0);
-            const planFeatures = Array.isArray(plan.features)
+            const fallbackFeatures = Array.isArray(plan.features)
               ? plan.features.slice(0, 4)
               : (typeof plan.features === 'string' && plan.features ? [plan.features] : []);
+            const roleCopy = getRoleSpecificPlanCopy({
+              userType: user?.userType,
+              planId,
+              fallbackDescription: plan.description,
+              fallbackFeatures
+            });
 
             return (
               <button
@@ -313,11 +418,11 @@ const SubscriptionManager = () => {
                     {isActive ? <CheckCircle className="w-5 h-5 text-blue-600" /> : null}
                   </div>
                 </div>
-                <p className="mt-1 text-sm text-gray-600">{plan.description}</p>
+                <p className="mt-1 text-sm text-gray-600">{roleCopy.description}</p>
                 <p className="mt-3 text-xl font-bold text-gray-900">{formatCurrency(displayPrice, plan.currency)}</p>
                 <p className="text-xs text-gray-500">per {interval}</p>
                 <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                  {planFeatures.map((feature) => (
+                  {roleCopy.features.map((feature) => (
                     <li key={String(feature)} className="flex items-start">
                       <ShieldCheck className="w-4 h-4 text-indigo-600 mr-2 mt-0.5" />
                       <span>{typeof feature === 'string' ? feature : feature?.name || 'Feature'}</span>
@@ -382,22 +487,34 @@ const SubscriptionManager = () => {
       <section className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-lg font-semibold text-gray-900">Plan Usage</h2>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          {user?.userType === 'brand' && (
+          <>
           <div className="p-3 rounded bg-gray-50">
             <p className="text-gray-500">Campaigns</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.campaignsUsed ?? 0} / {limits?.campaigns ?? '-'}</p>
+            <p className="font-semibold text-gray-900 mt-1">{usage?.campaignsUsed ?? 0} / {formatLimitValue(limits?.campaigns)}</p>
           </div>
           <div className="p-3 rounded bg-gray-50">
             <p className="text-gray-500">Team Members</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.teamMembersUsed ?? 0} / {limits?.teamMembers ?? '-'}</p>
+            <p className="font-semibold text-gray-900 mt-1">{usage?.teamMembersUsed ?? 0} / {formatLimitValue(limits?.teamMembers)}</p>
           </div>
           <div className="p-3 rounded bg-gray-50">
             <p className="text-gray-500">Active Deals</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.activeDealsUsed ?? 0} / {limits?.activeDeals ?? '-'}</p>
+            <p className="font-semibold text-gray-900 mt-1">{usage?.activeDealsUsed ?? 0} / {formatLimitValue(limits?.activeDeals)}</p>
+          </div>
+          </>
+          )}
+          {user?.userType === 'creator' && (
+          <>
+          <div className="p-3 rounded bg-gray-50">
+            <p className="text-gray-500">Active Deals</p>
+            <p className="font-semibold text-gray-900 mt-1">{usage?.activeDealsUsed ?? 0} / {formatLimitValue(limits?.activeDeals)}</p>
           </div>
           <div className="p-3 rounded bg-gray-50">
-            <p className="text-gray-500">Storage</p>
-            <p className="font-semibold text-gray-900 mt-1">{usage?.storageUsed ?? 0} / {limits?.storage ?? '-'}</p>
+            <p className="text-gray-500">Completed Deals</p>
+            <p className="font-semibold text-gray-900 mt-1">{usage?.completedDealsUsed ?? 0} / {formatLimitValue(limits?.completedDeals)}</p>
           </div>
+          </>
+          )}
         </div>
       </section>
 

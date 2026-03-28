@@ -7,6 +7,7 @@ const { Conversation } = require('../models/Conversation');
 const Message = require('../models/Message');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const Subscription = require('../models/Subscription');
 const { catchAsync } = require('../utils/catchAsync');
 const { isValidObjectId, isValidBudget, isValidFutureDate } = require('../utils/validators');
 const { getBrandFinancials } = require('./paymentController');
@@ -17,6 +18,8 @@ const buildConversationId = (dealId) => `deal_${dealId}_${Date.now()}`;
 
 const buildMessageId = (conversationId) => `msg_${conversationId}_${Date.now()}`;
 const getBrandContextId = (req) => req.brandId || req.user?._id;
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -41,6 +44,396 @@ const getActorRoleOnDeal = (deal, req) => {
     return 'creator';
   }
   return null;
+};
+
+const getSubscriptionPlanForUser = async (userId) => {
+  if (!userId) return 'free';
+  const subscription = await Subscription.findOne({
+    userId,
+    status: { $in: ['active', 'trialing'] }
+  })
+    .select('planId')
+    .lean();
+
+  return String(subscription?.planId || 'free').toLowerCase();
+};
+
+const getCreatorCompletedDealsLimitByPlan = (planId = 'free') => {
+  const normalizedPlan = String(planId || 'free').toLowerCase();
+  if (normalizedPlan === 'starter') return 10;
+  if (normalizedPlan === 'professional') return 30;
+  if (normalizedPlan === 'enterprise') return Number.POSITIVE_INFINITY;
+  return 2;
+};
+
+const getCreatorCompletedDealsGuard = async (creatorId) => {
+  const plan = await getSubscriptionPlanForUser(creatorId);
+  const completedDeals = await Deal.countDocuments({ creatorId, status: 'completed' });
+  const limit = getCreatorCompletedDealsLimitByPlan(plan);
+
+  return {
+    plan,
+    completedDeals,
+    limit,
+    allowed: completedDeals < limit
+  };
+};
+
+const getAiCounterAccess = async (deal, req) => {
+  const actorRole = getActorRoleOnDeal(deal, req);
+  if (!actorRole) {
+    return { allowed: false, plan: 'none', reason: 'Not authorized on this deal' };
+  }
+
+  const subscriptionUserId = actorRole === 'brand' ? getBrandContextId(req) : req.user?._id;
+  const plan = await getSubscriptionPlanForUser(subscriptionUserId);
+
+  if (plan !== 'enterprise') {
+    return {
+      allowed: false,
+      plan,
+      reason: 'AI Counter Dealing is available on Enterprise plan only'
+    };
+  }
+
+  return { allowed: true, plan, reason: '' };
+};
+
+const resolveAiBudgetCap = (deal, aiActorId = null) => {
+  const configuredCap = Number(deal?.negotiationSettings?.aiInitialBudget || 0);
+  if (configuredCap > 0) return configuredCap;
+
+  const aiEnabledBy = aiActorId || deal?.negotiationSettings?.aiEnabledBy;
+  if (!aiEnabledBy || !Array.isArray(deal?.negotiation)) return null;
+
+  const firstAiEntry = deal.negotiation
+    .filter((entry) => entry?.source === 'ai' && String(entry?.proposedBy) === String(aiEnabledBy))
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
+
+  const inferredCap = Number(firstAiEntry?.budget || 0);
+  return inferredCap > 0 ? inferredCap : null;
+};
+
+const getAiModeState = (deal) => {
+  const settings = deal?.negotiationSettings || {};
+  const mode = String(settings.mode || 'manual');
+  const brandId = String(deal?.brandId || '');
+  const creatorId = String(deal?.creatorId || '');
+  const legacyEnabledBy = String(settings.aiEnabledBy || '');
+
+  const brandAiEnabled = Boolean(settings.aiEnabledByBrand)
+    || (legacyEnabledBy && legacyEnabledBy === brandId);
+  const creatorAiEnabled = Boolean(settings.aiEnabledByCreator)
+    || (legacyEnabledBy && legacyEnabledBy === creatorId);
+
+  return {
+    aiModeActive: mode === 'ai',
+    brandAiEnabled,
+    creatorAiEnabled
+  };
+};
+
+const resolveStrictNegotiationBounds = ({ deal, actorRole, referenceBudget = null }) => {
+  if (!deal || !actorRole || !Array.isArray(deal.negotiation)) {
+    return { minBudget: null, maxBudget: null };
+  }
+
+  const baseBudget = Number(referenceBudget || deal?.budget || 0);
+  const brandId = String(deal?.brandId || '');
+  const creatorId = String(deal?.creatorId || '');
+
+  const negotiationEntries = deal.negotiation
+    .filter((entry) => Number.isFinite(Number(entry?.budget)) && Number(entry.budget) > 0)
+    .map((entry) => ({
+      budget: Number(entry.budget),
+      proposedBy: String(entry.proposedBy || '')
+    }));
+
+  const firstCreatorOffer = negotiationEntries.find((entry) => entry.proposedBy === creatorId)?.budget || null;
+  const firstBrandOffer = negotiationEntries.find((entry) => entry.proposedBy === brandId)?.budget || null;
+
+  const latestCreatorOffer = [...negotiationEntries]
+    .reverse()
+    .find((entry) => entry.proposedBy === creatorId)?.budget || null;
+  const latestBrandOffer = [...negotiationEntries]
+    .reverse()
+    .find((entry) => entry.proposedBy === brandId)?.budget || null;
+
+  const computeInnerGap = (lower, upper) => {
+    const spread = Math.max(0, Math.round(upper - lower));
+    if (spread <= 2) return 1;
+    return Math.max(2, Math.round(spread * 0.12));
+  };
+
+  if (actorRole === 'creator') {
+    // First creator counter must move above the base offer.
+    if (!firstCreatorOffer) {
+      const minBudget = baseBudget > 0 ? Math.round(baseBudget + 1) : 10;
+      return { minBudget, maxBudget: null };
+    }
+
+    // Later creator counters must stay strictly between creator's first and latest brand offer.
+    if (latestBrandOffer) {
+      const lower = Math.round(Math.min(firstCreatorOffer, latestBrandOffer));
+      const upper = Math.round(Math.max(firstCreatorOffer, latestBrandOffer));
+      const innerGap = computeInnerGap(lower, upper);
+      return {
+        minBudget: Math.max(lower + innerGap, 10),
+        maxBudget: Math.max(upper - innerGap, 10)
+      };
+    }
+  }
+
+  if (actorRole === 'brand') {
+    // First brand counter must be below creator's first counter.
+    if (!firstBrandOffer && firstCreatorOffer) {
+      const maxBudget = Math.max(Math.round(firstCreatorOffer - 1), 10);
+      const minBudget = baseBudget > 0 ? Math.min(Math.round(baseBudget), maxBudget) : 10;
+      return { minBudget, maxBudget };
+    }
+
+    // Later brand counters must stay strictly between brand's first and latest creator offer.
+    if (firstBrandOffer && latestCreatorOffer) {
+      const lower = Math.round(Math.min(firstBrandOffer, latestCreatorOffer));
+      const upper = Math.round(Math.max(firstBrandOffer, latestCreatorOffer));
+      const innerGap = computeInnerGap(lower, upper);
+      return {
+        minBudget: Math.max(lower + innerGap, 10),
+        maxBudget: Math.max(upper - innerGap, 10)
+      };
+    }
+  }
+
+  return { minBudget: null, maxBudget: null };
+};
+
+const buildNegotiationSuggestion = ({
+  deal,
+  campaign,
+  creator,
+  actorRole,
+  anchorBudget = null,
+  hardMaxBudget = null,
+  referenceBudget = null
+}) => {
+  const latestNegotiationBudget = Array.isArray(deal?.negotiation)
+    ? [...deal.negotiation]
+      .reverse()
+      .find((entry) => Number.isFinite(Number(entry?.budget)))?.budget
+    : null;
+
+  const resolvedAnchorBudget = Number.isFinite(Number(anchorBudget))
+    ? Number(anchorBudget)
+    : Number(latestNegotiationBudget);
+
+  const currentBudget = Number(
+    Number.isFinite(resolvedAnchorBudget) && resolvedAnchorBudget > 0
+      ? resolvedAnchorBudget
+      : (deal?.budget || 0)
+  );
+  const followers = Number(creator?.totalFollowers || 0);
+  const engagement = Number(creator?.averageEngagement || 0);
+  const rating = Number(creator?.stats?.averageRating || 0);
+  const creatorNiches = (creator?.niches || []).map((item) => String(item).toLowerCase());
+  const campaignCategory = String(campaign?.category || '').toLowerCase();
+  const nicheMatch = campaignCategory && creatorNiches.includes(campaignCategory);
+
+  const followerFactor = clamp(Math.log10(Math.max(followers, 10)) / 7, 0, 1);
+  const engagementFactor = clamp(engagement / 6, 0, 1);
+  const ratingFactor = clamp(rating / 5, 0, 1);
+
+  const baselineStrength = (followerFactor * 0.5) + (engagementFactor * 0.3) + (ratingFactor * 0.2);
+  const nicheBonus = nicheMatch ? 0.04 : 0;
+
+  let actorAdjustment = 0;
+  if (actorRole === 'creator') actorAdjustment = 0.03;
+  if (actorRole === 'brand') actorAdjustment = -0.03;
+
+  const multiplier = clamp(0.9 + (baselineStrength * 0.18) + nicheBonus + actorAdjustment, 0.78, 1.2);
+  const minSuggested = Math.round(clamp(currentBudget * 0.8, 10, 1000000));
+  const maxSuggested = Math.round(clamp(currentBudget * 1.25, 10, 1000000));
+  const targetBudget = Math.round(clamp(currentBudget * multiplier, minSuggested, maxSuggested));
+  const capBudget = Number(hardMaxBudget || 0);
+  let boundedTargetBudget = capBudget > 0
+    ? Math.min(targetBudget, Math.round(capBudget))
+    : targetBudget;
+  let boundedSuggestedMax = capBudget > 0
+    ? Math.min(maxSuggested, Math.round(capBudget))
+    : maxSuggested;
+
+  let boundedSuggestedMin = Math.min(minSuggested, boundedSuggestedMax);
+
+  const strictBounds = resolveStrictNegotiationBounds({
+    deal,
+    actorRole,
+    referenceBudget
+  });
+
+  if (Number.isFinite(strictBounds.minBudget)) {
+    boundedSuggestedMin = Math.max(boundedSuggestedMin, strictBounds.minBudget);
+  }
+
+  if (Number.isFinite(strictBounds.maxBudget)) {
+    boundedSuggestedMax = Math.min(boundedSuggestedMax, strictBounds.maxBudget);
+  }
+
+  if (boundedSuggestedMin > boundedSuggestedMax) {
+    const midpoint = Math.round((boundedSuggestedMin + boundedSuggestedMax) / 2);
+    boundedSuggestedMin = midpoint;
+    boundedSuggestedMax = midpoint;
+  }
+
+  boundedTargetBudget = clamp(boundedTargetBudget, boundedSuggestedMin, boundedSuggestedMax);
+
+  const currentDeadline = deal?.deadline ? new Date(deal.deadline) : null;
+  let suggestedDeadline = null;
+  if (currentDeadline && !Number.isNaN(currentDeadline.getTime())) {
+    suggestedDeadline = currentDeadline;
+    if (actorRole === 'creator' && engagement < 2) {
+      suggestedDeadline = new Date(currentDeadline.getTime() + (3 * 24 * 60 * 60 * 1000));
+    }
+  }
+
+  const confidence = Math.round(clamp((baselineStrength * 70) + (nicheMatch ? 20 : 0) + 10, 30, 95));
+
+  const message = actorRole === 'creator'
+    ? `AI suggestion: propose ${boundedTargetBudget} with terms aligned to campaign expectations and creator performance.`
+    : `AI suggestion: counter at ${boundedTargetBudget} based on creator fit, campaign category, and delivery confidence.`;
+
+  return {
+    suggestedBudget: boundedTargetBudget,
+    suggestedMin: boundedSuggestedMin,
+    suggestedMax: boundedSuggestedMax,
+    suggestedDeadline: suggestedDeadline ? suggestedDeadline.toISOString() : null,
+    confidence,
+    rationale: [
+      nicheMatch ? 'Campaign category and creator niche are aligned' : 'Category mismatch reduces pricing confidence',
+      `Follower strength considered (${followers.toLocaleString()} followers)`,
+      `Engagement quality considered (${engagement.toFixed(2)}%)`
+    ],
+    message
+  };
+};
+
+const runDualAiSettlement = ({
+  deal,
+  campaign,
+  creator,
+  seededRole = null,
+  maxAttemptsPerSide = 5
+}) => {
+  const brandId = deal?.brandId;
+  const creatorId = deal?.creatorId;
+  const attempts = { brand: 0, creator: 0 };
+  const offers = { brand: [], creator: [] };
+
+  const latestSeededOffer = Array.isArray(deal?.negotiation)
+    ? [...deal.negotiation].reverse().find((entry) => entry?.source === 'ai' && Number.isFinite(Number(entry?.budget)))
+    : null;
+
+  if (seededRole && latestSeededOffer) {
+    attempts[seededRole] = 1;
+    offers[seededRole].push(Number(latestSeededOffer.budget));
+  }
+
+  let nextRole = seededRole === 'brand' ? 'creator' : 'brand';
+
+  while (attempts.brand < maxAttemptsPerSide || attempts.creator < maxAttemptsPerSide) {
+    if (attempts[nextRole] >= maxAttemptsPerSide) {
+      nextRole = nextRole === 'brand' ? 'creator' : 'brand';
+      if (attempts[nextRole] >= maxAttemptsPerSide) break;
+    }
+
+    const proposerId = nextRole === 'brand' ? brandId : creatorId;
+    const pendingOffers = Array.isArray(deal.negotiation)
+      ? deal.negotiation.filter((entry) => entry.status === 'pending')
+      : [];
+    const latestPending = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    const anchorBudget = Number.isFinite(Number(latestPending?.budget))
+      ? Number(latestPending.budget)
+      : Number(deal?.budget || 0);
+
+    if (latestPending && latestPending.status === 'pending') {
+      latestPending.status = 'declined';
+    }
+
+    const aiSuggestion = buildNegotiationSuggestion({
+      deal,
+      campaign,
+      creator,
+      actorRole: nextRole,
+      anchorBudget,
+      hardMaxBudget: resolveAiBudgetCap(deal, proposerId),
+      referenceBudget: Number(deal?.negotiationSettings?.aiReferenceBudget || deal?.budget || 0)
+    });
+
+    deal.negotiation.push({
+      proposedBy: proposerId,
+      budget: aiSuggestion.suggestedBudget,
+      deadline: aiSuggestion.suggestedDeadline ? new Date(aiSuggestion.suggestedDeadline) : undefined,
+      message: aiSuggestion.message,
+      source: 'ai',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    attempts[nextRole] += 1;
+    offers[nextRole].push(Number(aiSuggestion.suggestedBudget));
+    nextRole = nextRole === 'brand' ? 'creator' : 'brand';
+  }
+
+  const creatorHighestOffer = offers.creator.length
+    ? Math.max(...offers.creator)
+    : Number(deal?.budget || 0);
+  const brandFifthOffer = offers.brand[maxAttemptsPerSide - 1]
+    ?? offers.brand[offers.brand.length - 1]
+    ?? Number(deal?.budget || 0);
+
+  const finalBudget = Math.round((creatorHighestOffer + brandFifthOffer) / 2);
+
+  const pendingOffers = Array.isArray(deal.negotiation)
+    ? deal.negotiation.filter((entry) => entry.status === 'pending')
+    : [];
+  const latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+  if (latestPendingOffer?.deadline) {
+    deal.deadline = latestPendingOffer.deadline;
+  }
+
+  if (latestPendingOffer) {
+    latestPendingOffer.status = 'accepted';
+    latestPendingOffer.budget = finalBudget;
+    latestPendingOffer.message = `AI auto-settlement accepted after ${maxAttemptsPerSide} attempts each. Final budget: ${finalBudget}.`;
+  }
+
+  deal.negotiation.forEach((entry) => {
+    if (latestPendingOffer && entry._id.toString() === latestPendingOffer._id.toString()) return;
+    if (entry.status === 'pending') entry.status = 'declined';
+  });
+
+  deal.budget = finalBudget;
+  deal.status = 'accepted';
+
+  addTimelineEvent(
+    deal,
+    'AI Dual Settlement Accepted',
+    `AI accepted at ${finalBudget} after ${maxAttemptsPerSide} attempts each`,
+    brandId,
+    {
+      attemptsPerSide: maxAttemptsPerSide,
+      creatorHighestOffer,
+      brandFifthOffer,
+      finalBudget
+    }
+  );
+
+  return {
+    attemptsPerSide: maxAttemptsPerSide,
+    creatorHighestOffer,
+    brandFifthOffer,
+    finalBudget
+  };
 };
 
 /**
@@ -445,6 +838,23 @@ exports.updateDealStatus = catchAsync(async (req, res) => {
 
   const actorRole = getActorRoleOnDeal(deal, req);
 
+  if (status === 'accepted') {
+    const creatorDealGuard = await getCreatorCompletedDealsGuard(deal.creatorId);
+    if (!creatorDealGuard.allowed) {
+      const maxText = Number.isFinite(creatorDealGuard.limit)
+        ? creatorDealGuard.limit
+        : 'Infinite';
+      return res.status(403).json({
+        success: false,
+        error: `Creator completed deal limit reached for ${creatorDealGuard.plan} plan (${creatorDealGuard.completedDeals}/${maxText})`,
+        code: 'CREATOR_DEAL_LIMIT_REACHED',
+        plan: creatorDealGuard.plan,
+        completedDeals: creatorDealGuard.completedDeals,
+        completedDealsLimit: Number.isFinite(creatorDealGuard.limit) ? creatorDealGuard.limit : -1
+      });
+    }
+  }
+
   // Business rule: only creator can accept an initial pending offer.
   if (deal.status === 'pending' && status === 'accepted' && actorRole !== 'creator') {
     return res.status(403).json({
@@ -504,7 +914,9 @@ exports.updateDealStatus = catchAsync(async (req, res) => {
   await deal.save();
 
   // Notify other party
-  const notifyUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
+  const notifyUserId = actorRole === 'brand'
+    ? (deal.creatorId?._id || deal.creatorId)
+    : (deal.brandId?._id || deal.brandId);
   await Notification.create({
     userId: notifyUserId,
     type: 'deal',
@@ -523,6 +935,19 @@ exports.acceptDeal = catchAsync(async (req, res) => {
 
   if (!deal) {
     return res.status(404).json({ success: false, error: 'Deal not found or cannot be accepted' });
+  }
+
+  const creatorDealGuard = await getCreatorCompletedDealsGuard(req.user._id);
+  if (!creatorDealGuard.allowed) {
+    const maxText = Number.isFinite(creatorDealGuard.limit) ? creatorDealGuard.limit : 'Infinite';
+    return res.status(403).json({
+      success: false,
+      error: `Completed deal limit reached for your ${creatorDealGuard.plan} plan (${creatorDealGuard.completedDeals}/${maxText}). Upgrade to accept more deals.`,
+      code: 'CREATOR_DEAL_LIMIT_REACHED',
+      plan: creatorDealGuard.plan,
+      completedDeals: creatorDealGuard.completedDeals,
+      completedDealsLimit: Number.isFinite(creatorDealGuard.limit) ? creatorDealGuard.limit : -1
+    });
   }
 
   // Check if brand has enough balance for escrow
@@ -764,6 +1189,246 @@ exports.requestRevision = catchAsync(async (req, res) => {
   res.json({ success: true, message: 'Revision requested' });
 });
 
+// ==================== NEGOTIATION SUGGESTION ====================
+exports.getNegotiationSuggestion = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const brandContextId = getBrandContextId(req);
+
+  const deal = await Deal.findById(id).lean();
+
+  if (!deal) {
+    return res.status(404).json({ success: false, error: 'Deal not found' });
+  }
+
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
+    return res.status(403).json({ success: false, error: 'Not authorized' });
+  }
+
+  const actorRole = getActorRoleOnDeal(deal, req);
+  const aiAccess = await getAiCounterAccess(deal, req);
+  const creator = await Creator.findById(deal.creatorId)
+    .select('displayName handle totalFollowers averageEngagement niches stats.averageRating')
+    .lean();
+  const campaign = await Campaign.findById(deal.campaignId)
+    .select('title category')
+    .lean();
+
+  const suggestion = buildNegotiationSuggestion({
+    deal,
+    campaign,
+    creator,
+    actorRole,
+    hardMaxBudget: resolveAiBudgetCap(deal, req.user._id),
+    referenceBudget: Number(deal?.negotiationSettings?.aiReferenceBudget || deal?.budget || 0)
+  });
+
+  const aiState = getAiModeState(deal);
+  const isActorAiEnabled = actorRole === 'brand' ? aiState.brandAiEnabled : aiState.creatorAiEnabled;
+
+  res.json({
+    success: true,
+    suggestion,
+    aiCounter: {
+      canUse: aiAccess.allowed,
+      plan: aiAccess.plan,
+      reason: aiAccess.reason,
+      isActive: aiState.aiModeActive,
+      isActiveForActor: isActorAiEnabled
+    }
+  });
+});
+
+// ==================== START AI COUNTER DEALING ====================
+exports.startAiCounterDealing = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const brandContextId = getBrandContextId(req);
+
+  const deal = await Deal.findOne({ _id: id, status: { $in: ['pending', 'negotiating'] } });
+
+  if (!deal) {
+    return res.status(404).json({ success: false, error: 'Deal not found' });
+  }
+
+  if (!canUserAct(deal, req.user._id, null, brandContextId)) {
+    return res.status(403).json({ success: false, error: 'Not authorized' });
+  }
+
+  const aiAccess = await getAiCounterAccess(deal, req);
+  if (!aiAccess.allowed) {
+    return res.status(403).json({
+      success: false,
+      error: aiAccess.reason,
+      code: 'ENTERPRISE_REQUIRED',
+      plan: aiAccess.plan
+    });
+  }
+
+  const actorRole = getActorRoleOnDeal(deal, req);
+
+  // Initial direct offers (pending) can only be countered by the creator.
+  if (deal.status === 'pending' && actorRole !== 'creator') {
+    return res.status(403).json({
+      success: false,
+      error: 'Only the creator can counter the initial offer'
+    });
+  }
+
+  if (deal.status === 'negotiating' && Array.isArray(deal.negotiation)) {
+    const pendingOffers = deal.negotiation.filter(n => n.status === 'pending');
+    const latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+    if (latestPendingOffer && latestPendingOffer.proposedBy?.toString() === req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Wait for the other party to accept or counter your latest offer'
+      });
+    }
+
+    if (latestPendingOffer && latestPendingOffer.status === 'pending') {
+      latestPendingOffer.status = 'declined';
+    }
+  }
+
+  const creator = await Creator.findById(deal.creatorId)
+    .select('displayName handle totalFollowers averageEngagement niches stats.averageRating')
+    .lean();
+  const campaign = await Campaign.findById(deal.campaignId)
+    .select('title category')
+    .lean();
+
+  const suggestion = buildNegotiationSuggestion({
+    deal,
+    campaign,
+    creator,
+    actorRole,
+    referenceBudget: Number(deal?.budget || 0)
+  });
+
+  deal.negotiationSettings = {
+    ...(deal.negotiationSettings || {}),
+    mode: 'ai',
+    aiInitialBudget: suggestion.suggestedBudget,
+    aiReferenceBudget: Number(deal?.budget || 0),
+    aiEnabledAt: new Date(),
+    aiEnabledBy: req.user._id,
+    aiEnabledByBrand: actorRole === 'brand' ? true : Boolean(deal?.negotiationSettings?.aiEnabledByBrand),
+    aiEnabledByCreator: actorRole === 'creator' ? true : Boolean(deal?.negotiationSettings?.aiEnabledByCreator)
+  };
+
+  deal.negotiation.push({
+    proposedBy: req.user._id,
+    budget: suggestion.suggestedBudget,
+    deadline: suggestion.suggestedDeadline ? new Date(suggestion.suggestedDeadline) : undefined,
+    message: suggestion.message,
+    source: 'ai',
+    status: 'pending',
+    createdAt: new Date()
+  });
+
+  deal.status = 'negotiating';
+  addTimelineEvent(
+    deal,
+    'AI Counter Dealing Started',
+    `AI generated counter offer at ${suggestion.suggestedBudget}`,
+    req.user._id,
+    { suggestedBudget: suggestion.suggestedBudget, confidence: suggestion.confidence }
+  );
+
+  const aiStateAfterStart = getAiModeState(deal);
+  const dualAiActive = aiStateAfterStart.brandAiEnabled && aiStateAfterStart.creatorAiEnabled;
+
+  if (dualAiActive) {
+    const creatorDealGuard = await getCreatorCompletedDealsGuard(deal.creatorId);
+    if (!creatorDealGuard.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: `Creator completed deal limit reached for ${creatorDealGuard.plan} plan. Dual-AI auto settlement is blocked.`,
+        code: 'CREATOR_DEAL_LIMIT_REACHED',
+        plan: creatorDealGuard.plan,
+        completedDeals: creatorDealGuard.completedDeals,
+        completedDealsLimit: Number.isFinite(creatorDealGuard.limit) ? creatorDealGuard.limit : -1
+      });
+    }
+
+    const settlement = runDualAiSettlement({
+      deal,
+      campaign,
+      creator,
+      seededRole: actorRole,
+      maxAttemptsPerSide: 5
+    });
+
+    await deal.save();
+
+    const aiSettlementMessage = `Deal accepted by AI after 5 attempts each. Final budget ${settlement.finalBudget} (avg of creator highest ${settlement.creatorHighestOffer} and brand 5th ${settlement.brandFifthOffer}).`;
+
+    await Notification.create({
+      userId: deal.brandId,
+      type: 'deal',
+      title: 'AI Negotiation Settled',
+      message: aiSettlementMessage,
+      data: {
+        dealId: deal._id,
+        autoAccepted: true,
+        attemptsPerSide: settlement.attemptsPerSide,
+        finalBudget: settlement.finalBudget
+      }
+    });
+
+    await Notification.create({
+      userId: deal.creatorId,
+      type: 'deal',
+      title: 'AI Negotiation Settled',
+      message: aiSettlementMessage,
+      data: {
+        dealId: deal._id,
+        autoAccepted: true,
+        attemptsPerSide: settlement.attemptsPerSide,
+        finalBudget: settlement.finalBudget
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Both AI modes are active. Deal accepted automatically after 5 attempts each.',
+      suggestion,
+      aiCounter: {
+        canUse: true,
+        plan: aiAccess.plan,
+        isActive: true,
+        dualAiActive: true,
+        autoAccepted: true,
+        attemptsPerSide: settlement.attemptsPerSide,
+        creatorHighestOffer: settlement.creatorHighestOffer,
+        brandFifthOffer: settlement.brandFifthOffer,
+        finalBudget: settlement.finalBudget
+      }
+    });
+  }
+
+  await deal.save();
+
+  const notifyUserId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
+  await Notification.create({
+    userId: notifyUserId,
+    type: 'deal',
+    title: 'AI Counter Offer Received',
+    message: suggestion.message,
+    data: { dealId: deal._id }
+  });
+
+  res.json({
+    success: true,
+    message: 'AI counter dealing started and counter offer sent',
+    suggestion,
+    aiCounter: {
+      canUse: true,
+      plan: aiAccess.plan,
+      isActive: true
+    }
+  });
+});
+
 // ==================== COUNTER OFFER ====================
 exports.counterOffer = catchAsync(async (req, res) => {
   const { id } = req.params;
@@ -782,6 +1447,22 @@ exports.counterOffer = catchAsync(async (req, res) => {
   }
 
   const actorRole = getActorRoleOnDeal(deal, req);
+
+  const aiState = getAiModeState(deal);
+  const aiModeActive = aiState.aiModeActive;
+  const actorAiEnabled = actorRole === 'brand' ? aiState.brandAiEnabled : aiState.creatorAiEnabled;
+  const counterpartyAiEnabled = actorRole === 'brand' ? aiState.creatorAiEnabled : aiState.brandAiEnabled;
+  const aiResponderId = actorRole === 'brand' ? deal.creatorId : deal.brandId;
+  const aiResponderRole = actorRole === 'brand' ? 'creator' : 'brand';
+
+  const manualLockedForActor = aiModeActive && actorAiEnabled;
+
+  if (manualLockedForActor) {
+    return res.status(403).json({
+      success: false,
+      error: 'Manual counter offer is disabled for the user who started AI Counter Dealing'
+    });
+  }
 
   // Initial direct offers (pending) can only be countered by the creator.
   if (deal.status === 'pending' && actorRole !== 'creator') {
@@ -809,17 +1490,155 @@ exports.counterOffer = catchAsync(async (req, res) => {
     }
   }
 
-  deal.negotiation.push({
+  const manualCounterEntry = {
     proposedBy: req.user._id,
     budget,
     deadline,
     message,
+    source: 'manual',
     status: 'pending',
     createdAt: new Date(),
-  });
+  };
+
+  deal.negotiation.push(manualCounterEntry);
 
   deal.status = 'negotiating';
   addTimelineEvent(deal, 'Counter Offer Sent', message || 'Counter offer sent', req.user._id, { budget, deadline });
+
+  const aiCanAutoRespond = aiModeActive
+    && counterpartyAiEnabled;
+
+  if (aiCanAutoRespond) {
+    const totalCounters = Array.isArray(deal.negotiation) ? deal.negotiation.length : 0;
+
+    // After enough back-and-forth, AI accepts the latest manual offer to close the deal.
+    if (totalCounters >= 5) {
+      const creatorDealGuard = await getCreatorCompletedDealsGuard(deal.creatorId);
+      if (!creatorDealGuard.allowed) {
+        return res.status(403).json({
+          success: false,
+          error: `Creator completed deal limit reached for ${creatorDealGuard.plan} plan. Auto-accept is blocked.`,
+          code: 'CREATOR_DEAL_LIMIT_REACHED',
+          plan: creatorDealGuard.plan,
+          completedDeals: creatorDealGuard.completedDeals,
+          completedDealsLimit: Number.isFinite(creatorDealGuard.limit) ? creatorDealGuard.limit : -1
+        });
+      }
+
+      const pendingOffers = deal.negotiation.filter((entry) => entry.status === 'pending');
+      const latestPendingOffer = pendingOffers.length ? pendingOffers[pendingOffers.length - 1] : null;
+
+      if (latestPendingOffer) {
+        if (Number.isFinite(Number(latestPendingOffer.budget))) {
+          deal.budget = Number(latestPendingOffer.budget);
+        }
+
+        if (latestPendingOffer.deadline) {
+          deal.deadline = latestPendingOffer.deadline;
+        }
+
+        latestPendingOffer.status = 'accepted';
+        deal.negotiation.forEach((entry) => {
+          if (entry._id.toString() !== latestPendingOffer._id.toString() && entry.status === 'pending') {
+            entry.status = 'declined';
+          }
+        });
+      }
+
+      deal.status = 'accepted';
+      addTimelineEvent(
+        deal,
+        'AI Auto Accepted Offer',
+        'AI accepted the latest counter after negotiation threshold',
+        aiResponderId,
+        { totalCounters }
+      );
+
+      await deal.save();
+
+      await Notification.create({
+        userId: req.user._id,
+        type: 'deal',
+        title: 'Offer Auto Accepted',
+        message: 'Your latest counter offer was accepted automatically by AI.',
+        data: { dealId: deal._id },
+      });
+
+      return res.json({
+        success: true,
+        message: 'Counter offer sent and automatically accepted by AI.',
+        aiAutoResponded: true,
+        autoAccepted: true,
+        dealStatus: deal.status,
+      });
+    }
+
+    // Supersede manual pending offer with immediate AI response.
+    if (Array.isArray(deal.negotiation) && deal.negotiation.length > 0) {
+      deal.negotiation[deal.negotiation.length - 1].status = 'declined';
+    }
+
+    const creator = await Creator.findById(deal.creatorId)
+      .select('displayName handle totalFollowers averageEngagement niches stats.averageRating')
+      .lean();
+    const campaign = await Campaign.findById(deal.campaignId)
+      .select('title category')
+      .lean();
+
+    const aiSuggestion = buildNegotiationSuggestion({
+      deal,
+      campaign,
+      creator,
+      actorRole: aiResponderRole,
+      anchorBudget: Number.isFinite(Number(budget)) ? Number(budget) : undefined,
+      hardMaxBudget: resolveAiBudgetCap(deal, aiResponderId),
+      referenceBudget: Number(deal?.negotiationSettings?.aiReferenceBudget || deal?.budget || 0)
+    });
+
+    deal.negotiation.push({
+      proposedBy: aiResponderId,
+      budget: aiSuggestion.suggestedBudget,
+      deadline: aiSuggestion.suggestedDeadline ? new Date(aiSuggestion.suggestedDeadline) : undefined,
+      message: aiSuggestion.message,
+      source: 'ai',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    addTimelineEvent(
+      deal,
+      'AI Auto Counter Sent',
+      `AI responded with ${aiSuggestion.suggestedBudget} after manual counter`,
+      aiResponderId,
+      {
+        anchorBudget: Number.isFinite(Number(budget)) ? Number(budget) : null,
+        suggestedBudget: aiSuggestion.suggestedBudget,
+        confidence: aiSuggestion.confidence
+      }
+    );
+
+    await deal.save();
+
+    await Notification.create({
+      userId: req.user._id,
+      type: 'deal',
+      title: 'AI Auto Counter Received',
+      message: aiSuggestion.message,
+      data: { dealId: deal._id },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Counter offer sent. AI auto-countered with updated terms.',
+      aiAutoResponded: true,
+      aiSuggestion: {
+        suggestedBudget: aiSuggestion.suggestedBudget,
+        suggestedDeadline: aiSuggestion.suggestedDeadline,
+        confidence: aiSuggestion.confidence
+      }
+    });
+  }
+
   await deal.save();
 
   // Notify other party
@@ -832,7 +1651,7 @@ exports.counterOffer = catchAsync(async (req, res) => {
     data: { dealId: deal._id },
   });
 
-  res.json({ success: true, message: 'Counter offer sent' });
+  res.json({ success: true, message: 'Counter offer sent', aiAutoResponded: false });
 });
 
 // ==================== SUBMIT DELIVERABLES ====================

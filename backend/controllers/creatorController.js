@@ -4,11 +4,660 @@ const Creator = require('../models/Creator');
 const Deal = require('../models/Deal');
 const Payment = require('../models/Payment');
 const Campaign = require('../models/Campaign');
+const Subscription = require('../models/Subscription');
+const axios = require('axios');
 const socialService = require('../services/socialService'); // ✅ FIX: singleton instance
 const fraudDetectionService = require('../services/fraudDetectionService');
 const { featureFlags } = require('../config/featureFlags');
 
 const CREATOR_EXCLUDED_EARNING_TYPES = ['withdrawal', 'refund', 'fee', 'penalty'];
+
+const PLATFORM_POSTING_WINDOWS = {
+  instagram: [
+    { label: '12:00 PM - 2:00 PM', reason: 'Midday sessions tend to drive stronger short-form engagement.' },
+    { label: '7:00 PM - 9:00 PM', reason: 'Evening leisure windows are usually strongest for reach.' }
+  ],
+  youtube: [
+    { label: '4:00 PM - 6:00 PM', reason: 'Publishing before prime time helps collect early watch signals.' },
+    { label: '8:00 PM - 10:00 PM', reason: 'Long-form watch time is often higher in evening blocks.' }
+  ],
+  tiktok: [
+    { label: '6:00 PM - 9:00 PM', reason: 'After-work hours usually show stronger velocity for short videos.' },
+    { label: '11:00 AM - 1:00 PM', reason: 'Lunchtime windows often produce reliable repeat views.' }
+  ],
+  twitter: [
+    { label: '8:00 AM - 10:00 AM', reason: 'Morning scrolling windows can improve early conversation.' },
+    { label: '5:00 PM - 7:00 PM', reason: 'Commute/evening windows often increase reply rates.' }
+  ]
+};
+
+const PLATFORM_POSTING_WINDOWS_BY_TIER = {
+  instagram: {
+    starter: [
+      { label: '11:00 AM - 1:00 PM', reason: 'Consistent midday posting helps smaller profiles build predictable reach.' },
+      { label: '6:30 PM - 8:30 PM', reason: 'Evening windows are usually strongest for discovery and saves.' }
+    ],
+    growth: [
+      { label: '12:00 PM - 2:00 PM', reason: 'Midday sessions tend to drive stronger short-form engagement.' },
+      { label: '7:00 PM - 9:00 PM', reason: 'Evening leisure windows are usually strongest for reach.' }
+    ],
+    scale: [
+      { label: '9:00 AM - 11:00 AM', reason: 'Larger profiles often benefit from earlier momentum accumulation.' },
+      { label: '7:30 PM - 10:00 PM', reason: 'Prime-time windows help maximize shares and comment velocity.' }
+    ]
+  },
+  youtube: {
+    starter: [
+      { label: '3:00 PM - 5:00 PM', reason: 'Publishing before peak hours improves early session signals.' },
+      { label: '8:00 PM - 9:30 PM', reason: 'Evening view sessions tend to improve average watch time.' }
+    ],
+    growth: [
+      { label: '4:00 PM - 6:00 PM', reason: 'Publishing before prime time helps collect early watch signals.' },
+      { label: '8:00 PM - 10:00 PM', reason: 'Long-form watch time is often higher in evening blocks.' }
+    ],
+    scale: [
+      { label: '2:00 PM - 4:00 PM', reason: 'Established channels can seed browse recommendations earlier.' },
+      { label: '7:00 PM - 9:00 PM', reason: 'Peak concurrent sessions can amplify high-retention uploads.' }
+    ]
+  },
+  tiktok: {
+    starter: [
+      { label: '10:30 AM - 12:30 PM', reason: 'Late-morning tests help identify early audience clusters.' },
+      { label: '6:00 PM - 8:00 PM', reason: 'After-work windows usually improve replay and completion rates.' }
+    ],
+    growth: [
+      { label: '6:00 PM - 9:00 PM', reason: 'After-work hours usually show stronger velocity for short videos.' },
+      { label: '11:00 AM - 1:00 PM', reason: 'Lunchtime windows often produce reliable repeat views.' }
+    ],
+    scale: [
+      { label: '5:00 PM - 7:00 PM', reason: 'Larger accounts can trigger earlier velocity before peak traffic.' },
+      { label: '8:00 PM - 10:00 PM', reason: 'Late-evening scroll windows are strong for high-share concepts.' }
+    ]
+  }
+};
+
+const FALLBACK_CAMPAIGN_CATEGORIES = [
+  'Fashion', 'Beauty', 'Technology', 'Food & Beverage', 'Fitness',
+  'Travel', 'Gaming', 'Lifestyle', 'Parenting', 'Finance',
+  'Education', 'Entertainment', 'Sports', 'Automotive', 'Real Estate',
+  'Health', 'Wellness', 'Other'
+];
+
+const CAMPAIGN_CATEGORIES =
+  Campaign?.schema?.path('category')?.enumValues?.length
+    ? Campaign.schema.path('category').enumValues
+    : FALLBACK_CAMPAIGN_CATEGORIES;
+
+const CONTENT_TYPE_OPTIONS = [
+  { value: 'general', label: 'General' },
+  ...CAMPAIGN_CATEGORIES.map((category) => ({
+    value: String(category).toLowerCase(),
+    label: category
+  }))
+];
+
+const LEGACY_CONTENT_TYPE_VALUES = new Set([
+  'short_form',
+  'tutorial',
+  'storytelling',
+  'review',
+  'community'
+]);
+
+const CONTENT_TYPE_IDEA_TEMPLATES = {
+  general: [
+    'Create a weekly "3 quick wins" post tied to your niche.',
+    'Turn one audience pain point into a before/after content sequence.',
+    'Reuse your top comment as the title for your next post.'
+  ],
+  short_form: [
+    'Make a 20-30 second hook-first video with one clear takeaway.',
+    'Publish a "mistake vs fix" short in your niche.',
+    'Record a rapid 3-step checklist format with captions.'
+  ],
+  tutorial: [
+    'Create a beginner-to-advanced walkthrough in 3 levels.',
+    'Break one process into a "what, why, how" tutorial format.',
+    'Teach one tool/feature with a real use-case demo.'
+  ],
+  storytelling: [
+    'Share a personal challenge -> pivot -> lesson story arc.',
+    'Post a "what I believed then vs now" narrative.',
+    'Tell a behind-the-scenes story with a measurable outcome.'
+  ],
+  review: [
+    'Do a "worth it / not worth it" breakdown with scoring.',
+    'Compare two approaches/products with clear winner criteria.',
+    'Review a trend and extract what actually works.'
+  ],
+  community: [
+    'Run a weekly audience Q&A and pin the best question.',
+    'Post a poll and follow up with a response video/post.',
+    'Start a mini challenge and feature audience submissions.'
+  ],
+  fashion: [
+    'Style one outfit in 3 ways for different budgets and occasions.',
+    'Break down one runway trend into an everyday wearable version.',
+    'Do a fast "keep or skip" on this season\'s trending fashion pieces.'
+  ],
+  beauty: [
+    'Show a 5-minute routine for one common skin or makeup goal.',
+    'Test one viral beauty claim and share before/after results.',
+    'Create a budget-vs-premium beauty comparison with final verdict.'
+  ],
+  technology: [
+    'Review one practical tech setup that improves daily productivity.',
+    'Share a quick "hidden features" tutorial for one popular app/device.',
+    'Compare two tools and pick the best option per use case.'
+  ],
+  'food & beverage': [
+    'Create one quick recipe with ingredients under a fixed budget.',
+    'Do a taste-test challenge: homemade vs store-bought version.',
+    'Share one healthy swap for a popular high-calorie favorite.'
+  ],
+  fitness: [
+    'Post a no-equipment workout routine for busy weekdays.',
+    'Show one common form mistake and the correct movement cue.',
+    'Build a 7-day challenge with daily check-in prompts.'
+  ],
+  travel: [
+    'Share a one-day itinerary with exact timing and budget tips.',
+    'Create a carry-on packing system for short trips.',
+    'Compare tourist hotspots vs local hidden gems in one city.'
+  ],
+  gaming: [
+    'Share a top 5 loadout or settings guide for ranked play.',
+    'Break down one clutch moment and teach the decision-making.',
+    'Create a beginner-to-pro progression roadmap for one title.'
+  ],
+  lifestyle: [
+    'Post a realistic day-in-the-life with productivity checkpoints.',
+    'Share 3 habits that improved energy and focus this month.',
+    'Create a weekly reset routine with simple repeatable steps.'
+  ],
+  parenting: [
+    'Share one practical routine that reduces daily family stress.',
+    'Create a screen-time balance plan with age-based examples.',
+    'Post a quick activity idea parents can set up in under 10 minutes.'
+  ],
+  finance: [
+    'Break down one budgeting framework with a real monthly example.',
+    'Compare two saving strategies and who each one fits best.',
+    'Explain one money myth and replace it with a better habit.'
+  ],
+  education: [
+    'Teach one concept in under 60 seconds using a real-world analogy.',
+    'Create a study workflow that improves retention before exams.',
+    'Share common learner mistakes and how to avoid them.'
+  ],
+  entertainment: [
+    'Create a weekly "best of" recap in your niche with commentary.',
+    'React to trending moments and add a unique creator perspective.',
+    'Rank 5 popular picks with clear criteria and audience voting.'
+  ],
+  sports: [
+    'Break down one pro-level move into beginner-friendly drills.',
+    'Share a game-day prep checklist for performance and recovery.',
+    'Analyze one key play and explain the tactical decision.'
+  ],
+  automotive: [
+    'Post a maintenance tip series that saves money over time.',
+    'Compare two models for different buyer profiles and budgets.',
+    'Create a buyer checklist for used car inspections.'
+  ],
+  'real estate': [
+    'Explain one property metric with a simple worked example.',
+    'Create a neighborhood comparison with renter/buyer lens.',
+    'Share a first-time buyer checklist with common pitfalls.'
+  ],
+  health: [
+    'Share one evidence-based health habit and how to start today.',
+    'Debunk one common health misconception with credible sources.',
+    'Create a weekly health tracking template for consistency.'
+  ],
+  wellness: [
+    'Post a stress-reset routine that fits into 10 minutes.',
+    'Share one sleep optimization tip and how to measure progress.',
+    'Create a mindful morning routine with step-by-step prompts.'
+  ],
+  other: [
+    'Turn one audience FAQ into a mini-series with practical examples.',
+    'Create a myth-vs-fact post focused on your core niche.',
+    'Share a behind-the-scenes process that reveals your workflow.'
+  ]
+};
+
+const CONTENT_TYPE_RELEVANCE_KEYWORDS = {
+  general: [],
+  fashion: ['fashion', 'outfit', 'style', 'wardrobe', 'lookbook', 'trend'],
+  beauty: ['beauty', 'makeup', 'skincare', 'skin', 'serum', 'routine', 'glow'],
+  technology: ['tech', 'app', 'device', 'software', 'tool', 'gadget', 'ai'],
+  'food & beverage': ['food', 'recipe', 'meal', 'drink', 'smoothie', 'cook', 'snack', 'beverage'],
+  fitness: ['fitness', 'workout', 'exercise', 'training', 'gym', 'strength', 'cardio'],
+  travel: ['travel', 'trip', 'itinerary', 'destination', 'flight', 'hotel', 'packing'],
+  gaming: ['gaming', 'game', 'stream', 'ranked', 'loadout', 'controller', 'esports'],
+  lifestyle: ['lifestyle', 'routine', 'daily', 'habit', 'productivity', 'home'],
+  parenting: ['parent', 'kid', 'child', 'family', 'toddler', 'school'],
+  finance: ['finance', 'budget', 'money', 'saving', 'invest', 'expense', 'income'],
+  education: ['education', 'study', 'learn', 'lesson', 'student', 'exam', 'course'],
+  entertainment: ['entertainment', 'reaction', 'review', 'show', 'movie', 'music', 'viral'],
+  sports: ['sports', 'match', 'game', 'athlete', 'training', 'team', 'tactic'],
+  automotive: ['car', 'automotive', 'vehicle', 'drive', 'engine', 'maintenance'],
+  'real estate': ['real estate', 'property', 'rent', 'buyer', 'listing', 'mortgage'],
+  health: ['health', 'wellness', 'nutrition', 'sleep', 'stress', 'recovery'],
+  wellness: ['wellness', 'mindfulness', 'self-care', 'sleep', 'mental', 'balance'],
+  other: []
+};
+
+const NON_BEAUTY_BANNED_TERMS = ['skincare', 'skin', 'serum', 'face mask', 'beauty'];
+
+const isValidContentTypeValue = (value = '') => {
+  const normalized = String(value || '').toLowerCase();
+  return CONTENT_TYPE_OPTIONS.some((option) => option.value === normalized)
+    || LEGACY_CONTENT_TYPE_VALUES.has(normalized);
+};
+
+const getCreatorSubscriptionPlan = async (creatorUserId) => {
+  if (!creatorUserId) return 'free';
+
+  const subscription = await Subscription.findOne({
+    userId: creatorUserId,
+    status: { $in: ['active', 'trialing'] }
+  })
+    .select('planId')
+    .lean();
+
+  return String(subscription?.planId || 'free').toLowerCase();
+};
+
+const hasRelevantKeyword = (text = '', keywords = []) => {
+  if (!text || !keywords.length) return false;
+  const normalized = String(text).toLowerCase();
+  return keywords.some((keyword) => normalized.includes(String(keyword).toLowerCase()));
+};
+
+const containsBannedTermsForType = (text = '', contentType = 'general') => {
+  const normalizedType = String(contentType || 'general').toLowerCase();
+  if (normalizedType === 'beauty' || normalizedType === 'health' || normalizedType === 'wellness') {
+    return false;
+  }
+
+  const normalized = String(text).toLowerCase();
+  return NON_BEAUTY_BANNED_TERMS.some((term) => normalized.includes(term));
+};
+
+const validateHfIdeasForType = (ideas = [], contentType = 'general') => {
+  const normalizedType = String(contentType || 'general').toLowerCase();
+  if (!ideas.length) return null;
+
+  const keywords = CONTENT_TYPE_RELEVANCE_KEYWORDS[normalizedType] || [];
+  const filtered = ideas.filter((idea) => !containsBannedTermsForType(idea, normalizedType));
+  if (!filtered.length) return null;
+
+  // For specific categories, require at least one idea to contain a category keyword.
+  if (normalizedType !== 'general' && keywords.length > 0) {
+    const relevanceHits = filtered.filter((idea) => hasRelevantKeyword(idea, keywords)).length;
+    if (relevanceHits === 0) {
+      return null;
+    }
+  }
+
+  return filtered.slice(0, 5);
+};
+
+const getPlatformFollowers = (socialMedia = {}, platform) => {
+  if (platform === 'youtube') {
+    return Number(socialMedia.youtube?.subscribers || 0);
+  }
+
+  return Number(socialMedia?.[platform]?.followers || 0);
+};
+
+const getPlatformEngagement = (socialMedia = {}, platform, fallback = 0) => {
+  const engagement = Number(socialMedia?.[platform]?.engagement || 0);
+  return engagement > 0 ? engagement : Number(fallback || 0);
+};
+
+const getPlatformLastSynced = (socialMedia = {}, platform) => {
+  return socialMedia?.[platform]?.lastSynced || null;
+};
+
+const getGrowthTier = (followers = 0, engagement = 0) => {
+  if (followers >= 100000 || engagement >= 4) return 'scale';
+  if (followers >= 10000 || engagement >= 2) return 'growth';
+  return 'starter';
+};
+
+const hashString = (value = '') => {
+  const input = String(value);
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return Math.abs(hash >>> 0);
+};
+
+const createSeededRng = (seedInput) => {
+  let seed = hashString(seedInput) || 123456789;
+  return () => {
+    seed = (1664525 * seed + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+};
+
+const shuffleWithRng = (items = [], rng = Math.random) => {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+const getDynamicPostingWindows = (platform, followers, engagement) => {
+  const tier = getGrowthTier(followers, engagement);
+  const tierConfig = PLATFORM_POSTING_WINDOWS_BY_TIER[platform];
+  if (!tierConfig) {
+    return PLATFORM_POSTING_WINDOWS[platform] || PLATFORM_POSTING_WINDOWS.instagram;
+  }
+
+  return tierConfig[tier] || tierConfig.growth;
+};
+
+const getConfidenceLevel = ({ followers = 0, engagement = 0, lastSynced = null }) => {
+  const syncedAt = lastSynced ? new Date(lastSynced) : null;
+  const recentlySynced = syncedAt && !Number.isNaN(syncedAt.getTime())
+    ? ((Date.now() - syncedAt.getTime()) / (1000 * 60 * 60 * 24)) <= 14
+    : false;
+
+  if ((engagement >= 3 || followers >= 100000) && recentlySynced) return 'high';
+  if (engagement >= 1.5 || followers >= 10000 || recentlySynced) return 'medium';
+  return 'low';
+};
+
+const getDominantPlatform = (creator) => {
+  const platforms = ['instagram', 'youtube', 'tiktok', 'twitter'];
+  const sorted = platforms
+    .map((platform) => ({
+      platform,
+      followers: getPlatformFollowers(creator.socialMedia, platform)
+    }))
+    .sort((a, b) => b.followers - a.followers);
+
+  if (sorted[0]?.followers > 0) {
+    return sorted[0].platform;
+  }
+
+  return creator.primaryPlatform || 'instagram';
+};
+
+const getGrowthPlatforms = () => {
+  return ['instagram', 'youtube', 'tiktok'];
+};
+
+const getTopAgeBucket = (ageGroups = {}) => {
+  const entries = Object.entries(ageGroups || {});
+  if (!entries.length) return null;
+
+  const [bucket, percentage] = entries.reduce((best, current) => {
+    return Number(current[1] || 0) > Number(best[1] || 0) ? current : best;
+  }, entries[0]);
+
+  if (!bucket || Number(percentage || 0) <= 0) return null;
+  return { bucket, percentage: Number(percentage) };
+};
+
+const buildContentIdeas = (creator, platform, options = {}) => {
+  const selectedContentType = String(options.contentType || 'general').toLowerCase();
+  const contentType = CONTENT_TYPE_IDEA_TEMPLATES[selectedContentType] ? selectedContentType : 'general';
+  const rng = options.rng || Math.random;
+  const niches = (creator.niches || []).slice(0, 3);
+  const ageInsight = getTopAgeBucket(creator.audienceDemographics?.ageGroups);
+  const ideas = [];
+
+  const contentTypeTemplates = CONTENT_TYPE_IDEA_TEMPLATES[contentType] || CONTENT_TYPE_IDEA_TEMPLATES.general;
+
+  if (!niches.length) {
+    ideas.push(`Create a weekly ${platform} series answering your audience's top 3 questions.`);
+    ideas.push(`Share one behind-the-scenes breakdown per week showing how you plan paid content.`);
+    ideas.push('Turn top-performing comments into follow-up posts with clear CTAs.');
+    ideas.push(...shuffleWithRng(contentTypeTemplates, rng).slice(0, 2));
+    return shuffleWithRng(ideas, rng).slice(0, 5);
+  }
+
+  for (const niche of niches) {
+    ideas.push(`Post a ${niche.toLowerCase()} myth-vs-reality piece with a practical takeaway.`);
+  }
+
+  if (ageInsight) {
+    ideas.push(
+      `Build one content thread specifically for ${ageInsight.bucket} audience interests and language patterns.`
+    );
+  }
+
+  const followers = getPlatformFollowers(creator.socialMedia, platform);
+  if (followers >= 100000) {
+    ideas.push('Run a two-part format: quick hook clip first, deeper follow-up post 24 hours later.');
+  } else if (followers >= 10000) {
+    ideas.push('Repurpose your best-performing post into 3 variants: tutorial, opinion, and case-study angle.');
+  } else {
+    ideas.push('Launch a weekly mini-series with recurring format so new viewers quickly recognize your content.');
+  }
+
+  ideas.push(...shuffleWithRng(contentTypeTemplates, rng).slice(0, 2));
+
+  return shuffleWithRng(ideas, rng).slice(0, 5);
+};
+
+const buildAudienceImprovementTips = (creator, platform) => {
+  const tips = [];
+  const avgEngagement = Number(creator.averageEngagement || 0);
+  const platformEngagement = getPlatformEngagement(creator.socialMedia, platform, avgEngagement);
+  const topCountries = creator.audienceDemographics?.topCountries || [];
+
+  if (platformEngagement < 1.5) {
+    tips.push('Use stronger 2-second hooks and shorter opening captions to reduce early drop-off.');
+  } else {
+    tips.push('Double down on formats with saves/shares since engagement health is already stable.');
+  }
+
+  if (topCountries.length > 0) {
+    const leadCountry = topCountries[0]?.country;
+    if (leadCountry) {
+      tips.push(`Schedule posts in ${leadCountry} prime-time windows and localize phrasing for that audience.`);
+    }
+  } else {
+    tips.push('Run two weekly time-slot experiments and compare impressions in 48 hours to find local peak windows.');
+  }
+
+  tips.push('Add one explicit interaction CTA per post (vote/comment/save) to lift quality engagement.');
+
+  if (Number(creator.totalFollowers || 0) >= 10000) {
+    tips.push('Create a recurring community format (weekly Q&A, critique, or challenge) to improve returning audience rate.');
+  }
+
+  return tips.slice(0, 5);
+};
+
+const parseIdeasFromText = (rawText = '') => {
+  if (!rawText) return [];
+
+  const normalized = String(rawText)
+    .replace(/\r/g, '\n')
+    .replace(/\t/g, ' ')
+    .trim();
+
+  const lines = normalized
+    .split('\n')
+    .map((line) => line.replace(/^\s*(?:[-*•]+|\d+[\.)])\s*/, '').trim())
+    .filter((line) => line.length >= 12 && line.length <= 240);
+
+  const uniqueLines = [...new Set(lines)];
+  if (uniqueLines.length >= 3) {
+    return uniqueLines.slice(0, 8);
+  }
+
+  // Fallback parser for inline numbered content.
+  const chunks = normalized
+    .split(/\s(?:\d+[\.)]|[-*•])\s+/)
+    .map((chunk) => chunk.trim())
+    .filter((chunk) => chunk.length >= 12 && chunk.length <= 240);
+
+  return [...new Set(chunks)].slice(0, 8);
+};
+
+const generateHuggingFaceContentIdeas = async ({ creator, platform, contentType, refreshToken }) => {
+  const hfApiKey = String(process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY || '').trim();
+  if (!hfApiKey) {
+    return null;
+  }
+
+  // Prefer router chat completions because api-inference is deprecated.
+  const configuredChatModel = String(
+    process.env.HF_CHAT_MODEL ||
+    process.env.HUGGINGFACE_CHAT_MODEL ||
+    ''
+  ).trim();
+  const chatModels = [
+    configuredChatModel,
+    'openai/gpt-oss-120b:fastest',
+    'openai/gpt-oss-20b:fastest',
+    'meta-llama/Llama-3.1-8B-Instruct:fastest'
+  ].filter(Boolean);
+  const inferenceModel = String(
+    process.env.HF_MODEL ||
+    process.env.HUGGINGFACE_MODEL ||
+    'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
+  ).trim();
+
+  const nicheText = (creator.niches || []).slice(0, 3).join(', ') || 'general creator growth';
+  const followerCount = Number(creator.totalFollowers || 0).toLocaleString();
+  const engagement = Number(creator.averageEngagement || 0).toFixed(2);
+  const nonce = refreshToken || `${Date.now()}`;
+
+  const prompt = [
+    'You are a social media growth strategist.',
+    `Generate exactly 5 distinct ${contentType.replace('_', ' ')} content ideas for a ${platform} creator.`,
+    `Creator context: niches=${nicheText}, followers=${followerCount}, avg_engagement=${engagement}%.`,
+    `Use this variation key to avoid repeats: ${nonce}.`,
+    'Return only numbered ideas, one per line, concise and practical.',
+    'Keep each idea under 20 words and avoid generic fluff.',
+    `STRICT CATEGORY RULE: every idea must clearly belong to ${contentType}.`,
+    'If category is not beauty/health/wellness, do not mention skincare, skin, serum, or face masks.'
+  ].join(' ');
+
+  try {
+    let rawText = '';
+    let chatError = null;
+    let chatErrorMeta = null;
+
+    for (const chatModel of chatModels) {
+      try {
+        const chatResponse = await axios.post(
+          'https://router.huggingface.co/v1/chat/completions',
+          {
+            model: chatModel,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a concise social media strategist that outputs actionable idea lists.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            temperature: 0.95,
+            max_tokens: 260,
+            stream: false
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${hfApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 20000
+          }
+        );
+
+        rawText = String(chatResponse?.data?.choices?.[0]?.message?.content || '').trim();
+        chatError = null;
+        chatErrorMeta = null;
+        if (rawText) break;
+      } catch (err) {
+        chatError = err;
+        chatErrorMeta = {
+          endpoint: 'https://router.huggingface.co/v1/chat/completions',
+          model: chatModel,
+          status: err?.response?.status || null
+        };
+      }
+    }
+
+    if (!rawText) {
+      try {
+        const fallbackResponse = await axios.post(
+          `https://router.huggingface.co/hf-inference/models/${encodeURIComponent(inferenceModel)}`,
+          {
+            inputs: prompt,
+            parameters: {
+              max_new_tokens: 220,
+              temperature: 0.95,
+              top_p: 0.92,
+              do_sample: true,
+              return_full_text: false
+            },
+            options: {
+              wait_for_model: true,
+              use_cache: false
+            }
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${hfApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 20000
+          }
+        );
+
+        const payload = fallbackResponse?.data;
+        rawText = Array.isArray(payload)
+          ? payload[0]?.generated_text || payload[0]?.summary_text || ''
+          : payload?.generated_text || payload?.summary_text || '';
+      } catch (fallbackError) {
+        const fallbackMeta = {
+          endpoint: `https://router.huggingface.co/hf-inference/models/${encodeURIComponent(inferenceModel)}`,
+          model: inferenceModel,
+          status: fallbackError?.response?.status || null
+        };
+
+        const errorToThrow = fallbackError;
+        errorToThrow._hfMeta = {
+          chatErrorMeta,
+          fallbackMeta
+        };
+        throw errorToThrow;
+      }
+    }
+
+    const parsedIdeas = parseIdeasFromText(rawText);
+    return parsedIdeas.length ? parsedIdeas.slice(0, 5) : null;
+  } catch (error) {
+    const status = error?.response?.status;
+    const errorData = error?.response?.data;
+    const message = errorData?.error || errorData?.message || error?.message || 'unknown';
+    console.warn('HF content idea generation failed, falling back to heuristics:', message);
+    if (status) {
+      console.warn('HF router status:', status);
+    }
+    if (error?._hfMeta) {
+      console.warn('HF router debug meta:', error._hfMeta);
+    }
+    return null;
+  }
+};
 
 const maybeRefreshFraudAssessment = async (creatorId) => {
   if (!featureFlags.fraudDetection.enabled || !featureFlags.fraudDetection.autoScoreOnSocialSync) {
@@ -789,5 +1438,100 @@ exports.updateAvailability = async (req, res) => {
     res.json({ success: true, message: 'Availability updated', availability: creator.availability });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// ==================== CREATOR GROWTH OS ====================
+exports.getGrowthOS = async (req, res) => {
+  try {
+    const currentPlan = await getCreatorSubscriptionPlan(req.user._id);
+    const canUseGrowthOS = ['professional', 'enterprise'].includes(currentPlan);
+
+    if (!canUseGrowthOS) {
+      return res.status(403).json({
+        success: false,
+        error: 'Creator Growth OS is available on Professional plan and above',
+        code: 'PROFESSIONAL_REQUIRED',
+        entitlement: {
+          canUse: false,
+          currentPlan,
+          requiredPlan: 'professional'
+        }
+      });
+    }
+
+    const requestedContentType = String(req.query.contentType || 'general').toLowerCase();
+    const selectedContentType = isValidContentTypeValue(requestedContentType)
+      ? requestedContentType
+      : 'general';
+    const refreshToken = String(req.query.refreshToken || '');
+
+    const creator = await Creator.findById(req.user._id).select(
+      'displayName handle primaryPlatform niches socialMedia totalFollowers averageEngagement audienceDemographics'
+    );
+
+    if (!creator) {
+      return res.status(404).json({ success: false, error: 'Creator not found' });
+    }
+
+    const platform = getDominantPlatform(creator);
+    const followers = getPlatformFollowers(creator.socialMedia, platform);
+    const engagement = getPlatformEngagement(creator.socialMedia, platform, creator.averageEngagement);
+    const lastSynced = getPlatformLastSynced(creator.socialMedia, platform) || creator.lastSocialSync;
+    const windows = getDynamicPostingWindows(platform, followers, engagement);
+    const confidence = getConfidenceLevel({ followers, engagement, lastSynced });
+    const ideaSeed = `${creator._id}:${platform}:${selectedContentType}:${refreshToken || 'base'}`;
+    const rng = createSeededRng(ideaSeed);
+    const postingInsights = getGrowthPlatforms().map((postingPlatform) => {
+      const platformFollowers = getPlatformFollowers(creator.socialMedia, postingPlatform);
+      const platformEngagement = getPlatformEngagement(creator.socialMedia, postingPlatform, creator.averageEngagement);
+      const platformLastSynced = getPlatformLastSynced(creator.socialMedia, postingPlatform) || creator.lastSocialSync;
+      const platformConfidence = getConfidenceLevel({
+        followers: platformFollowers,
+        engagement: platformEngagement,
+        lastSynced: platformLastSynced
+      });
+
+      return {
+        platform: postingPlatform,
+        confidence: platformConfidence,
+        windows: getDynamicPostingWindows(postingPlatform, platformFollowers, platformEngagement),
+        basis: `Suggestions are based on your ${postingPlatform} profile signals and current engagement benchmarks.`
+      };
+    });
+
+    const hfIdeas = await generateHuggingFaceContentIdeas({
+      creator,
+      platform,
+      contentType: selectedContentType,
+      refreshToken
+    });
+
+    const validatedHfIdeas = validateHfIdeasForType(hfIdeas || [], selectedContentType);
+    if (hfIdeas && !validatedHfIdeas) {
+      console.warn('HF ideas rejected for off-topic category drift, using heuristic ideas instead:', selectedContentType);
+    }
+
+    res.json({
+      success: true,
+      growthOS: {
+        postingInsights,
+        bestPostingTime: {
+          platform,
+          confidence,
+          windows,
+          basis: `Suggestions are based on your ${platform} profile signals and current engagement benchmarks.`
+        },
+        contentIdeas: validatedHfIdeas || buildContentIdeas(creator, platform, { contentType: selectedContentType, rng }),
+        selectedContentType,
+        availableContentTypes: CONTENT_TYPE_OPTIONS,
+        ideaSource: validatedHfIdeas ? 'huggingface' : 'heuristic',
+        audienceImprovementTips: buildAudienceImprovementTips(creator, platform),
+        generatedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Growth OS error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to generate growth insights' });
   }
 };
