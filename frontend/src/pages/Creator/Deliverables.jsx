@@ -47,15 +47,29 @@ const CreatorDeliverables = () => {
         const res = await dealService.getDeal(dealId);
         if (res?.success) {
           setDeal(res.deal);
-          // Initialize submission state for each deliverable that can be submitted (pending, revision, in-progress)
+          // Initialize submission state for each deliverable that can be submitted
           const initial = {};
           res.deal.deliverables?.forEach(d => {
-            if (['pending', 'revision', 'in-progress'].includes(d.status)) {
+            const isPerformance = res.deal.paymentType !== 'fixed';
+            // Allow submission if:
+            // 1. Status is pending/revision/in-progress
+            // 2. OR it's a performance deal and status is submitted, but total performance < 100%
+            const canSubmitAgain = isPerformance && d.status === 'submitted' && (res.deal.progress || 0) < 100;
+
+            if (['pending', 'revision', 'in-progress'].includes(d.status) || canSubmitAgain) {
               initial[d._id] = {
                 files: [],
                 links: [''],
                 uploading: false,
-                uploadedFiles: []
+                uploadedFiles: [],
+                metrics: {
+                  impressions: 0,
+                  likes: 0,
+                  comments: 0,
+                  shares: 0,
+                  conversions: 0,
+                  clicks: 0
+                }
               };
             }
           });
@@ -144,7 +158,8 @@ const CreatorDeliverables = () => {
       deliverablesToSubmit.push({
         deliverableId,
         files: uploadedFiles,
-        links: validLinks
+        links: validLinks,
+        metrics: sub.metrics // Added metrics
       });
     }
 
@@ -206,8 +221,19 @@ const CreatorDeliverables = () => {
   const completed = deal.deliverables?.filter(d => d.status === 'approved').length || 0;
   const total = deal.deliverables?.length || 0;
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const canSubmit = Object.values(submissions).some(s =>
-    s.files.length > 0 || (s.links || []).some(l => l.trim())
+  const isPerformance = deal.paymentType !== 'fixed';
+  const totalProgress = deal.progress || 0;
+  
+  const canSubmit = totalProgress < 100 && Object.values(submissions).some(s =>
+    s.files.length > 0 || 
+    (s.links || []).some(l => l.trim()) ||
+    (isPerformance && (
+      (s.metrics?.impressions || 0) > 0 ||
+      (s.metrics?.likes || 0) > 0 ||
+      (s.metrics?.comments || 0) > 0 ||
+      (s.metrics?.conversions || 0) > 0 ||
+      (s.metrics?.clicks || 0) > 0
+    ))
   );
 
   return (
@@ -310,6 +336,79 @@ const CreatorDeliverables = () => {
               <p className="text-sm font-medium text-gray-700">
                 {d.status === 'revision' ? 'Submit Revised Work' : 'Submit Your Work'}
               </p>
+
+              {/* Metrics (Only for performance-based deals) */}
+              {deal.paymentType !== 'fixed' && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 space-y-3">
+                  <p className="text-sm font-semibold text-indigo-900 flex items-center gap-2">
+                    <Eye className="w-4 h-4" /> Performance Reporting
+                  </p>
+                  <p className="text-xs text-indigo-700">Enter your live performance stats for this content.</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Impressions</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={submissions[d._id].metrics?.impressions || 0}
+                        onChange={e => updateSub(d._id, { metrics: { ...submissions[d._id].metrics, impressions: parseInt(e.target.value) || 0 } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Likes</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={submissions[d._id].metrics?.likes || 0}
+                        onChange={e => updateSub(d._id, { metrics: { ...submissions[d._id].metrics, likes: parseInt(e.target.value) || 0 } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Comments</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={submissions[d._id].metrics?.comments || 0}
+                        onChange={e => updateSub(d._id, { metrics: { ...submissions[d._id].metrics, comments: parseInt(e.target.value) || 0 } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Shares</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={submissions[d._id].metrics?.shares || 0}
+                        onChange={e => updateSub(d._id, { metrics: { ...submissions[d._id].metrics, shares: parseInt(e.target.value) || 0 } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Clicks</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={submissions[d._id].metrics?.clicks || 0}
+                        onChange={e => updateSub(d._id, { metrics: { ...submissions[d._id].metrics, clicks: parseInt(e.target.value) || 0 } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Conversions</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={submissions[d._id].metrics?.conversions || 0}
+                        onChange={e => updateSub(d._id, { metrics: { ...submissions[d._id].metrics, conversions: parseInt(e.target.value) || 0 } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* File upload */}
               <div>

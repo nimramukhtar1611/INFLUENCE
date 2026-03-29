@@ -138,6 +138,21 @@ const CreateDeal = () => {
         performanceMetrics: {}
       };
 
+      // Calculate a realistic initial budget for escrow (must be >= $10)
+      let calculatedBudget = 10; 
+      if (paymentType === 'cpe') {
+        calculatedBudget = (parseInt(perfMetrics.targetEngagements) || 0) * (parseFloat(perfMetrics.baseRate) || 0);
+      } else if (paymentType === 'cpa') {
+        calculatedBudget = (parseInt(perfMetrics.targetConversions) || 0) * (parseFloat(perfMetrics.baseRate) || parseFloat(perfMetrics.commissionRate) || 0);
+      } else if (paymentType === 'cpm') {
+        calculatedBudget = ((parseInt(perfMetrics.targetImpressions) || 0) / 1000) * (parseFloat(perfMetrics.ratePerThousand) || 0);
+      } else if (paymentType === 'revenue_share') {
+        calculatedBudget = parseFloat(perfMetrics.minimumGuarantee) || 50; 
+      }
+
+      // Ensure budget is at least $10 for backend validation and send it
+      perfData.budget = Math.max(10, Math.ceil(calculatedBudget));
+
       if (paymentType === 'cpe') {
         perfData.performanceMetrics = {
           targetEngagements: parseInt(perfMetrics.targetEngagements) || 0,
@@ -147,16 +162,18 @@ const CreateDeal = () => {
       } else if (paymentType === 'cpa') {
         perfData.performanceMetrics = {
           targetConversions: parseInt(perfMetrics.targetConversions) || 0,
-          commissionRate: parseFloat(perfMetrics.commissionRate) || 0
+          commissionRate: parseFloat(perfMetrics.commissionRate) || 0,
+          baseRate: parseFloat(perfMetrics.baseRate) || 0
         };
       } else if (paymentType === 'cpm') {
         perfData.performanceMetrics = {
           targetImpressions: parseInt(perfMetrics.targetImpressions) || 0,
-          ratePerThousand: parseFloat(perfMetrics.ratePerThousand) || 0
+          cpmRate: parseFloat(perfMetrics.ratePerThousand) || 0,
+          baseRate: parseFloat(perfMetrics.baseRate) || 0
         };
       } else if (paymentType === 'revenue_share') {
         perfData.performanceMetrics = {
-          revenueSharePercent: parseFloat(perfMetrics.revenueSharePercent) || 0,
+          sharePercentage: parseFloat(perfMetrics.revenueSharePercent) || 0,
           minimumGuarantee: parseFloat(perfMetrics.minimumGuarantee) || 0
         };
       }

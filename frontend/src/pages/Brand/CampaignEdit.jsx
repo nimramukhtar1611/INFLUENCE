@@ -829,21 +829,7 @@ const CampaignEdit = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Terms
-              </label>
-              <select
-                name="paymentTerms"
-                value={formData.paymentTerms}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="escrow">Escrow (Funds held until approval)</option>
-                <option value="half">50% upfront, 50% on completion</option>
-                <option value="full">Full payment on completion</option>
-              </select>
-            </div>
+            {/* Payment terms hidden as it's always escrow */}
           </div>
 
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">

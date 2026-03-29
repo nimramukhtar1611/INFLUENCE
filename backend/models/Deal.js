@@ -387,10 +387,26 @@ dealSchema.pre('save', function(next) {
   // Calculate net amount
   this.netAmount = this.budget - (this.platformFee || 0);
   
-  // Calculate progress based on deliverables
-  if (this.deliverables && this.deliverables.length > 0) {
-    const completed = this.deliverables.filter(d => d.status === 'approved').length;
-    this.progress = Math.round((completed / this.deliverables.length) * 100);
+  // Calculate progress
+  if (this.paymentType === 'fixed') {
+    // Fixed: Progress based on deliverable approvals
+    if (this.deliverables && this.deliverables.length > 0) {
+      const completed = this.deliverables.filter(d => d.status === 'approved').length;
+      this.progress = Math.round((completed / this.deliverables.length) * 100);
+    }
+  } else {
+    // Performance: Progress based on targets
+    let performanceProgress = 0;
+    if (this.paymentType === 'cpe' && this.performanceMetrics?.cpe) {
+      performanceProgress = Math.round(((this.metrics?.likes || 0) + (this.metrics?.comments || 0)) / (this.performanceMetrics.cpe.targetLikes || 1) * 100);
+    } else if (this.paymentType === 'cpa' && this.performanceMetrics?.cpa) {
+      performanceProgress = Math.round((this.metrics?.conversions || 0) / (this.performanceMetrics.cpa.targetConversions || 1) * 100);
+    } else if (this.paymentType === 'cpm' && this.performanceMetrics?.cpm) {
+      performanceProgress = Math.round((this.metrics?.impressions || 0) / (this.performanceMetrics.cpm.targetImpressions || 1) * 100);
+    } else {
+      performanceProgress = 0;
+    }
+    this.progress = Math.min(100, performanceProgress);
   }
   
   // Calculate ROI metrics
@@ -483,7 +499,16 @@ dealSchema.methods.updatePerformanceMetrics = async function(metrics) {
   });
   
   // Update current metrics
-  Object.assign(this.metrics, metrics);
+  if (metrics) {
+    if (metrics.impressions !== undefined) this.metrics.impressions = metrics.impressions;
+    if (metrics.likes !== undefined) this.metrics.likes = metrics.likes;
+    if (metrics.comments !== undefined) this.metrics.comments = metrics.comments;
+    if (metrics.shares !== undefined) this.metrics.shares = metrics.shares;
+    if (metrics.conversions !== undefined) this.metrics.conversions = metrics.conversions;
+    if (metrics.clicks !== undefined) this.metrics.clicks = metrics.clicks;
+    
+    this.markModified('metrics');
+  }
   
   // Keep only last 30 days of history
   const thirtyDaysAgo = new Date();

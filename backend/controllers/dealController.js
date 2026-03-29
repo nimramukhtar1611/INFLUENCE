@@ -1233,7 +1233,7 @@ exports.requestRevision = catchAsync(async (req, res) => {
     return res.status(400).json({ success: false, error: 'Deliverable ID and revision notes required' });
   }
 
-  const deal = await Deal.findOne({ _id: id, brandId, status: 'in-progress' });
+  const deal = await Deal.findOne({ _id: id, brandId, status: { $in: ['in-progress', 'revision'] } });
 
   if (!deal) {
     return res.status(404).json({ success: false, error: 'Deal not found or cannot request revision' });
@@ -1976,8 +1976,10 @@ exports.submitDeliverables = catchAsync(async (req, res) => {
   }
 
   const errors = [];
+  let hasPerformanceMetrics = false;
+
   for (const submission of deliverables) {
-    const { deliverableId, files = [], links = [], notes } = submission;
+    const { deliverableId, files = [], links = [], notes, metrics } = submission;
     const deliverable = deal.deliverables.id(deliverableId);
     if (!deliverable) {
       errors.push(`Deliverable ${deliverableId} not found`);
@@ -1989,16 +1991,75 @@ exports.submitDeliverables = catchAsync(async (req, res) => {
     if (files.length) deliverable.files.push(...files);
     if (links.length) deliverable.links.push(...links);
     if (notes) deliverable.notes = notes;
+    
+    // Save metrics if and performance deal
+    if (deal.paymentType !== 'fixed' && metrics) {
+      if (!deliverable.performance) {
+        deliverable.performance = {
+          impressions: 0,
+          likes: 0,
+          comments: 0,
+          shares: 0,
+          conversions: 0,
+          clicks: 0
+        };
+      }
+      
+      deliverable.performance.impressions = (deliverable.performance.impressions || 0) + (metrics.impressions || 0);
+      deliverable.performance.likes = (deliverable.performance.likes || 0) + (metrics.likes || 0);
+      deliverable.performance.comments = (deliverable.performance.comments || 0) + (metrics.comments || 0);
+      deliverable.performance.shares = (deliverable.performance.shares || 0) + (metrics.shares || 0);
+      deliverable.performance.conversions = (deliverable.performance.conversions || 0) + (metrics.conversions || 0);
+      deliverable.performance.clicks = (deliverable.performance.clicks || 0) + (metrics.clicks || 0);
+      
+      hasPerformanceMetrics = true;
+    }
   }
 
   if (errors.length === deliverables.length) {
     return res.status(400).json({ success: false, errors });
   }
 
-  // Auto-transition to in-progress if currently accepted
-  if (deal.status === 'accepted') {
+  // Aggregation for performance deals
+  if (hasPerformanceMetrics) {
+    const totals = {
+      impressions: 0,
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      conversions: 0,
+      clicks: 0
+    };
+
+    deal.deliverables.forEach(d => {
+      if (d.performance) {
+        totals.impressions += (d.performance.impressions || 0);
+        totals.likes += (d.performance.likes || 0);
+        totals.comments += (d.performance.comments || 0);
+        totals.shares += (d.performance.shares || 0);
+        totals.conversions += (d.performance.conversions || 0);
+        totals.clicks += (d.performance.clicks || 0);
+      }
+    });
+
+    // Update the deal's total metrics (assuming method exists on deal instance)
+    if (typeof deal.updatePerformanceMetrics === 'function') {
+      await deal.updatePerformanceMetrics(totals);
+    } else {
+       // Fallback if method doesn't exist for some reason
+       Object.assign(deal.metrics, totals);
+       deal.markModified('metrics');
+    }
+  }
+
+  // Auto-transition to in-progress if currently accepted or in revision
+  if (deal.status === 'accepted' || deal.status === 'revision') {
+    const oldStatus = deal.status;
     deal.status = 'in-progress';
-    addTimelineEvent(deal, 'Work Started', 'Creator submitted first deliverables', req.user._id);
+    const eventMsg = oldStatus === 'accepted' 
+      ? 'Creator submitted first deliverables' 
+      : 'Creator submitted revised deliverables';
+    addTimelineEvent(deal, 'Work Started', eventMsg, req.user._id);
   }
 
   addTimelineEvent(deal, 'Deliverables Submitted', `${deliverables.length} deliverable(s) submitted`, req.user._id);
@@ -2043,6 +2104,27 @@ exports.approveDeliverable = catchAsync(async (req, res) => {
 
   if (deliverable.status !== 'submitted') {
     return res.status(400).json({ success: false, error: 'Deliverable not in submitted state' });
+  }
+
+  // Performance-based validation: Require 100% progress before approval
+  if (deal.paymentType !== 'fixed') {
+    let performanceProgress = 0;
+    if (deal.paymentType === 'cpe' && deal.performanceMetrics?.cpe) {
+      performanceProgress = Math.round(((deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)) / (deal.performanceMetrics.cpe.targetLikes || 1) * 100);
+    } else if (deal.paymentType === 'cpa' && deal.performanceMetrics?.cpa) {
+      performanceProgress = Math.round((deal.metrics?.conversions || 0) / (deal.performanceMetrics.cpa.targetConversions || 1) * 100);
+    } else if (deal.paymentType === 'cpm' && deal.performanceMetrics?.cpm) {
+      performanceProgress = Math.round((deal.metrics?.impressions || 0) / (deal.performanceMetrics.cpm.targetImpressions || 1) * 100);
+    } else {
+      performanceProgress = 100;
+    }
+
+    if (performanceProgress < 100) {
+      return res.status(400).json({
+        success: false,
+        error: `Performance targets not reached. Current progress is ${performanceProgress}%. Approval is only allowed at 100%.`,
+      });
+    }
   }
 
   deliverable.status = 'approved';
@@ -2424,37 +2506,44 @@ exports.createPerformanceDeal = catchAsync(async (req, res) => {
   // Build performance metrics based on type
   const perfMetrics = {};
   if (performanceMetrics) {
-    if (paymentType === 'cpe' && performanceMetrics.cpe) {
+    // Determine if performanceMetrics is nested or flat
+    const cpe = performanceMetrics.cpe || (paymentType === 'cpe' ? performanceMetrics : null);
+    const cpa = performanceMetrics.cpa || (paymentType === 'cpa' ? performanceMetrics : null);
+    const cpm = performanceMetrics.cpm || (paymentType === 'cpm' ? performanceMetrics : null);
+    const revenueShare = performanceMetrics.revenueShare || (paymentType === 'revenue_share' ? performanceMetrics : null);
+    const hybrid = performanceMetrics.hybrid || (paymentType === 'hybrid' ? performanceMetrics : null);
+
+    if (paymentType === 'cpe' && cpe) {
       perfMetrics.cpe = {
-        targetLikes: performanceMetrics.cpe.targetLikes || 0,
-        targetComments: performanceMetrics.cpe.targetComments || 0,
-        targetShares: performanceMetrics.cpe.targetShares || 0,
-        targetSaves: performanceMetrics.cpe.targetSaves || 0,
-        bonusRate: performanceMetrics.cpe.bonusRate || 0.5,
-        baseRate: performanceMetrics.cpe.baseRate || budget,
+        targetLikes: cpe.targetLikes || cpe.targetEngagements || 0,
+        targetComments: cpe.targetComments || 0,
+        targetShares: cpe.targetShares || 0,
+        targetSaves: cpe.targetSaves || 0,
+        bonusRate: cpe.bonusRate || 0.5,
+        baseRate: cpe.baseRate || budget,
       };
-    } else if (paymentType === 'cpa' && performanceMetrics.cpa) {
+    } else if (paymentType === 'cpa' && cpa) {
       perfMetrics.cpa = {
-        targetConversions: performanceMetrics.cpa.targetConversions || 0,
-        commissionRate: performanceMetrics.cpa.commissionRate || 0.1,
-        baseRate: performanceMetrics.cpa.baseRate || budget,
+        targetConversions: cpa.targetConversions || 0,
+        commissionRate: cpa.commissionRate || (cpa.sharePercentage / 100) || 0.1,
+        baseRate: cpa.baseRate || budget,
       };
-    } else if (paymentType === 'cpm' && performanceMetrics.cpm) {
+    } else if (paymentType === 'cpm' && cpm) {
       perfMetrics.cpm = {
-        targetImpressions: performanceMetrics.cpm.targetImpressions || 0,
-        cpmRate: performanceMetrics.cpm.cpmRate || 10,
-        baseRate: performanceMetrics.cpm.baseRate || budget,
+        targetImpressions: cpm.targetImpressions || 0,
+        cpmRate: cpm.cpmRate || cpm.ratePerThousand || 10,
+        baseRate: cpm.baseRate || budget,
       };
-    } else if (paymentType === 'revenue_share' && performanceMetrics.revenueShare) {
+    } else if (paymentType === 'revenue_share' && revenueShare) {
       perfMetrics.revenueShare = {
-        sharePercentage: performanceMetrics.revenueShare.sharePercentage || 20,
-        minimumGuarantee: performanceMetrics.revenueShare.minimumGuarantee || 0,
+        sharePercentage: revenueShare.sharePercentage || revenueShare.revenueSharePercent || 20,
+        minimumGuarantee: revenueShare.minimumGuarantee || 0,
       };
-    } else if (paymentType === 'hybrid' && performanceMetrics.hybrid) {
+    } else if (paymentType === 'hybrid' && hybrid) {
       perfMetrics.hybrid = {
-        basePortion: performanceMetrics.hybrid.basePortion || budget * 0.5,
-        performancePortion: performanceMetrics.hybrid.performancePortion || budget * 0.5,
-        performanceWeight: performanceMetrics.hybrid.performanceWeight || 0.5,
+        basePortion: hybrid.basePortion || budget * 0.5,
+        performancePortion: hybrid.performancePortion || budget * 0.5,
+        performanceWeight: hybrid.performanceWeight || 0.5,
       };
     }
   }

@@ -146,9 +146,6 @@ const Brands = () => {
           <Button variant="outline" icon={Download} onClick={handleExport}>
             Export
           </Button>
-          <Button variant="primary" onClick={() => window.location.href = '/admin/brands/new'}>
-            Add Brand
-          </Button>
         </div>
       </div>
 

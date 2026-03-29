@@ -376,11 +376,30 @@ const DealDetails = () => {
       toast.error('Please provide revision notes');
       return;
     }
+
+    let deliverableToRevise = selectedDeliverable;
+
+    // If no deliverable is selected from the sidebar button
+    if (!deliverableToRevise) {
+      const submitted = deal.deliverables?.filter(d => d.status === 'submitted') || [];
+      if (submitted.length === 1) {
+        deliverableToRevise = submitted[0]._id;
+      } else if (submitted.length > 1) {
+        toast.error('Multiple deliverables submitted. Please use the "Request Changes" button on a specific deliverable in the Deliverables tab.');
+        return;
+      } else {
+        toast.error('No submitted deliverables to revise');
+        return;
+      }
+    }
+
     try {
-      await requestRevision(id, selectedDeliverable, revisionNotes);
+      await requestRevision(id, deliverableToRevise, revisionNotes);
       toast.success('Revision requested');
       setShowRevisionModal(false);
       setRevisionNotes('');
+      // Clean up selection
+      setSelectedDeliverable(null);
       loadDeal();
     } catch (error) {
       toast.error('Failed to request revision');
@@ -636,6 +655,114 @@ const DealDetails = () => {
                 </div>
               </div>
             </div>
+
+            {deal.paymentType !== 'fixed' && deal.performanceMetrics && (
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Performance Metrics</h2>
+                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded uppercase tracking-wider">
+                    {deal.paymentType}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* CPE Model */}
+                  {deal.paymentType === 'cpe' && deal.performanceMetrics.cpe && (
+                    <>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Target Engagements</p>
+                        <p className="font-semibold text-gray-900">{deal.performanceMetrics.cpe.targetLikes?.toLocaleString() || '0'}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Current: {(deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Base Rate</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(deal.performanceMetrics.cpe.baseRate || 0)}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Bonus Rate</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(deal.performanceMetrics.cpe.bonusRate || 0)}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* CPA Model */}
+                  {deal.paymentType === 'cpa' && deal.performanceMetrics.cpa && (
+                    <>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Target Conversions</p>
+                        <p className="font-semibold text-gray-900">{deal.performanceMetrics.cpa.targetConversions?.toLocaleString() || '0'}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Current: {deal.metrics?.conversions || 0}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Commission Rate</p>
+                        <p className="font-semibold text-gray-900">{deal.performanceMetrics.cpa.commissionRate}%</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Base Rate</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(deal.performanceMetrics.cpa.baseRate || 0)}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* CPM Model */}
+                  {deal.paymentType === 'cpm' && deal.performanceMetrics.cpm && (
+                    <>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Target Impressions</p>
+                        <p className="font-semibold text-gray-900">{deal.performanceMetrics.cpm.targetImpressions?.toLocaleString() || '0'}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Current: {deal.metrics?.impressions || 0}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Rate per 1000</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(deal.performanceMetrics.cpm.cpmRate || 0)}</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Base Rate</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(deal.performanceMetrics.cpm.baseRate || 0)}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Revenue Share Model */}
+                  {deal.paymentType === 'revenue_share' && deal.performanceMetrics.revenueShare && (
+                    <>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Share Percentage</p>
+                        <p className="font-semibold text-gray-900">{deal.performanceMetrics.revenueShare.sharePercentage || 0}%</p>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Minimum Guarantee</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(deal.performanceMetrics.revenueShare.minimumGuarantee || 0)}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Performance Progress Bar */}
+                <div className="mt-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">Performance Progress</span>
+                    <span className="text-xs font-semibold text-indigo-600">
+                      {deal.paymentType === 'cpe' ? Math.min(100, Math.round(((deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)) / (deal.performanceMetrics.cpe.targetLikes || 1) * 100)) :
+                       deal.paymentType === 'cpa' ? Math.min(100, Math.round((deal.metrics?.conversions || 0) / (deal.performanceMetrics.cpa.targetConversions || 1) * 100)) :
+                       deal.paymentType === 'cpm' ? Math.min(100, Math.round((deal.metrics?.impressions || 0) / (deal.performanceMetrics.cpm.targetImpressions || 1) * 100)) : 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div 
+                      className="bg-indigo-600 h-2 rounded-full transition-all duration-500" 
+                      style={{ 
+                        width: `${
+                          deal.paymentType === 'cpe' ? Math.min(100, Math.round(((deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)) / (deal.performanceMetrics.cpe.targetLikes || 1) * 100)) :
+                          deal.paymentType === 'cpa' ? Math.min(100, Math.round((deal.metrics?.conversions || 0) / (deal.performanceMetrics.cpa.targetConversions || 1) * 100)) :
+                          deal.paymentType === 'cpm' ? Math.min(100, Math.round((deal.metrics?.impressions || 0) / (deal.performanceMetrics.cpm.targetImpressions || 1) * 100)) : 0
+                        }%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {deal.requirements?.length > 0 && (
               <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -916,19 +1043,81 @@ const DealDetails = () => {
                   </div>
                 )}
 
+                {del.metrics && Object.keys(del.metrics).length > 0 && (
+                  <div className="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Performance Reported</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {del.metrics.impressions > 0 && (
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400">Impressions</p>
+                          <p className="text-sm font-semibold">{del.metrics.impressions.toLocaleString()}</p>
+                        </div>
+                      )}
+                      {del.metrics.likes > 0 && (
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400">Likes</p>
+                          <p className="text-sm font-semibold">{del.metrics.likes.toLocaleString()}</p>
+                        </div>
+                      )}
+                      {del.metrics.comments > 0 && (
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400">Comments</p>
+                          <p className="text-sm font-semibold">{del.metrics.comments.toLocaleString()}</p>
+                        </div>
+                      )}
+                      {del.metrics.conversions > 0 && (
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400">Conversions</p>
+                          <p className="text-sm font-semibold">{del.metrics.conversions.toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {isBrand && del.status === 'submitted' && (
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="success"
-                      size="sm"
-                      icon={ThumbsUp}
-                      onClick={() => {
-                        setSelectedDeliverable(del._id);
-                        setShowApproveModal(true);
-                      }}
-                    >
-                      Approve
-                    </Button>
+                  <div className="flex flex-col gap-2 mt-4">
+                    {/* Performance Progress logic for approval button */}
+                    {(() => {
+                      const isPerformance = deal.paymentType !== 'fixed';
+                      let performanceProgress = 0;
+                      if (isPerformance) {
+                        if (deal.paymentType === 'cpe' && deal.performanceMetrics?.cpe) {
+                          performanceProgress = Math.round(((deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)) / (deal.performanceMetrics.cpe.targetLikes || 1) * 100);
+                        } else if (deal.paymentType === 'cpa' && deal.performanceMetrics?.cpa) {
+                          performanceProgress = Math.round((deal.metrics?.conversions || 0) / (deal.performanceMetrics.cpa.targetConversions || 1) * 100);
+                        } else if (deal.paymentType === 'cpm' && deal.performanceMetrics?.cpm) {
+                          performanceProgress = Math.round((deal.metrics?.impressions || 0) / (deal.performanceMetrics.cpm.targetImpressions || 1) * 100);
+                        } else {
+                          performanceProgress = 100;
+                        }
+                      }
+                      
+                      const canApprove = !isPerformance || performanceProgress >= 100;
+
+                      return (
+                        <>
+                          <Button
+                            variant="success"
+                            size="sm"
+                            icon={ThumbsUp}
+                            disabled={!canApprove}
+                            onClick={() => {
+                              setSelectedDeliverable(del._id);
+                              setShowApproveModal(true);
+                            }}
+                          >
+                            {canApprove ? 'Approve' : `Approval Locked (${performanceProgress}% Progress)`}
+                          </Button>
+                          {!canApprove && (
+                            <p className="text-[10px] text-amber-600 bg-amber-50 p-1.5 rounded border border-amber-100">
+                              For performance deals, approval is only enabled once the 100% target is reached.
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
+
                     <Button
                       variant="warning"
                       size="sm"
@@ -1122,6 +1311,26 @@ const DealDetails = () => {
                   </div>
                 </div>
               ))}
+              {deal.requirements?.length > 0 && (
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h2>
+                  <ul className="space-y-2">
+                    {deal.requirements.map((req, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {deal.terms && (
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Terms</h2>
+                  <p className="text-sm text-gray-600 whitespace-pre-line">{deal.terms}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-8">

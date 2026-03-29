@@ -989,8 +989,8 @@ const dealValidations = {
     body('notes')
       .notEmpty()
       .withMessage('Revision notes are required')
-      .isLength({ min: 10, max: 1000 })
-      .withMessage('Revision notes must be between 10 and 1000 characters')
+      .isLength({ min: 3, max: 1000 })
+      .withMessage('Revision notes must be between 3 and 1000 characters')
   ],
 
   accept: [

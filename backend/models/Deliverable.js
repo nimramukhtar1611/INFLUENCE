@@ -68,7 +68,7 @@ const deliverableSchema = new mongoose.Schema({
     default: 0
   },
   metrics: {
-    views: Number,
+    impressions: Number,
     likes: Number,
     comments: Number,
     shares: Number,
