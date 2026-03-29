@@ -72,7 +72,7 @@ const protectUploadActor = async (req, res, next) => {
 };
 
 // Upload single file
-router.post('/single', protect, uploadSingle, async (req, res) => {
+router.post('/single', protect, uploadSingle(), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -117,7 +117,7 @@ router.post('/single', protect, uploadSingle, async (req, res) => {
 });
 
 // Upload multiple files
-router.post('/multiple', protect, uploadMultiple, async (req, res) => {
+router.post('/multiple', protect, uploadMultiple(), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -255,7 +255,7 @@ router.post('/profile-picture', protectUploadActor, uploadProfilePicture, async 
 router.use(uploadErrorHandler);
 
 // Upload cover photo
-router.post('/cover-photo', protect, uploadSingle, async (req, res) => {
+router.post('/cover-photo', protect, uploadSingle('coverPhoto'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

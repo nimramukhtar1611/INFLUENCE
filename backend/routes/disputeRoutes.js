@@ -27,7 +27,7 @@ router.post('/', createDispute);
 router.get('/user', getUserDisputes);
 router.get('/:id', getDispute);
 router.post('/:id/messages', addMessage);
-router.post('/:id/evidence', uploadSingle, uploadEvidence);
+router.post('/:id/evidence', uploadSingle(), uploadEvidence);
 router.post('/:id/accept-resolution', acceptResolution);
 router.post('/:id/reject-resolution', rejectResolution);
 router.post('/:id/escalate', escalateDispute);

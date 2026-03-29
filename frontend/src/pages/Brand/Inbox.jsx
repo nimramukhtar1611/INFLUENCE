@@ -772,23 +772,26 @@ const BrandInbox = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {getConversationName(conv)}
+                      <div className="flex items-center justify-between mb-0.5">
+                        <h3 className="font-bold text-gray-900 truncate">
+                          {conv.deal_id?.campaignId?.title || conv.campaign_id?.title || getConversationName(conv)}
                         </h3>
                         {conv.lastMessageAt && (
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                          <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
                             {formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true })}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 truncate">
-                        {conv.lastMessage?.senderId?._id === user?._id && 'You: '}
+                      <div className="text-xs text-indigo-600 font-medium mb-1 truncate">
+                        Partner: {getConversationName(conv)}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate italic">
+                        {conv.lastMessage?.senderId?._id === user?._id || conv.lastMessage?.senderId === user?._id ? 'You: ' : ''}
                         {conv.lastMessage?.contentType === 'deal_offer'
                           ? '💰 Deal offer'
                           : conv.lastMessage?.content ||
                             (conv.lastMessage?.attachments?.length > 0
-                              ? 'Sent an attachment'
+                              ? '📷 Photo'
                               : 'No messages yet')}
                       </p>
                       {conv.deal_id && (
@@ -1029,7 +1032,7 @@ const BrandInbox = () => {
                         multiple
                         onChange={handleFileUpload}
                         className="hidden"
-                        accept="image/*,video/*,.pdf,.doc,.docx"
+                        accept="image/*"
                       />
                       <Paperclip className="w-5 h-5 text-gray-500" />
                     </label>
@@ -1081,7 +1084,7 @@ const BrandInbox = () => {
                 <ul className="text-left space-y-1">
                   <li>• Respond quickly to build strong relationships</li>
                   <li>• Share campaign briefs clearly</li>
-                  <li>• Use attachments to share creative assets</li>
+                  <li>• Use attachments to share images and creative assets</li>
                 </ul>
               </div>
             </div>

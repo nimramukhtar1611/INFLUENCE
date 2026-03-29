@@ -32,8 +32,15 @@ const getConversations = asyncHandler(async (req, res) => {
   };
 
   const conversations = await Conversation.find(query)
-    .populate('participants.user_id', 'fullName email userType profilePicture brandName')
-    .populate('deal_id',     'title budget status campaignId')
+    .populate('participants.user_id', 'fullName email userType profilePicture brandName isOnline lastSeen')
+    .populate({
+      path: 'deal_id',
+      select: 'budget status campaignId',
+      populate: {
+        path: 'campaignId',
+        select: 'title'
+      }
+    })
     .populate('campaign_id', 'title')
     .sort({ 'last_message.created_at': -1 });
 
@@ -44,10 +51,15 @@ const getConversations = asyncHandler(async (req, res) => {
       if (includeArchived === 'true') return true;
       return !conv.metadata?.is_archived;
     })
-    .map(conv => ({
-      ...conv.toObject(),
-      unreadCount: conv.unread_count?.get(userId) || 0
-    }));
+    .map(conv => {
+      const convObj = conv.toObject();
+      return {
+        ...convObj,
+        lastMessage: convObj.last_message || null,
+        lastMessageAt: convObj.last_message?.created_at || convObj.updated_at,
+        unreadCount: conv.unread_count?.get(userId) || 0
+      };
+    });
 
   res.json({ success: true, data: result });
 });

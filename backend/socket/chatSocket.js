@@ -181,9 +181,11 @@ const initializeSocket = (socketIo) => {
     });
 
     // ==================== TYPING ====================
-    socket.on('typing:start', ({ conversationId }) => {
+    socket.on('typing:start', async ({ conversationId }) => {
+      const user = await User.findById(userId).select('fullName');
       socket.to(`conversation_${conversationId}`).emit('typing:update', {
         userId,
+        fullName:       user?.fullName || 'Someone',
         isTyping:       true,
         conversationId
       });

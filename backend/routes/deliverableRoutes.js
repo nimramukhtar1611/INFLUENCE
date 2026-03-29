@@ -2,7 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-const { uploadMultiple } = require('../middleware/upload');
+const { uploadDeliverables } = require('../middleware/upload');
+
 const {
   submitDeliverable,
   getDealDeliverables,
@@ -16,7 +17,8 @@ const {
 router.use(protect);
 
 // ==================== SUBMIT DELIVERABLES ====================
-router.post('/:dealId', uploadMultiple, submitDeliverable);
+router.post('/:dealId', uploadDeliverables, submitDeliverable);
+
 
 // ==================== GET DELIVERABLES ====================
 router.get('/deal/:dealId', getDealDeliverables);

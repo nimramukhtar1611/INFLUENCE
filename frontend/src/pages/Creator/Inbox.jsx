@@ -589,18 +589,23 @@ const CreatorInbox = () => {
                       {isUserOnline(conv) && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-gray-900 truncate">{getConversationName(conv)}</h3>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <h3 className="font-bold text-gray-900 truncate">
+                          {conv.deal_id?.campaignId?.title || conv.campaign_id?.title || getConversationName(conv)}
+                        </h3>
                         {conv.lastMessageAt && (
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                          <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
                             {formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true })}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 truncate">
-                        {conv.lastMessage?.senderId?._id === user?._id && 'You: '}
-                        {conv.lastMessage?.contentType === 'deal_offer' ? '💰 Deal offer'
-                          : conv.lastMessage?.content || (conv.lastMessage?.attachments?.length > 0 ? 'Sent an attachment' : 'No messages yet')}
+                      <div className="text-xs text-indigo-600 font-medium mb-1 truncate">
+                        Brand: {getConversationName(conv)}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate italic">
+                        {conv.lastMessage?.senderId?._id === user?._id || conv.lastMessage?.senderId === user?._id ? 'You: ' : ''}
+                        {conv.lastMessage?.contentType === 'deal_offer' ? '💰 Deal offer' :
+                         conv.lastMessage?.content || (conv.lastMessage?.attachments?.length > 0 ? '📷 Photo' : 'No messages yet')}
                       </p>
                       {conv.deal_id && (
                         <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
@@ -735,7 +740,7 @@ const CreatorInbox = () => {
                     style={{ minHeight: '48px' }} />
                   <div className="absolute right-2 bottom-2 flex items-center gap-1">
                     <label className="cursor-pointer p-1.5 hover:bg-gray-100 rounded-lg">
-                      <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" accept="image/*,video/*,.pdf,.doc,.docx" />
+                      <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" accept="image/*" />
                       <Paperclip className="w-5 h-5 text-gray-500" />
                     </label>
                     <button className="p-1.5 hover:bg-gray-100 rounded-lg" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
@@ -770,7 +775,7 @@ const CreatorInbox = () => {
                 <ul className="text-left space-y-1">
                   <li>• Respond quickly to build strong relationships</li>
                   <li>• Share your portfolio and ideas</li>
-                  <li>• Use attachments to show your work</li>
+                  <li>• Use attachments to share images and creative work</li>
                 </ul>
               </div>
             </div>

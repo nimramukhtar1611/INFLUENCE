@@ -3,6 +3,9 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { protect } = require('../middleware/auth');
 const { uploadMultiple } = require('../middleware/upload');
+const cloudinary = require('../config/cloudinary');
+const fs = require('fs');
+
 const {
   getConversations,
   createConversation,
@@ -57,8 +60,8 @@ router.post('/block/:userId', blockUser);
 router.post('/unblock/:userId', unblockUser);
 router.get('/blocked', getBlockedUsers);
 
-// Upload attachment
-router.post('/upload', uploadMultiple, async (req, res) => {
+// Upload attachment - Restrict to images only as requested
+router.post('/upload', uploadMultiple('files', { allowedCategories: ['image'] }), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -67,13 +70,38 @@ router.post('/upload', uploadMultiple, async (req, res) => {
       });
     }
 
-    const files = req.files.map(file => ({
-      url: `/uploads/${file.filename}`,
-      type: file.mimetype.startsWith('image/') ? 'image' :
-            file.mimetype.startsWith('video/') ? 'video' : 'document',
-      filename: file.originalname,
-      size: file.size,
-      mimeType: file.mimetype
+    const files = await Promise.all(req.files.map(async (file) => {
+      let fileUrl = `/uploads/${file.filename}`;
+      let publicId = null;
+
+      // Upload to cloudinary if configured
+      if (process.env.CLOUDINARY_CLOUD_NAME) {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'messages',
+            resource_type: 'image' // Explicitly set to image
+          });
+          fileUrl = result.secure_url;
+          publicId = result.public_id;
+          
+          // Delete local file after successful upload to Cloudinary
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        } catch (cloudinaryError) {
+          console.error('Cloudinary upload error:', cloudinaryError);
+          // Fallback to local URL if Cloudinary fails
+        }
+      }
+
+      return {
+        url: fileUrl,
+        type: 'image', // Since we only allow images now
+        filename: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+        publicId
+      };
     }));
 
     res.json({
