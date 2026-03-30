@@ -255,6 +255,15 @@ const dealSchema = new mongoose.Schema({
     required: [true, 'Deadline is required'],
     validate: {
       validator: function(v) {
+        if (!v) return false;
+
+        // Only enforce future deadlines when creating or changing the deadline.
+        // Existing deals naturally pass their deadline and still need other updates
+        // (e.g., cron marking status as overdue) without failing validation.
+        if (!this.isNew && !this.isModified('deadline')) {
+          return true;
+        }
+
         return v > new Date();
       },
       message: 'Deadline must be in the future'
