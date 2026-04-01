@@ -8,6 +8,7 @@ const Subscription = require('../models/Subscription');
 const axios = require('axios');
 const socialService = require('../services/socialService'); // ✅ FIX: singleton instance
 const fraudDetectionService = require('../services/fraudDetectionService');
+const geminiService = require('../services/geminiService');
 const { featureFlags } = require('../config/featureFlags');
 
 const CREATOR_EXCLUDED_EARNING_TYPES = ['withdrawal', 'refund', 'fee', 'penalty'];
@@ -657,6 +658,46 @@ const generateHuggingFaceContentIdeas = async ({ creator, platform, contentType,
     }
     return null;
   }
+};
+
+/**
+ * Tiered content generation: 
+ * 1. Gemini (Primary)
+ * 2. Hugging Face (Secondary Fallback)
+ * 3. Heuristic Templates (Final Fallback - handled in getGrowthOS)
+ */
+const generateAIContentIdeas = async ({ creator, platform, contentType, refreshToken }) => {
+  // 1. Try Gemini
+  try {
+    const geminiResult = await geminiService.generateContentIdeas({
+      creator,
+      platform,
+      contentType,
+      refreshToken
+    });
+    
+    if (geminiResult && geminiResult.ideas && geminiResult.ideas.length > 0) {
+      const validatedGemini = validateHfIdeasForType(geminiResult.ideas, contentType);
+      if (validatedGemini) return { ideas: validatedGemini, source: geminiResult.source };
+    }
+  } catch (err) {
+    console.warn('Gemini generation failed, falling back to HF:', err.message);
+  }
+
+  // 2. Try Hugging Face
+  const hfIdeas = await generateHuggingFaceContentIdeas({
+    creator,
+    platform,
+    contentType,
+    refreshToken
+  });
+
+  if (hfIdeas && hfIdeas.length > 0) {
+    const validatedHf = validateHfIdeasForType(hfIdeas, contentType);
+    if (validatedHf) return { ideas: validatedHf, source: 'huggingface' };
+  }
+
+  return null;
 };
 
 const maybeRefreshFraudAssessment = async (creatorId) => {
@@ -1500,17 +1541,15 @@ exports.getGrowthOS = async (req, res) => {
       };
     });
 
-    const hfIdeas = await generateHuggingFaceContentIdeas({
+    const aiResult = await generateAIContentIdeas({
       creator,
       platform,
       contentType: selectedContentType,
       refreshToken
     });
 
-    const validatedHfIdeas = validateHfIdeasForType(hfIdeas || [], selectedContentType);
-    if (hfIdeas && !validatedHfIdeas) {
-      console.warn('HF ideas rejected for off-topic category drift, using heuristic ideas instead:', selectedContentType);
-    }
+    const finalIdeas = aiResult?.ideas || buildContentIdeas(creator, platform, { contentType: selectedContentType, rng });
+    const ideaSource = aiResult?.source || 'heuristic';
 
     res.json({
       success: true,
@@ -1522,10 +1561,10 @@ exports.getGrowthOS = async (req, res) => {
           windows,
           basis: `Suggestions are based on your ${platform} profile signals and current engagement benchmarks.`
         },
-        contentIdeas: validatedHfIdeas || buildContentIdeas(creator, platform, { contentType: selectedContentType, rng }),
+        contentIdeas: finalIdeas,
         selectedContentType,
         availableContentTypes: CONTENT_TYPE_OPTIONS,
-        ideaSource: validatedHfIdeas ? 'huggingface' : 'heuristic',
+        ideaSource,
         audienceImprovementTips: buildAudienceImprovementTips(creator, platform),
         generatedAt: new Date().toISOString()
       }

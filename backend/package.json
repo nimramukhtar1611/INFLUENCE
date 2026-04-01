@@ -26,6 +26,7 @@
   "dependencies": {
     "@bull-board/api": "^5.7.0",
     "@bull-board/express": "^5.7.0",
+    "@google/generative-ai": "^0.24.1",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@sentry/node": "^10.46.0",
     "@socket.io/redis-adapter": "^8.3.0",

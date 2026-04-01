@@ -255,7 +255,7 @@ creditCardSchema.methods.markExpired = async function() {
  * Mark as removed
  * @returns {Promise}
  */
-creditCardSchema.methods.remove = async function() {
+creditCardSchema.methods.markRemoved = async function() {
   this.status = 'removed';
   this.isDefault = false;
   await this.save();

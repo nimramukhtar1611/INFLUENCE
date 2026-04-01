@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Lightbulb, RefreshCw, Clock3, Sparkles, Users, Loader, AlertCircle } from 'lucide-react';
 import creatorService from '../../services/creatorService';
 import Button from '../../components/UI/Button';
@@ -11,16 +11,23 @@ const CreatorGrowthOS = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [ideasLoading, setIdeasLoading] = useState(false);
+  const [ideasRefreshLoading, setIdeasRefreshLoading] = useState(false);
   const [growthOS, setGrowthOS] = useState(null);
   const [contentType, setContentType] = useState('general');
   const [error, setError] = useState('');
+  const fetchedRef = useRef(false);
 
   const fetchGrowthOS = async (showToast = false, options = {}) => {
     const ideasOnly = Boolean(options.onlyIdeas);
+    const refreshingIdeas = Boolean(options.refreshIdeas);
 
     try {
       if (ideasOnly) {
-        setIdeasLoading(true);
+        if (refreshingIdeas) {
+          setIdeasRefreshLoading(true);
+        } else {
+          setIdeasLoading(true);
+        }
       } else if (showToast) {
         setRefreshing(true);
       } else {
@@ -31,7 +38,7 @@ const CreatorGrowthOS = () => {
       const params = {
         contentType: options.contentType || contentType,
       };
-      if (options.refreshIdeas) {
+      if (refreshingIdeas) {
         params.refreshToken = `${Date.now()}`;
       }
 
@@ -51,6 +58,7 @@ const CreatorGrowthOS = () => {
       if (!ideasOnly) setGrowthOS(null);
     } finally {
       if (ideasOnly) {
+        setIdeasRefreshLoading(false);
         setIdeasLoading(false);
       } else if (showToast) {
         setRefreshing(false);
@@ -61,7 +69,10 @@ const CreatorGrowthOS = () => {
   };
 
   useEffect(() => {
-    fetchGrowthOS();
+    if (!fetchedRef.current) {
+      fetchGrowthOS();
+      fetchedRef.current = true;
+    }
   }, []);
 
   if (loading) {
@@ -218,7 +229,7 @@ const CreatorGrowthOS = () => {
                   size="sm"
                   icon={RefreshCw}
                   onClick={() => fetchGrowthOS(false, { onlyIdeas: true, contentType, refreshIdeas: true })}
-                  loading={ideasLoading}
+                  loading={ideasRefreshLoading}
                 >
                   Refresh
                 </Button>
