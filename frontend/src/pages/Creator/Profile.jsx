@@ -203,7 +203,7 @@ const CreatorProfile = () => {
   if (hookLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader className="w-8 h-8 animate-spin text-[#667eea]" />
       </div>
     );
   }
@@ -225,7 +225,7 @@ const CreatorProfile = () => {
       </div>
 
       {/* Cover Picture */}
-      <div className="relative h-48 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg overflow-hidden group">
+      <div className="relative h-48 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-lg overflow-hidden group">
         {formData.coverPicture && (
           <img
             src={formData.coverPicture}
@@ -254,7 +254,7 @@ const CreatorProfile = () => {
         <div className="flex items-start gap-6 mb-6">
           {/* Profile Picture */}
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg -mt-16">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg -mt-16">
               {formData.profilePicture ? (
                 <img
                   src={formData.profilePicture}
@@ -262,13 +262,13 @@ const CreatorProfile = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-12 h-12 text-indigo-600" />
+                <User className="w-12 h-12 text-[#667eea]" />
               )}
             </div>
             {isEditing && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition"
+                className="absolute bottom-0 right-0 bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white p-2 rounded-full hover:from-[#5a67d8] hover:to-[#6b4c9a] transition"
               >
                 <Camera className="w-4 h-4" />
               </button>
@@ -286,7 +286,7 @@ const CreatorProfile = () => {
           {!isEditing ? (
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{formData.displayName || formData.fullName}</h2>
-              <p className="text-indigo-600 font-medium">@{formData.handle}</p>
+              <p className="text-[#667eea] font-medium">@{formData.handle}</p>
               {formData.bio && (
                 <p className="text-gray-600 mt-2 max-w-2xl">{formData.bio}</p>
               )}
@@ -300,7 +300,7 @@ const CreatorProfile = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-[#667eea] focus:border-[#667eea]"
                 />
                 {errors.fullName && <p className="text-red-600 text-sm mt-1">{errors.fullName}</p>}
               </div>
@@ -311,7 +311,7 @@ const CreatorProfile = () => {
                   name="displayName"
                   value={formData.displayName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-[#667eea] focus:border-[#667eea]"
                 />
                 {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
               </div>
@@ -324,7 +324,7 @@ const CreatorProfile = () => {
                     name="handle"
                     value={formData.handle}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 pl-7 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2 pl-7 border rounded-lg focus:ring-[#667eea] focus:border-[#667eea]"
                   />
                 </div>
                 {errors.handle && <p className="text-red-600 text-sm mt-1">{errors.handle}</p>}
@@ -379,7 +379,7 @@ const CreatorProfile = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-[#667eea] focus:border-[#667eea]"
                 />
                 {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
               </>

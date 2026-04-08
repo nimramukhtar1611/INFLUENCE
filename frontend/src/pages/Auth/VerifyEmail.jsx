@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, XCircle, Loader } from 'lucide-react';
+import { CheckCircle, XCircle, Loader, Mail, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const VerifyEmail = () => {
@@ -63,8 +63,8 @@ const VerifyEmail = () => {
       case 'loading':
         return (
           <div className="text-center">
-            <Loader className="w-16 h-16 text-indigo-600 animate-spin mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Verifying Email...</h2>
+            <Loader className="w-16 h-16 text-purple-600 animate-spin mx-auto mb-8" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Verifying Email...</h2>
             <p className="text-gray-600">Please wait while we verify your email address.</p>
           </div>
         );
@@ -72,11 +72,11 @@ const VerifyEmail = () => {
       case 'success':
         return (
           <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8">
+              <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Email Verified!</h2>
+            <p className="text-gray-600 mb-8">{message}</p>
             <p className="text-sm text-gray-500">Redirecting to login...</p>
           </div>
         );
@@ -84,24 +84,25 @@ const VerifyEmail = () => {
       case 'error':
         return (
           <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <XCircle className="w-8 h-8 text-red-600" />
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-8">
+              <XCircle className="w-10 h-10 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Verification Failed</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
-            <div className="space-y-3">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Verification Failed</h2>
+            <p className="text-gray-600 mb-8">{message}</p>
+            <div className="space-y-4">
               <button
                 onClick={handleResend}
                 disabled={resendDisabled}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50"
+                className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
               >
-                {resendDisabled ? `Resend in ${timer}s` : 'Resend Verification Email'}
+                {resendDisabled ? `Resend in ${timer}s` : 'Resend email'}
               </button>
               <Link
-                to="/login"
-                className="block text-indigo-600 hover:text-indigo-700 text-sm"
+                to="/"
+                className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium transition-colors"
               >
-                Back to Login
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Return to Site
               </Link>
             </div>
           </div>
@@ -110,28 +111,63 @@ const VerifyEmail = () => {
       case 'info':
         return (
           <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-blue-600" />
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8">
+              <CheckCircle className="w-10 h-10 text-purple-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Sent!</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Email Sent!</h2>
+            <p className="text-gray-600 mb-8">{message}</p>
             <Link
-              to="/login"
-              className="inline-block text-indigo-600 hover:text-indigo-700"
+              to="/"
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium transition-colors"
             >
-              Back to Login
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Return to Site
             </Link>
           </div>
         );
 
       default:
-        return null;
+        // Default state - show email verification waiting screen
+        return (
+          <div className="text-center">
+            <div 
+className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8">
+              <Mail className="w-10 h-10 text-purple-600" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Verify your email address</h2>
+            <p className="text-gray-600 mb-2">
+              We've sent a verification link to <span className="font-medium text-gray-900">[[user.email_to_verify]]</span>
+            </p>
+            <p className="text-gray-500 text-sm mb-8">
+              If you don't see the email, check your spam folder.
+            </p>
+            <div className="space-y-4">
+              <button
+                onClick={handleResend}
+                disabled={resendDisabled}
+                className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              >
+                {resendDisabled ? `Resend in ${timer}s` : 'Resend email'}
+              </button>
+              <Link
+                to="/"
+                className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Return to Site
+              </Link>
+            </div>
+            <p className="text-gray-400 text-xs mt-8">
+              You can reach us at if you have any questions
+            </p>
+          </div>
+        );
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         {renderContent()}
       </div>
     </div>

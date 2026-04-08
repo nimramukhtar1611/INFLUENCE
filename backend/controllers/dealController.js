@@ -96,6 +96,24 @@ const getAiCounterAccess = async (deal, req) => {
     };
   }
 
+  // Check brand's global AI counter setting for brand users
+  if (actorRole === 'brand') {
+    const Brand = require('../models/Brand');
+    try {
+      const brand = await Brand.findById(getBrandContextId(req));
+      if (!brand?.preferences?.aiCounterEnabled) {
+        return {
+          allowed: false,
+          plan,
+          reason: 'AI Counter Dealing is disabled in your brand settings. Enable it in Settings > AI Settings.'
+        };
+      }
+    } catch (error) {
+      console.error('Error checking brand AI setting:', error);
+      // Continue with default behavior if there's an error
+    }
+  }
+
   return { allowed: true, plan, reason: '' };
 };
 

@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import dealService from '../../services/dealService';
 import api from '../../services/api';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
@@ -188,14 +189,7 @@ const CreatorDeliverables = () => {
 
   // ==================== STATUS HELPERS ====================
   const statusColor = (s) => {
-    const map = {
-      approved: 'text-green-600 bg-green-100',
-      submitted: 'text-blue-600 bg-blue-100',
-      'in-progress': 'text-purple-600 bg-purple-100',
-      revision: 'text-orange-600 bg-orange-100',
-      pending: 'text-yellow-600 bg-yellow-100'
-    };
-    return map[s] || 'text-gray-600 bg-gray-100';
+    return getStatusColor(s, 'deliverable', isDark);
   };
 
   const statusIcon = (s) => {

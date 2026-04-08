@@ -23,8 +23,11 @@ import { formatCurrency, timeAgo } from '../../utils/helpers';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const AvailableDeals = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   // ==================== STATE ====================
   const [loading, setLoading] = useState(true);
   const [campaigns, setCampaigns] = useState([]);
@@ -172,22 +175,28 @@ const AvailableDeals = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Available Deals</h1>
-        <p className="text-gray-600">Find brand collaborations that match your profile</p>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
+        <div>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Available Deals</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Find brand collaborations that match your profile</p>
+        </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
+      <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             <input
               type="text"
               placeholder="Search campaigns, brands, or keywords..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+              }`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -198,7 +207,11 @@ const AvailableDeals = () => {
               type="button"
               onClick={() => setShowFilters(!showFilters)}
               className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${
-                showFilters ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'border-gray-300'
+                showFilters 
+                  ? 'bg-indigo-50 border-indigo-600 text-indigo-600' 
+                  : isDark
+                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700/50'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
               <Filter className="w-4 h-4" />
@@ -212,16 +225,20 @@ const AvailableDeals = () => {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className={`mt-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Category
                 </label>
                 <select
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                 >
                   <option value="">All Categories</option>
                   {categories.map(cat => (
@@ -231,13 +248,17 @@ const AvailableDeals = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Platform
                 </label>
                 <select
                   value={filters.platform}
                   onChange={(e) => handleFilterChange('platform', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                 >
                   <option value="">All Platforms</option>
                   {platforms.map(plat => (
@@ -247,7 +268,7 @@ const AvailableDeals = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Min Budget
                 </label>
                 <input
@@ -255,12 +276,16 @@ const AvailableDeals = () => {
                   value={filters.minBudget}
                   onChange={(e) => handleFilterChange('minBudget', e.target.value)}
                   placeholder="Any"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Max Budget
                 </label>
                 <input
@@ -268,15 +293,19 @@ const AvailableDeals = () => {
                   value={filters.maxBudget}
                   onChange={(e) => handleFilterChange('maxBudget', e.target.value)}
                   placeholder="Any"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                  }`}
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className={`flex justify-end gap-2 mt-4 ${isDark ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                className={`px-4 py-2 text-sm font-medium ${isDark ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-900'}`}
               >
                 Clear All
               </button>
@@ -293,14 +322,18 @@ const AvailableDeals = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600" />
-          <p className="text-red-700">{error}</p>
+        <div className={`p-4 rounded-lg border flex items-center gap-3 ${
+          isDark 
+            ? 'bg-red-950/40 border-red-900 text-red-300'
+            : 'bg-red-50 border-red-200 text-red-700'
+        }`}>
+          <AlertCircle className="w-5 h-5" />
+          <p>{error}</p>
         </div>
       )}
 
       {/* Results Count */}
-      <p className="text-sm text-gray-600">
+      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
         Showing {campaigns.length} of {pagination.total} available deals
       </p>
 
@@ -312,7 +345,9 @@ const AvailableDeals = () => {
             : 30;
 
           return (
-            <div key={campaign._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6">
+            <div key={campaign._id} className={`rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 ${
+              isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'
+            }`}>
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
@@ -322,100 +357,102 @@ const AvailableDeals = () => {
                     className="w-16 h-16 rounded-xl object-cover"
                   />
                   <div className="ml-4">
-                    <h3 className="font-semibold text-gray-900">{campaign.brandId?.brandName}</h3>
-                    <p className="text-sm text-gray-600">{campaign.title}</p>
+                    <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{campaign.brandId?.brandName}</h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{campaign.title}</p>
                   </div>
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+              <p className={`text-sm mb-4 line-clamp-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 {campaign.description || 'No description provided'}
               </p>
 
               {/* Details Grid */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="flex items-center text-sm">
-                  <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-900 font-medium">
+                  <DollarSign className={`w-4 h-4 mr-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <span className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     {formatCurrency(campaign.budget || 0)}
                   </span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <Briefcase className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">
+                  <Briefcase className={`w-4 h-4 mr-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>
                     {campaign.deliverables?.length || 1} deliverables
                   </span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">
+                  <Clock className={`w-4 h-4 mr-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>
                     {daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}
                   </span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <Users className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">
+                  <Users className={`w-4 h-4 mr-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>
                     {campaign.applications?.length || 0} applicants
                   </span>
                 </div>
               </div>
 
               {/* Tags and Actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className={`flex items-center justify-between pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
                 <div className="flex gap-2 flex-wrap">
                   {campaign.category && (
-                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs">
+                    <span className={`px-3 py-1 rounded-full text-xs ${
+                      isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
+                    }`}>
                       {campaign.category}
                     </span>
                   )}
                   {campaign.targetAudience?.platforms?.slice(0, 2).map(platform => (
-                    <span key={platform} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs capitalize">
+                    <span key={platform} className={`px-3 py-1 rounded-full text-xs capitalize ${
+                      isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
+                    }`}>
                       {platform}
                     </span>
                   ))}
                 </div>
                 <button
                   onClick={() => handleApply(campaign)}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 flex items-center"
+                  className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white px-4 py-2 rounded-lg text-sm hover:opacity-90 flex items-center"
                 >
                   Apply Now
-                  <ChevronRight className="w-4 h-4 ml-1" />
                 </button>
               </div>
             </div>
           );
         }) : (
-          <div className="col-span-2 text-center py-12 bg-white rounded-xl">
-            <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No available deals found</p>
-            <button
-              onClick={clearFilters}
-              className="text-indigo-600 hover:text-indigo-700"
-            >
-              Clear filters
-            </button>
+          <div className="col-span-2 text-center py-12">
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No campaigns found</p>
           </div>
         )}
       </div>
 
       {/* Pagination */}
-      {pagination.pages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
+      {campaigns.length > 0 && (
+        <div className={`flex items-center justify-center gap-4 mt-6 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <button
             onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
             disabled={pagination.page === 1}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+              isDark
+                ? 'border-gray-600 hover:bg-gray-700/50'
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}
           >
             Previous
           </button>
-          <span className="px-4 py-2 text-gray-600">
-            Page {pagination.page} of {pagination.pages}
-          </span>
+          <span className={`px-4 py-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Page {pagination.page} of {pagination.pages}</span>
           <button
             onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
             disabled={pagination.page === pagination.pages}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+              isDark
+                ? 'border-gray-600 hover:bg-gray-700/50'
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}
           >
             Next
           </button>
@@ -431,39 +468,47 @@ const AvailableDeals = () => {
       >
         {selectedCampaign && (
           <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium text-gray-900">{selectedCampaign.title}</h3>
-              <p className="text-sm text-gray-600 mt-1">{selectedCampaign.brandId?.brandName}</p>
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedCampaign.title}</h3>
+              <p className={`text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{selectedCampaign.brandId?.brandName}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Your Proposal *
               </label>
               <textarea
                 rows="5"
                 value={applicationData.proposal}
                 onChange={(e) => setApplicationData({...applicationData, proposal: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
                 placeholder="Explain why you're a great fit for this campaign, your ideas, and how you'll deliver value..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Your Rate ($)
               </label>
               <input
                 type="number"
                 value={applicationData.rate}
                 onChange={(e) => setApplicationData({...applicationData, rate: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
                 placeholder="Enter your rate"
               />
             </div>
 
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm text-yellow-800">
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/30 border border-yellow-700/30' : 'bg-yellow-50'}`}>
+              <p className={`text-sm ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>
                 <strong>Tip:</strong> Personalize your proposal. Mention specific ideas for this campaign to increase your chances.
               </p>
             </div>

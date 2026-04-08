@@ -2,8 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { useDeal } from '../../hooks/useDeal';
 import { useSocket } from '../../context/SocketContext';
+import brandService from '../../services/brandService';
 import dealService from '../../services/dealService';
 import {
   ArrowLeft,
@@ -39,7 +41,8 @@ import {
   Trash2,
   Smile
 } from 'lucide-react';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
@@ -61,6 +64,8 @@ const DealDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { socket, joinConversation, leaveConversation, sendMessage: sendSocketMessage, markAsRead, addReaction, deleteMessage } = useSocket();
   const {
     currentDeal: deal,
@@ -97,6 +102,7 @@ const DealDetails = () => {
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [counterSuggestion, setCounterSuggestion] = useState(null);
   const [aiCounterAccess, setAiCounterAccess] = useState({ canUse: false, reason: '', plan: 'free', isActive: false });
+  const [brandAiCounterEnabled, setBrandAiCounterEnabled] = useState(false);
   const [ratingScore, setRatingScore] = useState(5);
   const [ratingReview, setRatingReview] = useState('');
 
@@ -111,6 +117,22 @@ const DealDetails = () => {
       loadDeal();
     }
   }, [id]);
+
+  useEffect(() => {
+    const fetchBrandAiSetting = async () => {
+      if (user?.userType === 'brand' && user?._id) {
+        try {
+          const res = await brandService.getProfile();
+          if (res?.success && res.brand) {
+            setBrandAiCounterEnabled(res.brand.aiCounterEnabled || false);
+          }
+        } catch (error) {
+          console.error('Error fetching brand AI setting:', error);
+        }
+      }
+    };
+    fetchBrandAiSetting();
+  }, [user?.userType, user?._id]);
 
   useEffect(() => () => {
     if (conversationId) leaveConversation(conversationId);
@@ -485,19 +507,8 @@ const DealDetails = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'accepted': return 'bg-blue-100 text-blue-800';
-      case 'in-progress': return 'bg-purple-100 text-purple-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'negotiating': return 'bg-indigo-100 text-indigo-800';
-      case 'revision': return 'bg-orange-100 text-orange-800';
-      case 'cancelled':
-      case 'declined': return 'bg-red-100 text-red-800';
-      case 'disputed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'deal', isDark);
   };
 
   const getDeliverableStatusColor = (status) => {
@@ -513,7 +524,7 @@ const DealDetails = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-12 h-12 animate-spin text-indigo-600" />
+        <Loader className="w-12 h-12 animate-spin text-[#667eea]" />
       </div>
     );
   }
@@ -595,7 +606,7 @@ const DealDetails = () => {
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Progress</p>
-          <p className="text-2xl font-bold text-indigo-600">{deal.progress || 0}%</p>
+          <p className="text-2xl font-bold text-[#667eea]">{deal.progress || 0}%</p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Payment</p>
@@ -612,13 +623,13 @@ const DealDetails = () => {
               onClick={() => setActiveTab(tab)}
               className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                 activeTab === tab
-                  ? 'border-indigo-600 text-indigo-600'
+                  ? 'border-[#667eea] text-[#667eea]'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               {tab}
               {tab === 'messages' && messages.length > 0 && (
-                <span className="ml-2 bg-indigo-100 text-indigo-600 text-xs px-2 py-0.5 rounded-full">
+                <span className="ml-2 bg-[#667eea]/10 text-[#667eea] text-xs px-2 py-0.5 rounded-full">
                   {messages.length}
                 </span>
               )}
@@ -660,7 +671,7 @@ const DealDetails = () => {
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">Performance Metrics</h2>
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded uppercase tracking-wider">
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea] text-xs font-semibold rounded uppercase tracking-wider">
                     {deal.paymentType}
                   </span>
                 </div>
@@ -742,7 +753,7 @@ const DealDetails = () => {
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-700">Performance Progress</span>
-                    <span className="text-xs font-semibold text-indigo-600">
+                    <span className="text-xs font-semibold text-[#667eea]">
                       {deal.paymentType === 'cpe' ? Math.min(100, Math.round(((deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)) / (deal.performanceMetrics.cpe.targetLikes || 1) * 100)) :
                        deal.paymentType === 'cpa' ? Math.min(100, Math.round((deal.metrics?.conversions || 0) / (deal.performanceMetrics.cpa.targetConversions || 1) * 100)) :
                        deal.paymentType === 'cpm' ? Math.min(100, Math.round((deal.metrics?.impressions || 0) / (deal.performanceMetrics.cpm.targetImpressions || 1) * 100)) : 0}%
@@ -750,7 +761,7 @@ const DealDetails = () => {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div 
-                      className="bg-indigo-600 h-2 rounded-full transition-all duration-500" 
+                      className="bg-[#667eea] h-2 rounded-full transition-all duration-500" 
                       style={{ 
                         width: `${
                           deal.paymentType === 'cpe' ? Math.min(100, Math.round(((deal.metrics?.likes || 0) + (deal.metrics?.comments || 0)) / (deal.performanceMetrics.cpe.targetLikes || 1) * 100)) :
@@ -796,8 +807,8 @@ const DealDetails = () => {
                 {otherParty?.profilePicture ? (
                   <img src={otherParty.profilePicture} alt={otherParty.displayName} className="w-16 h-16 rounded-full object-cover" />
                 ) : (
-                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <User className="w-8 h-8 text-indigo-600" />
+                  <div className="w-16 h-16 bg-[#667eea]/10 rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-[#667eea]" />
                   </div>
                 )}
                 <div>
@@ -818,7 +829,7 @@ const DealDetails = () => {
 
               <Link
                 to={isBrand ? `/brand/creators/${otherParty?._id}` : `/brands/${otherParty?._id}`}
-                className="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center"
+                className="text-[#667eea] hover:text-[#5a67d8] text-sm font-medium flex items-center transition-colors"
               >
                 View Full Profile
               </Link>
@@ -828,16 +839,16 @@ const DealDetails = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
               {deal.status === 'negotiating' && latestCounter && (
-                <div className="mb-4 p-3 rounded-lg border border-indigo-100 bg-indigo-50">
-                  <p className="text-xs text-indigo-700 font-medium mb-1">Latest Counter Offer</p>
+                <div className="mb-4 p-3 rounded-lg border border-[#667eea]/20 bg-gradient-to-r from-[#667eea]/5 to-[#764ba2]/5">
+                  <p className="text-xs text-[#667eea] font-medium mb-1">Latest Counter Offer</p>
                   {latestCounter.budget && (
-                    <p className="text-sm text-indigo-800">Budget: {formatCurrency(latestCounter.budget)}</p>
+                    <p className="text-sm text-[#764ba2]">Budget: {formatCurrency(latestCounter.budget)}</p>
                   )}
                   {latestCounter.deadline && (
-                    <p className="text-sm text-indigo-800">Deadline: {formatDate(latestCounter.deadline)}</p>
+                    <p className="text-sm text-[#764ba2]">Deadline: {formatDate(latestCounter.deadline)}</p>
                   )}
                   {latestCounter.message && (
-                    <p className="text-sm text-indigo-900 mt-1">{latestCounter.message}</p>
+                    <p className="text-sm text-[#667eea] mt-1">{latestCounter.message}</p>
                   )}
                 </div>
               )}
@@ -869,7 +880,7 @@ const DealDetails = () => {
                   </>
                 )}
 
-                {canBrandCounter && aiCounterAccess?.canUse && (
+                {canBrandCounter && brandAiCounterEnabled && aiCounterAccess?.canUse && (
                   <Button
                     variant="secondary"
                     fullWidth
@@ -882,14 +893,20 @@ const DealDetails = () => {
                   </Button>
                 )}
 
-                {canBrandCounter && !aiCounterAccess?.canUse && aiCounterAccess?.reason && (
+                {canBrandCounter && brandAiCounterEnabled && !aiCounterAccess?.canUse && aiCounterAccess?.reason && (
                   <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
                     {aiCounterAccess.reason}
                   </p>
                 )}
 
+                {canBrandCounter && !brandAiCounterEnabled && (
+                  <p className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-2">
+                    AI Counter Dealing is disabled in your brand settings. Enable it to use this feature.
+                  </p>
+                )}
+
                 {manualCounterDisabled && (
-                  <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg p-2">
+                  <p className="text-xs text-[#667eea] bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 border border-[#667eea]/20 rounded-lg p-2">
                     You started AI Counter Dealing, so your manual counter offer is disabled.
                   </p>
                 )}
@@ -1034,7 +1051,7 @@ const DealDetails = () => {
                           href={link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-sm text-indigo-600 hover:text-indigo-700 truncate"
+                          className="block text-sm text-[#667eea] hover:text-[#5a67d8] truncate transition-colors"
                         >
                           {link}
                         </a>
@@ -1157,7 +1174,7 @@ const DealDetails = () => {
               return (
                 <div key={msg._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[70%] rounded-lg p-3 ${
-                    isOwn ? 'bg-indigo-600 text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-100'
+                    isOwn ? 'bg-[#667eea] text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-100'
                   }`}>
                     {!isOwn && (
                       <p className="text-xs text-gray-500 mb-1">
@@ -1189,7 +1206,7 @@ const DealDetails = () => {
                       </div>
                     )}
                     <div className={`flex items-center justify-end mt-1 text-xs ${
-                      isOwn ? 'text-indigo-200' : 'text-gray-500'
+                      isOwn ? 'text-[#667eea]/60' : 'text-gray-500'
                     }`}>
                       <span>{timeAgo(msg.createdAt)}</span>
                       {isOwn && (
@@ -1211,8 +1228,8 @@ const DealDetails = () => {
 
           <div className="p-4 border-t border-gray-200">
             {replyingTo && (
-              <div className="mb-2 flex items-center justify-between bg-indigo-50 p-2 rounded-lg">
-                <span className="text-sm text-indigo-600">Replying to: {replyingTo.content?.substring(0, 50)}</span>
+              <div className="mb-2 flex items-center justify-between bg-[#667eea]/10 p-2 rounded-lg">
+                <span className="text-sm text-[#667eea]">Replying to: {replyingTo.content?.substring(0, 50)}</span>
                 <button onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600">
                   <X className="w-4 h-4" />
                 </button>
@@ -1264,7 +1281,7 @@ const DealDetails = () => {
               <button
                 onClick={handleSendMessage}
                 disabled={(!messageInput.trim() && attachments.length === 0) || sendingMessage || uploading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="px-4 py-2 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] disabled:opacity-50 transition-colors"
               >
                 {sendingMessage ? <Loader className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               </button>
@@ -1406,13 +1423,13 @@ const DealDetails = () => {
       <Modal isOpen={showCounterModal} onClose={() => setShowCounterModal(false)} title="Counter Offer">
         <div className="space-y-4">
           {counterSuggestion && (
-            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
-              <p className="text-xs font-semibold text-indigo-800 mb-1">Suggested Offer</p>
-              <p className="text-sm text-indigo-900">Budget: {formatCurrency(counterSuggestion.suggestedBudget || 0)}</p>
+            <div className="rounded-lg border border-[#667eea]/20 bg-gradient-to-r from-[#667eea]/5 to-[#764ba2]/5 p-3">
+              <p className="text-xs font-semibold text-[#764ba2] mb-1">Suggested Offer</p>
+              <p className="text-sm text-[#667eea]">Budget: {formatCurrency(counterSuggestion.suggestedBudget || 0)}</p>
               {counterSuggestion.suggestedDeadline && (
-                <p className="text-sm text-indigo-900">Deadline: {formatDate(counterSuggestion.suggestedDeadline)}</p>
+                <p className="text-sm text-[#667eea]">Deadline: {formatDate(counterSuggestion.suggestedDeadline)}</p>
               )}
-              <p className="text-xs text-indigo-700 mt-1">Confidence: {counterSuggestion.confidence || 0}%</p>
+              <p className="text-xs text-[#764ba2] mt-1">Confidence: {counterSuggestion.confidence || 0}%</p>
             </div>
           )}
 

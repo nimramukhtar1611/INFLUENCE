@@ -8,6 +8,7 @@ import {
   Trash2, Edit, Plus, Download, Upload, HelpCircle, FileText, Camera, Settings as SettingsIcon
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import brandService from '../../services/brandService';
 import authService from '../../services/authService';
 import api from '../../services/api';
@@ -15,6 +16,8 @@ import Button from '../../components/UI/Button';
 import Input from '../../components/UI/Input';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 
 // ==================== SUB-COMPONENTS ====================
 
@@ -161,7 +164,7 @@ const ProfileSettings = ({ settings, setSettings, profileImage, onProfileImageUp
         <select
           value={settings.industry || 'Other'}
           onChange={(e) => setSettings({ ...settings, industry: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#667eea]"
         >
           <option value="Fashion">Fashion</option>
           <option value="Beauty">Beauty</option>
@@ -189,7 +192,7 @@ const ProfileSettings = ({ settings, setSettings, profileImage, onProfileImageUp
         <select
           value={settings.employees || '1-10'}
           onChange={(e) => setSettings({ ...settings, employees: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#667eea]"
         >
           <option value="1-10">1-10</option>
           <option value="11-50">11-50</option>
@@ -264,7 +267,7 @@ const CompanySettings = ({ settings, setSettings }) => {
           <select
             value={settings.businessType || 'individual'}
             onChange={(e) => setSettings({ ...settings, businessType: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#667eea]"
           >
             <option value="individual">Individual</option>
             <option value="sole_proprietor">Sole Proprietor</option>
@@ -323,8 +326,72 @@ const SocialSettings = ({ settings, setSettings }) => {
   );
 };
 
+const AISettings = ({ settings, setSettings }) => {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gray-50 p-6 rounded-lg">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">AI Counter Dealing</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-900">Enable AI Counter Dealing</h4>
+              <p className="text-sm text-gray-500 mt-1">
+                When enabled, AI counter dealing will be automatically available for all your campaigns. 
+                You won't need to manually enable it for each individual campaign.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, aiCounterEnabled: !settings.aiCounterEnabled })}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:ring-offset-2 ${
+                settings.aiCounterEnabled ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2]' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  settings.aiCounterEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          
+          {settings.aiCounterEnabled && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">AI Counter Dealing Enabled</p>
+                  <p className="text-xs text-green-700 mt-1">
+                    AI counter dealing will now be automatically available for all your new and existing campaigns.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!settings.aiCounterEnabled && (
+            <div className="mt-4 p-4 bg-gray-100 border border-gray-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-gray-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">AI Counter Dealing Disabled</p>
+                  <p className="text-xs text-gray-700 mt-1">
+                    You will need to manually enable AI counter dealing for each individual campaign where you want to use it.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN COMPONENT ====================
 const BrandSettings = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { user, refreshUser, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -364,7 +431,8 @@ const BrandSettings = () => {
       facebook: '',
       linkedin: '',
       youtube: ''
-    }
+    },
+    aiCounterEnabled: false
   });
 
   // 2FA State
@@ -380,6 +448,7 @@ const BrandSettings = () => {
     { id: 'profile', label: 'Profile Info', icon: User },
     { id: 'company', label: 'Company Details', icon: Building2 },
     { id: 'social', label: 'Social Media', icon: Instagram },
+    { id: 'ai', label: 'AI Settings', icon: SettingsIcon },
     { id: 'security', label: 'Security', icon: Lock }
   ];
 
@@ -480,7 +549,8 @@ const BrandSettings = () => {
               facebook: toSocialUrl('facebook', brand.socialMedia?.facebook || ''),
               linkedin: toSocialUrl('linkedin', brand.socialMedia?.linkedin || ''),
               youtube: toSocialUrl('youtube', brand.socialMedia?.youtube || '')
-            }
+            },
+            aiCounterEnabled: brand.aiCounterEnabled || false
           });
         }
       } catch (error) {
@@ -604,6 +674,10 @@ const BrandSettings = () => {
   };
 
   // ==================== RENDER TAB CONTENT ====================
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'payment', false); // Brand Settings doesn't use theme yet
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
@@ -619,6 +693,8 @@ const BrandSettings = () => {
         return <CompanySettings settings={settings} setSettings={setSettings} />;
       case 'social':
         return <SocialSettings settings={settings} setSettings={setSettings} />;
+      case 'ai':
+        return <AISettings settings={settings} setSettings={setSettings} />;
       case 'security':
         return (
           <div className="space-y-6">
@@ -638,7 +714,7 @@ const BrandSettings = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      twoFactorStatus?.enabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                      twoFactorStatus?.enabled ? getStatusColor('completed', 'status', false) : getStatusColor('inactive', 'status', false)
                     }`}>
                       <Smartphone className="w-6 h-6" />
                     </div>
@@ -687,17 +763,17 @@ const BrandSettings = () => {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader className="animate-spin text-indigo-600 w-10 h-10" />
+        <Loader className="animate-spin text-[#667eea] w-10 h-10" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center">
+    <div className={`space-y-6 max-w-6xl mx-auto ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage your real brand profile and preferences</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Settings</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage your real brand profile and preferences</p>
         </div>
         <Button
           variant="primary"
@@ -720,7 +796,7 @@ const BrandSettings = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-indigo-100 text-indigo-600'
+                    ? 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -815,13 +891,13 @@ const BrandSettings = () => {
                   <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48" />
                 ) : (
                   <div className="w-48 h-48 bg-gray-100 animate-spin flex items-center justify-center">
-                    <Loader className="w-8 h-8 text-indigo-500" />
+                    <Loader className="w-8 h-8 text-[#667eea]" />
                   </div>
                 )}
               </div>
               <div className="text-left bg-gray-50 p-3 rounded-lg border">
                 <p className="text-xs text-gray-500 font-medium uppercase mb-1">Manual Entry Key</p>
-                <code className="text-sm font-mono break-all text-indigo-600 font-bold">
+                <code className="text-sm font-mono break-all text-[#667eea] font-bold">
                   {qrCodeData?.secret}
                 </code>
               </div>
@@ -840,7 +916,7 @@ const BrandSettings = () => {
                 type="text"
                 maxLength={6}
                 autoFocus
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-[#667eea]"
                 placeholder="000000"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
@@ -865,7 +941,7 @@ const BrandSettings = () => {
           {twoFactorStep === 'success' && (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                <div className={`w-16 h-16 ${getStatusColor('completed', 'status', false).split(' ')[0]} ${getStatusColor('completed', 'status', false).split(' ')[1]} rounded-full flex items-center justify-center`}>
                   <CheckCircle className="w-10 h-10" />
                 </div>
               </div>

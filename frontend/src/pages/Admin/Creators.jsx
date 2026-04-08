@@ -1,14 +1,19 @@
 // pages/Admin/Creators.jsx
 import React, { useState } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
-import { Search, Eye, CheckCircle, Clock, Users, DollarSign, Star, Instagram, Youtube, Twitter, Download } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
+import { Search, Filter, CheckCircle, Clock, Users, DollarSign, Star, Instagram, Youtube, Twitter, Download, UserCheck, UserX } from 'lucide-react';
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import Modal from '../../components/Common/Modal';
+import Loader from '../../components/Common/Loader';
 import { formatNumber, formatCurrency, formatDate } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 
 const Creators = () => {
   const { creators, loading, refreshData, stats } = useAdminData();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCreator, setSelectedCreator] = useState(null);
@@ -20,13 +25,8 @@ const Creators = () => {
     return true;
   });
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'status', false); // Creators page doesn't use theme yet
   };
 
   const getPlatformIcon = (platform) => {
@@ -38,7 +38,13 @@ const Creators = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="large" color="purple" />
+      </div>
+    );
+  }
 
   const openCreatorDetails = (creator) => {
     setSelectedCreator(creator);
@@ -46,94 +52,121 @@ const Creators = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Creator Management</h1>
-        <Button variant="outline" icon={Download}>Export</Button>
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      {/* Header */}
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
+        <div>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Creator Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage all creators on the platform</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" icon={Download}>
+            Export
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard title="Total Creators" value={stats.totalCreators?.toLocaleString() || '0'} icon={Users} color="bg-blue-500" />
         <StatsCard title="Active" value={creators.filter(c => c.status === 'active').length} icon={CheckCircle} color="bg-green-500" />
         <StatsCard title="Pending" value={creators.filter(c => c.status === 'pending').length} icon={Clock} color="bg-yellow-500" />
         <StatsCard title="Total Earnings" value={formatCurrency(creators.reduce((sum, c) => sum + (c.stats?.totalEarnings || 0), 0))} icon={DollarSign} color="bg-purple-500" />
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="Search creators..."
-            className="flex-1 px-4 py-2 border rounded-lg"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-4 py-2 border rounded-lg">
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="suspended">Suspended</option>
-          </select>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200/50">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search creators by name, email, or niche..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <div className="relative">
+              <select 
+                value={filter} 
+                onChange={(e) => setFilter(e.target.value)} 
+                className="appearance-none pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 shadow-sm bg-white"
+              >
+                <option value="all">All Creators</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="suspended">Suspended</option>
+              </select>
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                {filter === 'all' && <Users className="w-4 h-4 text-gray-400" />}
+                {filter === 'active' && <UserCheck className="w-4 h-4 text-green-500" />}
+                {filter === 'pending' && <Clock className="w-4 h-4 text-yellow-500" />}
+                {filter === 'suspended' && <UserX className="w-4 h-4 text-red-500" />}
+              </div>
+              <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            </div>
+
+            <Button variant="outline" icon={Download} className="px-4 py-3">
+              Export
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table className="min-w-full">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left">Creator</th>
-              <th className="px-6 py-3 text-left">Niche</th>
-              <th className="px-6 py-3 text-left">Status</th>
-              <th className="px-6 py-3 text-left">Platforms</th>
-              <th className="px-6 py-3 text-left">Followers</th>
-              <th className="px-6 py-3 text-left">Engagement</th>
-              <th className="px-6 py-3 text-left">Earnings</th>
-              <th className="px-6 py-3 text-left">Rating</th>
-              <th className="px-6 py-3 text-right">Actions</th>
+        <div>
+          <table className="min-w-full">
+            <thead>
+              <tr>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Creator</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Niche</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Status</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Platforms</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Followers</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Engagement</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Earnings</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap font-normal text-gray-600">Rating</th>
              </tr>
-          </thead>
-          <tbody>
-            {filteredCreators.map(creator => (
-              <tr key={creator._id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="font-medium">{creator.displayName}</div>
-                  <div className="text-sm text-gray-500">{creator.email}</div>
-                </td>
-                <td className="px-6 py-4">{creator.niches?.[0] || '—'}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(creator.status)}`}>
-                    {creator.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-1">
-                    {creator.socialMedia?.instagram && getPlatformIcon('instagram')}
-                    {creator.socialMedia?.youtube && getPlatformIcon('youtube')}
-                    {creator.socialMedia?.tiktok && getPlatformIcon('tiktok')}
-                  </div>
-                </td>
-                <td className="px-6 py-4">{formatNumber(creator.totalFollowers || 0)}</td>
-                <td className="px-6 py-4 text-green-600">{creator.averageEngagement?.toFixed(1) || '0'}%</td>
-                <td className="px-6 py-4 font-medium">{formatCurrency(creator.stats?.totalEarnings || 0)}</td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="ml-1">{creator.stats?.averageRating?.toFixed(1) || '0'}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => openCreatorDetails(creator)}
-                    className="text-indigo-600 hover:text-indigo-900"
-                    title="View Details"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredCreators.map(creator => (
+                <tr 
+                  key={creator._id} 
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => openCreatorDetails(creator)}
+                >
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="font-medium truncate max-w-[150px]">{creator.displayName}</div>
+                    <div className="text-sm text-gray-500 truncate max-w-[150px]">{creator.email}</div>
+                  </td>
+                  <td className="px-4 py-4 truncate max-w-[100px]">{creator.niches?.[0] || '—'}</td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColorClass(creator.status)}`}>
+                      {creator.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex gap-1">
+                      {creator.socialMedia?.instagram && getPlatformIcon('instagram')}
+                      {creator.socialMedia?.youtube && getPlatformIcon('youtube')}
+                      {creator.socialMedia?.tiktok && getPlatformIcon('tiktok')}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">{formatNumber(creator.totalFollowers || 0)}</td>
+                  <td className="px-4 py-4 text-green-600 whitespace-nowrap">{creator.averageEngagement?.toFixed(1) || '0'}%</td>
+                  <td className="px-4 py-4 font-medium whitespace-nowrap">{formatCurrency(creator.stats?.totalEarnings || 0)}</td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="ml-1">{creator.stats?.averageRating?.toFixed(1) || '0'}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Modal

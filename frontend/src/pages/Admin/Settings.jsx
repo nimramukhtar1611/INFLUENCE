@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAdminData } from '../../hooks/useAdminData';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import api from '../../services/api';
 import Button from '../../components/UI/Button';
 import Input from '../../components/UI/Input';
@@ -90,7 +91,7 @@ const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
             />
             {uploading && (
               <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
-                <Loader className="w-5 h-5 text-white animate-spin" />
+                <Loader size="small" color="white" />
               </div>
             )}
           </div>
@@ -126,6 +127,8 @@ const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
 
 const AdminSettings = () => {
   const { user, refreshUser, updateUser } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const {
     settings,
     fees,
@@ -333,40 +336,40 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Platform Settings</h1>
-        <div className="flex gap-2">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
+        <div>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Platform Settings</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Configure platform-wide settings and preferences</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" icon={RefreshCw} onClick={refreshData}>
             Refresh
-          </Button>
-          <Button variant="primary" icon={Save} onClick={handleSave} loading={saving}>
-            Save Changes
           </Button>
         </div>
       </div>
 
       {/* Settings Layout */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="flex flex-col md:flex-row">
+      <div className={`${isDark ? 'bg-gray-900' : 'bg-white'} rounded-xl shadow-sm overflow-hidden`}>
+        <div className="flex flex-col lg:flex-row">
           {/* Sidebar */}
-          <div className="md:w-64 border-r border-gray-200 bg-gray-50">
-            <nav className="p-4 space-y-1">
+          <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} lg:w-64 border-r overflow-x-auto`}>
+            <nav className="p-2 lg:p-4 space-y-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-2 lg:gap-3 px-2 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                       activeTab === tab.id
-                        ? 'bg-indigo-100 text-indigo-600'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]'
+                        : isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {tab.label}
+                    <Icon className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
+                    <span className="truncate">{tab.label}</span>
                   </button>
                 );
               })}
@@ -374,7 +377,7 @@ const AdminSettings = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-3 lg:p-6 overflow-x-hidden">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 capitalize">
               {tabs.find(t => t.id === activeTab)?.label} Settings
             </h2>
@@ -402,7 +405,7 @@ const AdminSettings = () => {
                   onChange={(e) => setFormData({...formData, platformName: e.target.value})}
                 />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                   <Input
                     label="Support Email"
                     type="email"
@@ -416,7 +419,7 @@ const AdminSettings = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Timezone
@@ -424,7 +427,7 @@ const AdminSettings = () => {
                     <select
                       value={formData.timezone}
                       onChange={(e) => setFormData({...formData, timezone: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
                     >
                       <option value="America/New_York">Eastern Time</option>
                       <option value="America/Chicago">Central Time</option>
@@ -444,7 +447,7 @@ const AdminSettings = () => {
                     <select
                       value={formData.dateFormat}
                       onChange={(e) => setFormData({...formData, dateFormat: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -459,7 +462,7 @@ const AdminSettings = () => {
                     <select
                       value={formData.currency}
                       onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -473,7 +476,7 @@ const AdminSettings = () => {
 
             {activeTab === 'fees' && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                   <Input
                     label="Commission Rate (%)"
                     type="number"
@@ -607,9 +610,9 @@ const AdminSettings = () => {
 
                 <div className="pt-6 border-t border-gray-200">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">My Two-Factor Authentication</h3>
-                  <div className="bg-white border rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-4">
+                  <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl p-4 lg:p-6`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                      <div className="flex items-center gap-3 lg:gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                           twoFactorStatus?.enabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
                         }`}>
@@ -830,7 +833,7 @@ const AdminSettings = () => {
                     <select
                       value={formData.paymentProvider}
                       onChange={(e) => setFormData({ ...formData, paymentProvider: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
                     >
                       <option value="stripe">Stripe</option>
                       <option value="manual">Manual (Offline)</option>

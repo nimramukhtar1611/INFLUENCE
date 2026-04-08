@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import ReCAPTCHA from "react-google-recaptcha";
-import { 
+import {
   Mail, Lock, User, Phone, Globe,
-  ArrowRight, Eye, EyeOff, Shield, CheckCircle
+  ArrowRight, Eye, EyeOff, Shield, CheckCircle, Building2, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import OTPVerification from '../../components/Auth/OTPVerification';
@@ -18,22 +18,19 @@ const Signup = () => {
   const [otpDestination, setOtpDestination] = useState('');
   const [otpType, setOtpType] = useState('email');
   const navigate = useNavigate();
-  
+
   const [captchaToken, setCaptchaToken] = useState(null);
   const captchaRef = React.useRef();
 
-  // ✅ Get reCAPTCHA site key from Vite environment
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
-  console.log('🔐 reCAPTCHA Site Key loaded:', RECAPTCHA_SITE_KEY ? '✅ Yes' : '❌ No');
-
-  const { 
-    signup, 
-    sendEmailOTP, 
-    sendPhoneOTP, 
-    verifyEmailOTP, 
+  const {
+    signup,
+    sendEmailOTP,
+    sendPhoneOTP,
+    verifyEmailOTP,
     verifyPhoneOTP,
-    loading: authLoading 
+    loading: authLoading
   } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -82,73 +79,36 @@ const Signup = () => {
 
   const validateStep1 = () => {
     const newErrors = {};
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/[A-Z]/.test(formData.password)) {
-      newErrors.password = 'Password must contain at least one uppercase letter';
-    } else if (!/[0-9]/.test(formData.password)) {
-      newErrors.password = 'Password must contain at least one number';
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    if (!formData.fullName) {
-      newErrors.fullName = 'Full name is required';
-    }
-    
+    if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    else if (!/[A-Z]/.test(formData.password)) newErrors.password = 'Password must contain at least one uppercase letter';
+    else if (!/[0-9]/.test(formData.password)) newErrors.password = 'Password must contain at least one number';
+    if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
+    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.fullName) newErrors.fullName = 'Full name is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
     const newErrors = {};
-    
     if (userType === 'brand') {
-      if (!formData.brandName) {
-        newErrors.brandName = 'Brand name is required';
-      }
-      if (!formData.industry) {
-        newErrors.industry = 'Industry is required';
-      }
+      if (!formData.brandName) newErrors.brandName = 'Brand name is required';
+      if (!formData.industry) newErrors.industry = 'Industry is required';
     } else {
-      if (!formData.displayName) {
-        newErrors.displayName = 'Display name is required';
-      }
-      if (!formData.handle) {
-        newErrors.handle = 'Handle is required';
-      }
-      if (!formData.niche) {
-        newErrors.niche = 'Please select a niche';
-      }
+      if (!formData.displayName) newErrors.displayName = 'Display name is required';
+      if (!formData.handle) newErrors.handle = 'Handle is required';
+      if (!formData.niche) newErrors.niche = 'Please select a niche';
     }
-
-    if (!captchaToken) {
-      newErrors.captcha = 'Please verify reCAPTCHA';
-    }
-    
+    if (!captchaToken) newErrors.captcha = 'Please verify reCAPTCHA';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleEmailOTP = async () => {
-    if (!formData.email) {
-      toast.error('Email is required');
-      return;
-    }
-    
+    if (!formData.email) { toast.error('Email is required'); return; }
     const result = await sendEmailOTP(formData.email);
     if (result.success) {
       setOtpDestination(formData.email);
@@ -158,10 +118,7 @@ const Signup = () => {
   };
 
   const handlePhoneOTP = async () => {
-    if (!formData.phone) {
-      toast.error('Please enter phone number');
-      return;
-    }
+    if (!formData.phone) { toast.error('Please enter phone number'); return; }
     const result = await sendPhoneOTP(formData.phone);
     if (result.success) {
       setOtpDestination(formData.phone);
@@ -172,93 +129,56 @@ const Signup = () => {
 
   const handleVerifyOTP = async (code) => {
     let result;
-    if (otpType === 'email') {
-      result = await verifyEmailOTP(otpDestination, code);
-    } else {
-      result = await verifyPhoneOTP(otpDestination, code);
-    }
-
-    if (result.success) {
-      setShowOTP(false);
-      setStep(3);
-    }
+    if (otpType === 'email') result = await verifyEmailOTP(otpDestination, code);
+    else result = await verifyPhoneOTP(otpDestination, code);
+    if (result.success) { setShowOTP(false); setStep(3); }
   };
 
   const handleResendOTP = async () => {
-    if (otpType === 'email') {
-      await sendEmailOTP(otpDestination);
-    } else {
-      await sendPhoneOTP(otpDestination);
-    }
+    if (otpType === 'email') await sendEmailOTP(otpDestination);
+    else await sendPhoneOTP(otpDestination);
   };
 
   const handleCaptchaChange = (token) => {
-    console.log('🔐 reCAPTCHA token received:', token ? '✅ Yes' : '❌ No');
     setCaptchaToken(token);
-    if (errors.captcha) {
-      setErrors(prev => ({
-        ...prev,
-        captcha: null
-      }));
-    }
+    if (errors.captcha) setErrors(prev => ({ ...prev, captcha: null }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (step === 1) {
-      if (validateStep1()) {
-        setStep(2);
-      }
+      if (validateStep1()) setStep(2);
     } else if (step === 2) {
-      if (validateStep2()) {
-        handleEmailOTP();
-      }
+      if (validateStep2()) handleEmailOTP();
     } else {
       setLoading(true);
-      
       const signupData = {
         email: formData.email,
         password: formData.password,
         fullName: formData.fullName,
-        userType: userType,
+        userType,
         phone: formData.phone || '',
-        captchaToken: captchaToken,
+        captchaToken,
       };
-
       if (userType === 'brand') {
         signupData.brandName = formData.brandName;
         signupData.industry = formData.industry;
         signupData.website = formData.website || '';
       } else {
         signupData.displayName = formData.displayName;
-        const cleanHandle = formData.handle.startsWith('@') 
-          ? formData.handle.substring(1) 
-          : formData.handle;
+        const cleanHandle = formData.handle.startsWith('@') ? formData.handle.substring(1) : formData.handle;
         signupData.handle = cleanHandle;
         signupData.niches = formData.niche ? [formData.niche] : [];
       }
-
-      console.log('Submitting signup data:', signupData);
-
       try {
         const result = await signup(signupData);
-        
         if (result.success) {
           toast.success('Account created successfully!');
-          if (userType === 'brand') {
-            navigate('/brand/dashboard');
-          } else {
-            navigate('/creator/dashboard');
-          }
+          navigate(userType === 'brand' ? '/brand/dashboard' : '/creator/dashboard');
         }
       } catch (error) {
         console.error('Signup error:', error);
-        
-        if (captchaRef.current) {
-          captchaRef.current.reset();
-          setCaptchaToken(null);
-        }
+        if (captchaRef.current) { captchaRef.current.reset(); setCaptchaToken(null); }
       } finally {
         setLoading(false);
       }
@@ -267,16 +187,8 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
   if (showOTP) {
@@ -292,412 +204,931 @@ const Signup = () => {
     );
   }
 
+  const stepLabels = ['Basic Info', 'Details', 'Verification'];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full bg-white p-8 rounded-xl shadow-lg">
-        
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign in
-            </Link>
-          </p>
-        </div>
+    <div
+      className="min-h-screen flex"
+      style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
+      {/* ── Left decorative panel ── */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
+        {/* floating blobs */}
+        <div
+          style={{
+            position: 'absolute', width: 340, height: 340, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)', top: -80, left: -80,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute', width: 220, height: 220, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.06)', bottom: 80, right: -40,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute', width: 140, height: 140, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)', top: '45%', left: '60%',
+          }}
+        />
 
-        {step === 1 && (
-          <div className="mb-8">
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setUserType('brand')}
-                className={`p-4 border-2 rounded-lg text-center transition-all ${
-                  userType === 'brand'
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-300'
-                }`}
-              >
-                <h3 className="font-semibold text-lg mb-1">Brand</h3>
-                <p className="text-sm text-gray-600">Find creators for your campaigns</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUserType('creator')}
-                className={`p-4 border-2 rounded-lg text-center transition-all ${
-                  userType === 'creator'
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-300'
-                }`}
-              >
-                <h3 className="font-semibold text-lg mb-1">Creator</h3>
-                <p className="text-sm text-gray-600">Monetize your audience</p>
-              </button>
+        {/* brand mark */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <Shield className="text-white" size={22} />
             </div>
-          </div>
-        )}
-
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className={`flex-1 h-2 rounded-l-full ${step >= 1 ? 'bg-indigo-600' : 'bg-gray-200'}`} />
-            <div className={`flex-1 h-2 ${step >= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`} />
-            <div className={`flex-1 h-2 rounded-r-full ${step >= 3 ? 'bg-indigo-600' : 'bg-gray-200'}`} />
-          </div>
-          <div className="flex justify-between mt-2 text-sm text-gray-600">
-            <span>Basic Info</span>
-            <span>Details</span>
-            <span>Verification</span>
+            <span style={{ color: '#fff', fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px' }}>
+              InfluenceX
+            </span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {step === 1 ? (
-            <div className="space-y-4">
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    name="fullName"
-                    required
-                    className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      errors.fullName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter your full name"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                  />
-                </div>
-                {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address *
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Enter your phone number"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    required
-                    className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      errors.password ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Create a password"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <Eye className="w-5 h-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    required
-                    className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <Eye className="w-5 h-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
-              </div>
-            </div>
-          ) : step === 2 ? (
-            <div className="space-y-4">
-              {userType === 'brand' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Brand Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="brandName"
-                      required
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                        errors.brandName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter your brand name"
-                      value={formData.brandName}
-                      onChange={handleChange}
-                    />
-                    {errors.brandName && <p className="mt-1 text-sm text-red-600">{errors.brandName}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Industry *
-                    </label>
-                    <select
-                      name="industry"
-                      required
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                        errors.industry ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      value={formData.industry}
-                      onChange={handleChange}
-                    >
-                      <option value="">Select industry</option>
-                      {brandIndustries.map(industry => (
-                        <option key={industry.value} value={industry.value}>
-                          {industry.label}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.industry && <p className="mt-1 text-sm text-red-600">{errors.industry}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website
-                    </label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="url"
-                        name="website"
-                        className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="https://www.yourbrand.com"
-                        value={formData.website}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Display Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="displayName"
-                      required
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                        errors.displayName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="How should brands address you?"
-                      value={formData.displayName}
-                      onChange={handleChange}
-                    />
-                    {errors.displayName && <p className="mt-1 text-sm text-red-600">{errors.displayName}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Handle *
-                    </label>
-                    <input
-                      type="text"
-                      name="handle"
-                      required
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                        errors.handle ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="username (without @)"
-                      value={formData.handle}
-                      onChange={handleChange}
-                    />
-                    {errors.handle && <p className="mt-1 text-sm text-red-600">{errors.handle}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Primary Niche *
-                    </label>
-                    <select
-                      name="niche"
-                      required
-                      className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                        errors.niche ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      value={formData.niche}
-                      onChange={handleChange}
-                    >
-                      <option value="">Select your niche</option>
-                      {creatorNiches.map(niche => (
-                        <option key={niche.value} value={niche.value}>
-                          {niche.label}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.niche && <p className="mt-1 text-sm text-red-600">{errors.niche}</p>}
-                  </div>
-                </>
-              )}
-
-              {/* ✅ reCAPTCHA - with null check */}
-              {RECAPTCHA_SITE_KEY ? (
-                <div className={errors.captcha ? 'border border-red-500 p-3 rounded-lg bg-red-50' : 'p-3 border border-gray-200 rounded-lg'}>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Verify reCAPTCHA *
-                  </label>
-                  <ReCAPTCHA
-                    ref={captchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={handleCaptchaChange}
-                  />
-                  {errors.captcha && <p className="mt-2 text-sm text-red-600">{errors.captcha}</p>}
-                </div>
-              ) : (
-                <div className="p-3 border border-yellow-200 rounded-lg bg-yellow-50">
-                  <p className="text-sm text-yellow-800">
-                    ⚠️ reCAPTCHA is not configured. Please set VITE_RECAPTCHA_SITE_KEY in .env
-                  </p>
-                </div>
-              )}
-
-              <div className="flex items-center mt-4">
-                <input
-                  id="terms"
-                  name="terms"
-                  type="checkbox"
-                  required
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                  I agree to the{' '}
-                  <Link to="/terms" className="text-indigo-600 hover:text-indigo-500">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link to="/privacy" className="text-indigo-600 hover:text-indigo-500">
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center space-y-6">
-              <div className="flex justify-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-10 h-10 text-green-600" />
-                </div>
-              </div>
-              
-              <h3 className="text-xl font-semibold text-gray-900">
-                Almost there!
-              </h3>
-              
-              <p className="text-gray-600">
-                We've sent a verification code to your email. Please check your inbox and verify your email address.
-              </p>
-
-              {formData.phone && (
-                <button
-                  type="button"
-                  onClick={handlePhoneOTP}
-                  className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                >
-                  Also verify phone number (optional)
-                </button>
-              )}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || authLoading || (step === 2 && !captchaToken)}
-            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        {/* hero copy */}
+        <div className="relative z-10">
+          <h1
+            style={{
+              color: '#fff', fontSize: 42, fontWeight: 800,
+              lineHeight: 1.15, letterSpacing: '-1px', marginBottom: 20,
+            }}
           >
-            {loading || authLoading ? (
-              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                {step === 1 ? 'Continue' : step === 2 ? 'Create Account' : 'Go to Dashboard'}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
+            Connect brands<br />with creators.
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 17, lineHeight: 1.7, maxWidth: 360 }}>
+           join thousand of brands and creators collaborating on impactful campaigns 
+          </p>
 
-        <div className="mt-6 text-center">
-          <div className="flex items-center justify-center gap-1 text-xs text-gray-400">
-            <Shield className="w-3 h-3" />
-            <span>Your information is secure and encrypted</span>
+          {/* stats row */}
+          <div className="flex gap-10 mt-10">
+            {[
+              { n: '12K+', label: 'Creators' },
+              { n: '3K+', label: 'Brands' },
+              { n: '98%', label: 'Satisfaction' },
+            ].map(({ n, label }) => (
+              <div key={label}>
+                <p style={{ color: '#fff', fontSize: 26, fontWeight: 800 }}>{n}</p>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{label}</p>
+              </div>
+            ))}
           </div>
+        </div>
+
+        {/* bottom tag */}
+        <div
+          className="relative z-10 flex items-center gap-2"
+          style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
+        >
+          <Shield size={13} />
+          <span>Your data is always secure and encrypted</span>
         </div>
       </div>
+
+      {/* ── Right form panel ── */}
+      <div
+        className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10"
+        style={{
+          background: '#fff',
+          borderRadius: '0',
+        }}
+      >
+        <div className="w-full" style={{ maxWidth: 420 }}>
+
+          {/* mobile logo */}
+          <div className="flex lg:hidden items-center gap-2 mb-8">
+            <div
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Shield className="text-white" size={18} />
+            </div>
+            <span
+              style={{
+                fontSize: 18, fontWeight: 700,
+                color: '#111827',
+              }}
+            >
+              InfluenceX
+            </span>
+          </div>
+
+          {/* heading */}
+          <div className="mb-8">
+            <h2
+              style={{
+                fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px',
+                color: '#111827', marginBottom: 6,
+              }}
+            >
+              Create Account
+            </h2>
+            <p style={{ color: '#6b7280', fontSize: 15 }}>
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                style={{ fontWeight: 700, color: '#667eea', textDecoration: 'none' }}
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+
+          {/* Step progress bar */}
+          <div className="mb-6">
+            <div style={{ display: 'flex', gap: 0, marginBottom: 8 }}>
+              {[1, 2, 3].map(s => (
+                <div
+                  key={s}
+                  style={{
+                    flex: 1,
+                    height: 4,
+                    background: step >= s ? 'linear-gradient(90deg, #667eea, #764ba2)' : '#e5e7eb',
+                    borderRadius: s === 1 ? '10px 0 0 10px' : s === 3 ? '0 10px 10px 0' : '0',
+                  }}
+                />
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              {stepLabels.map((lbl, i) => (
+                <span
+                  key={lbl}
+                  style={{
+                    fontSize: 11,
+                    color: step >= i + 1 ? '#667eea' : '#9ca3af',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                  }}
+                >
+                  {lbl}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* ── Account type selector ── */}
+            <div>
+              <label
+                style={{
+                  display: 'block', fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: '#9ca3af', marginBottom: 10,
+                }}
+              >
+                Sign up as
+              </label>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {/* Brand */}
+                <button
+                  type="button"
+                  onClick={() => setUserType('brand')}
+                  style={{
+                    padding: '14px 12px',
+                    borderRadius: 12,
+                    border: userType === 'brand'
+                      ? '2px solid #667eea'
+                      : '2px solid #e5e7eb',
+                    background: userType === 'brand'
+                      ? '#f5f3ff'
+                      : '#fff',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 38, height: 38, borderRadius: 10,
+                      background: userType === 'brand'
+                        ? 'linear-gradient(135deg,#667eea,#764ba2)'
+                        : '#f3f4f6',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.18s ease',
+                    }}
+                  >
+                    <Building2
+                      size={18}
+                      style={{ color: userType === 'brand' ? '#fff' : '#6b7280' }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p
+                      style={{
+                        fontSize: 14, fontWeight: 600,
+                        color: userType === 'brand'
+                          ? '#667eea'
+                          : '#374151',
+                      }}
+                    >
+                      Brand
+                    </p>
+                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>
+                      Find creators
+                    </p>
+                  </div>
+                </button>
+
+                {/* Creator */}
+                <button
+                  type="button"
+                  onClick={() => setUserType('creator')}
+                  style={{
+                    padding: '14px 12px',
+                    borderRadius: 12,
+                    border: userType === 'creator'
+                      ? '2px solid #667eea'
+                      : '2px solid #e5e7eb',
+                    background: userType === 'creator'
+                      ? '#f5f3ff'
+                      : '#fff',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 38, height: 38, borderRadius: 10,
+                      background: userType === 'creator'
+                        ? 'linear-gradient(135deg,#667eea,#764ba2)'
+                        : '#f3f4f6',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.18s ease',
+                    }}
+                  >
+                    <Sparkles
+                      size={18}
+                      style={{ color: userType === 'creator' ? '#fff' : '#6b7280' }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p
+                      style={{
+                        fontSize: 14, fontWeight: 600,
+                        color: userType === 'creator'
+                          ? '#667eea'
+                          : '#374151',
+                      }}
+                    >
+                      Creator
+                    </p>
+                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>
+                      Monetize audience
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* ── Full Name ── */}
+            <div>
+              <label
+                style={{
+                  display: 'block', fontSize: 13, fontWeight: 600,
+                  color: '#374151', marginBottom: 6,
+                }}
+              >
+                Full Name
+              </label>
+              <div style={{ position: 'relative' }}>
+                <User
+                  size={16}
+                  style={{
+                    position: 'absolute', left: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: errors.fullName ? '#ef4444' : '#9ca3af',
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.fullName}
+                  name="fullName"
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 40px',
+                    borderRadius: 10,
+                    border: `1.5px solid ${errors.fullName ? '#ef4444' : '#e5e7eb'}`,
+                    background: '#f9fafb',
+                    color: '#111827',
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                  onBlur={(e) => { e.target.style.borderColor = errors.fullName ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                />
+              </div>
+              {errors.fullName && (
+                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.fullName}</p>
+              )}
+            </div>
+
+            {/* ── Email ── */}
+            <div>
+              <label
+                style={{
+                  display: 'block', fontSize: 13, fontWeight: 600,
+                  color: '#374151', marginBottom: 6,
+                }}
+              >
+                Email address
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail
+                  size={16}
+                  style={{
+                    position: 'absolute', left: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: errors.email ? '#ef4444' : '#9ca3af',
+                  }}
+                />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  name="email"
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 40px',
+                    borderRadius: 10,
+                    border: `1.5px solid ${errors.email ? '#ef4444' : '#e5e7eb'}`,
+                    background: '#f9fafb',
+                    color: '#111827',
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                  onBlur={(e) => { e.target.style.borderColor = errors.email ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                />
+              </div>
+              {errors.email && (
+                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.email}</p>
+              )}
+            </div>
+
+            {/* ── Phone ── */}
+            <div>
+              <label
+                style={{
+                  display: 'block', fontSize: 13, fontWeight: 600,
+                  color: '#374151', marginBottom: 6,
+                }}
+              >
+                Phone Number
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Phone
+                  size={16}
+                  style={{
+                    position: 'absolute', left: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#9ca3af',
+                  }}
+                />
+                <input
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={formData.phone}
+                  name="phone"
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 40px',
+                    borderRadius: 10,
+                    border: '1.5px solid #e5e7eb',
+                    background: '#f9fafb',
+                    color: '#111827',
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                />
+              </div>
+            </div>
+
+            {/* ── Password ── */}
+            <div>
+              <label
+                style={{
+                  display: 'block', fontSize: 13, fontWeight: 600,
+                  color: '#374151', marginBottom: 6,
+                }}
+              >
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock
+                  size={16}
+                  style={{
+                    position: 'absolute', left: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: errors.password ? '#ef4444' : '#9ca3af',
+                  }}
+                />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a password"
+                  value={formData.password}
+                  name="password"
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '12px 44px 12px 40px',
+                    borderRadius: 10,
+                    border: `1.5px solid ${errors.password ? '#ef4444' : '#e5e7eb'}`,
+                    background: '#f9fafb',
+                    color: '#111827',
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                  onBlur={(e) => { e.target.style.borderColor = errors.password ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    color: '#9ca3af',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.password}</p>
+              )}
+            </div>
+
+            {/* ── Confirm Password ── */}
+            <div>
+              <label
+                style={{
+                  display: 'block', fontSize: 13, fontWeight: 600,
+                  color: '#374151', marginBottom: 6,
+                }}
+              >
+                Confirm Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock
+                  size={16}
+                  style={{
+                    position: 'absolute', left: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: errors.confirmPassword ? '#ef4444' : '#9ca3af',
+                  }}
+                />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  name="confirmPassword"
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '12px 44px 12px 40px',
+                    borderRadius: 10,
+                    border: `1.5px solid ${errors.confirmPassword ? '#ef4444' : '#e5e7eb'}`,
+                    background: '#f9fafb',
+                    color: '#111827',
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                  onBlur={(e) => { e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute', right: 14, top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    color: '#9ca3af',
+                  }}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.confirmPassword}</p>
+              )}
+            </div>
+
+            {step === 2 && (
+              <>
+                {userType === 'brand' ? (
+                  <>
+                    {/* ── Brand Name ── */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block', fontSize: 13, fontWeight: 600,
+                          color: '#374151', marginBottom: 6,
+                        }}
+                      >
+                        Brand Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter your brand name"
+                        value={formData.brandName}
+                        name="brandName"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${errors.brandName ? '#ef4444' : '#e5e7eb'}`,
+                          background: '#f9fafb',
+                          color: '#111827',
+                          fontSize: 14,
+                          outline: 'none',
+                          transition: 'border-color 0.15s',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.brandName ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                      />
+                      {errors.brandName && (
+                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.brandName}</p>
+                      )}
+                    </div>
+
+                    {/* ── Industry ── */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block', fontSize: 13, fontWeight: 600,
+                          color: '#374151', marginBottom: 6,
+                        }}
+                      >
+                        Industry
+                      </label>
+                      <select
+                        value={formData.industry}
+                        name="industry"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${errors.industry ? '#ef4444' : '#e5e7eb'}`,
+                          background: '#f9fafb',
+                          color: '#111827',
+                          fontSize: 14,
+                          outline: 'none',
+                          transition: 'border-color 0.15s',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.industry ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                      >
+                        <option value="">Select industry</option>
+                        {brandIndustries.map(i => (
+                          <option key={i.value} value={i.value}>{i.label}</option>
+                        ))}
+                      </select>
+                      {errors.industry && (
+                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.industry}</p>
+                      )}
+                    </div>
+
+                    {/* ── Website ── */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block', fontSize: 13, fontWeight: 600,
+                          color: '#374151', marginBottom: 6,
+                        }}
+                      >
+                        Website
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <Globe
+                          size={16}
+                          style={{
+                            position: 'absolute', left: 14, top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: '#9ca3af',
+                          }}
+                        />
+                        <input
+                          type="url"
+                          placeholder="https://www.yourbrand.com"
+                          value={formData.website}
+                          name="website"
+                          onChange={handleChange}
+                          style={{
+                            width: '100%',
+                            padding: '12px 14px 12px 40px',
+                            borderRadius: 10,
+                            border: '1.5px solid #e5e7eb',
+                            background: '#f9fafb',
+                            color: '#111827',
+                            fontSize: 14,
+                            outline: 'none',
+                            transition: 'border-color 0.15s',
+                            boxSizing: 'border-box',
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                          onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* ── Display Name ── */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block', fontSize: 13, fontWeight: 600,
+                          color: '#374151', marginBottom: 6,
+                        }}
+                      >
+                        Display Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="How should brands address you?"
+                        value={formData.displayName}
+                        name="displayName"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${errors.displayName ? '#ef4444' : '#e5e7eb'}`,
+                          background: '#f9fafb',
+                          color: '#111827',
+                          fontSize: 14,
+                          outline: 'none',
+                          transition: 'border-color 0.15s',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.displayName ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                      />
+                      {errors.displayName && (
+                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.displayName}</p>
+                      )}
+                    </div>
+
+                    {/* ── Handle ── */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block', fontSize: 13, fontWeight: 600,
+                          color: '#374151', marginBottom: 6,
+                        }}
+                      >
+                        Handle
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="username (without @)"
+                        value={formData.handle}
+                        name="handle"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${errors.handle ? '#ef4444' : '#e5e7eb'}`,
+                          background: '#f9fafb',
+                          color: '#111827',
+                          fontSize: 14,
+                          outline: 'none',
+                          transition: 'border-color 0.15s',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.handle ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                      />
+                      {errors.handle && (
+                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.handle}</p>
+                      )}
+                    </div>
+
+                    {/* ── Primary Niche ── */}
+                    <div>
+                      <label
+                        style={{
+                          display: 'block', fontSize: 13, fontWeight: 600,
+                          color: '#374151', marginBottom: 6,
+                        }}
+                      >
+                        Primary Niche
+                      </label>
+                      <select
+                        value={formData.niche}
+                        name="niche"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${errors.niche ? '#ef4444' : '#e5e7eb'}`,
+                          background: '#f9fafb',
+                          color: '#111827',
+                          fontSize: 14,
+                          outline: 'none',
+                          transition: 'border-color 0.15s',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.niche ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                      >
+                        <option value="">Select your niche</option>
+                        {creatorNiches.map(n => (
+                          <option key={n.value} value={n.value}>{n.label}</option>
+                        ))}
+                      </select>
+                      {errors.niche && (
+                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.niche}</p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* ── reCAPTCHA ── */}
+                {RECAPTCHA_SITE_KEY ? (
+                  <div
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: 10,
+                      border: `1.5px solid ${errors.captcha ? '#ef4444' : '#e5e7eb'}`,
+                      background: '#f9fafb',
+                    }}
+                  >
+                    <ReCAPTCHA
+                      ref={captchaRef}
+                      sitekey={RECAPTCHA_SITE_KEY}
+                      onChange={handleCaptchaChange}
+                    />
+                    {errors.captcha && (
+                      <p style={{ marginTop: 8, fontSize: 12, color: '#ef4444' }}>{errors.captcha}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ padding: '10px 14px', background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 10 }}>
+                    <p style={{ fontSize: 12, color: '#92400e' }}>⚠️ reCAPTCHA not configured. Set VITE_RECAPTCHA_SITE_KEY in .env</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {step === 3 && (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <div
+                  style={{
+                    width: 80, height: 80, borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #d0f4ff, #e0fbff)',
+                    border: '3px solid #667eea',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 18px',
+                    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)',
+                  }}
+                >
+                  <CheckCircle size={38} color="#667eea" />
+                </div>
+                <div
+                  style={{
+                    fontSize: 20, fontWeight: 700,
+                    color: '#111827', marginBottom: 10,
+                  }}
+                >
+                  Almost there!
+                </div>
+                <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, marginBottom: 14 }}>
+                  We've sent a verification code to your email.<br />
+                  Please check your inbox and verify your email address.
+                </p>
+                {formData.phone && (
+                  <button
+                    type="button"
+                    onClick={handlePhoneOTP}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#667eea',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Also verify phone number (optional)
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ── Submit ── */}
+            <button
+              type="submit"
+              disabled={loading || authLoading || (step === 2 && !captchaToken)}
+              style={{
+                width: '100%',
+                padding: '13px 20px',
+                borderRadius: 10,
+                border: 'none',
+                background: (loading || authLoading || (step === 2 && !captchaToken))
+                  ? '#a5b4fc'
+                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: '#fff',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: (loading || authLoading || (step === 2 && !captchaToken)) ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                transition: 'opacity 0.2s, transform 0.1s',
+                letterSpacing: '0.01em',
+              }}
+              onMouseEnter={(e) => { if (!loading && !authLoading && !(step === 2 && !captchaToken)) e.target.style.opacity = '0.92'; }}
+              onMouseLeave={(e) => { e.target.style.opacity = '1'; }}
+            >
+              {loading || authLoading ? (
+                <div
+                  style={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    border: '2px solid rgba(255,255,255,0.4)',
+                    borderTopColor: '#fff',
+                    animation: 'spin 0.7s linear infinite',
+                  }}
+                />
+              ) : (
+                <>
+                  {step === 1 ? 'Continue' : step === 2 ? 'Create Account' : 'Go to Dashboard'}
+                  <ArrowRight size={17} />
+                </>
+              )}
+            </button>
+
+            {/* ── Footer links ── */}
+            <p style={{ textAlign: 'center', fontSize: 14, color: '#6b7280' }}>
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                style={{ fontWeight: 700, color: '#667eea', textDecoration: 'none' }}
+              >
+                Sign in
+              </Link>
+            </p>
+
+            <div
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 6, paddingTop: 4,
+              }}
+            >
+              <Shield size={11} style={{ color: '#d1d5db' }} />
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                Your information is secure and encrypted
+              </span>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      {/* spin keyframe injected inline */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input::placeholder { color: #9ca3af; }
+      `}</style>
     </div>
   );
 };

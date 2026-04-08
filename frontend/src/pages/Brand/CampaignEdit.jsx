@@ -455,7 +455,7 @@ const CampaignEdit = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-12 h-12 animate-spin text-indigo-600" />
+        <Loader className="w-12 h-12 animate-spin text-[#667eea]" />
       </div>
     );
   }
@@ -465,7 +465,7 @@ const CampaignEdit = () => {
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Campaign Not Found</h2>
-        <Link to="/brand/campaigns" className="text-indigo-600 hover:text-indigo-700">
+        <Link to="/brand/campaigns" className="text-[#667eea] hover:text-[#764ba2]">
           Back to Campaigns
         </Link>
       </div>
@@ -725,7 +725,7 @@ const CampaignEdit = () => {
             <button
               type="button"
               onClick={addDeliverable}
-              className="flex items-center text-indigo-600 hover:text-indigo-700"
+              className="flex items-center text-[#667eea] hover:text-[#764ba2]"
             >
               <Plus className="w-5 h-5 mr-1" />
               Add Another Deliverable
@@ -929,7 +929,7 @@ const CampaignEdit = () => {
                     type="checkbox"
                     checked={formData.targetAudience.niches.includes(niche)}
                     onChange={() => toggleNiche(niche)}
-                    className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                   />
                   <Hash className="w-3 h-3 text-gray-400 mr-1" />
                   <span className="text-sm">{niche}</span>
@@ -952,7 +952,7 @@ const CampaignEdit = () => {
                       type="checkbox"
                       checked={formData.targetAudience.platforms.includes(platform)}
                       onChange={() => togglePlatform(platform)}
-                      className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                     />
                     <Icon className={`w-4 h-4 mr-1 ${
                       platform === 'instagram' ? 'text-pink-600' :
@@ -980,7 +980,7 @@ const CampaignEdit = () => {
                     type="checkbox"
                     checked={formData.targetAudience.ages.includes(age)}
                     onChange={() => toggleAgeGroup(age)}
-                    className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                   />
                   <Users2 className="w-3 h-3 text-gray-400 mr-1" />
                   <span className="text-sm">{age}</span>
@@ -1001,7 +1001,7 @@ const CampaignEdit = () => {
                     type="checkbox"
                     checked={formData.targetAudience.genders.includes(gender)}
                     onChange={() => toggleGender(gender)}
-                    className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                   />
                   <span className="capitalize text-sm">{gender}</span>
                 </label>

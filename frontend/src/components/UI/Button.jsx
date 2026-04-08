@@ -1,6 +1,7 @@
 // components/UI/Button.js - COMPLETE FIXED VERSION
 import React from 'react';
 import { Loader } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 
 const Button = ({ 
   children, 
@@ -16,16 +17,19 @@ const Button = ({
   className = '',
   ...props 
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   // ==================== VARIANTS ====================
   const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 active:bg-indigo-800',
-    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500 active:bg-gray-100',
+    primary: 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:from-[#5a67d8] hover:to-[#6b4c9a] focus:ring-[#667eea] active:from-[#4c51bf] active:to-[#5a3d7a] shadow-lg hover:shadow-xl transition-all duration-200',
+    secondary: isDark ? 'bg-gray-700 text-gray-200 border border-gray-600 hover:bg-gray-600 focus:ring-[#667eea] active:bg-gray-500' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-[#667eea] active:bg-gray-100',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 active:bg-red-800',
     success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 active:bg-green-800',
     warning: 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500 active:bg-yellow-800',
-    outline: 'border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-500 active:bg-indigo-100',
-    ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 active:bg-gray-200',
-    link: 'text-indigo-600 hover:text-indigo-700 underline-offset-2 hover:underline focus:ring-indigo-500 p-0'
+    outline: 'border-2 border-[#667eea] text-[#667eea] hover:bg-gradient-to-r hover:from-[#667eea]/10 hover:to-[#764ba2]/10 focus:ring-[#667eea] active:from-[#667eea]/20 active:to-[#764ba2]/20',
+    ghost: isDark ? 'text-gray-300 hover:bg-gray-700 focus:ring-gray-500 active:bg-gray-600' : 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 active:bg-gray-200',
+    link: 'text-[#667eea] hover:text-[#5a67d8] underline-offset-2 hover:underline focus:ring-[#667eea] p-0 transition-colors duration-200'
   };
 
   // ==================== SIZES ====================
@@ -119,6 +123,9 @@ export const IconButton = ({
   label,
   ...props
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   const sizes = {
     xs: 'p-1',
     sm: 'p-1.5',
@@ -136,11 +143,11 @@ export const IconButton = ({
   };
 
   const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500',
+    primary: 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:from-[#5a67d8] hover:to-[#6b4c9a] focus:ring-[#667eea] shadow-lg hover:shadow-xl transition-all duration-200',
+    secondary: isDark ? 'bg-gray-700 text-gray-200 border border-gray-600 hover:bg-gray-600 focus:ring-[#667eea]' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-[#667eea]',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
-    outline: 'border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500'
+    ghost: isDark ? 'text-gray-300 hover:bg-gray-700 focus:ring-gray-500' : 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
+    outline: isDark ? 'border border-gray-600 hover:bg-gray-700 focus:ring-[#667eea]' : 'border border-gray-300 hover:bg-gray-50 focus:ring-[#667eea]'
   };
 
   return (

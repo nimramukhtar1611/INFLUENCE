@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 
 const Contracts = () => {
   const [selectedContract, setSelectedContract] = useState(null);
@@ -105,24 +106,18 @@ const Contracts = () => {
     }
   ];
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      case 'expired': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStandardizedStatusColor = (status) => {
+    return getStatusColor(status, 'status', false);
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
-      case 'active': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'pending': return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'completed': return <CheckCircle className="w-4 h-4 text-blue-600" />;
-      case 'draft': return <FileText className="w-4 h-4 text-gray-600" />;
-      default: return <AlertCircle className="w-4 h-4 text-gray-600" />;
+    switch(status?.toLowerCase()) {
+      case 'active': 
+      case 'completed': return CheckCircle;
+      case 'pending': return Clock;
+      case 'draft': return AlertCircle;
+      case 'expired': return AlertCircle;
+      default: return AlertCircle;
     }
   };
 
@@ -230,8 +225,8 @@ const Contracts = () => {
                     {contract.value}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs rounded-full flex items-center w-fit gap-1 ${getStatusColor(contract.status)}`}>
-                      {getStatusIcon(contract.status)}
+                    <span className={`px-2 py-1 text-xs rounded-full flex items-center w-fit gap-1 ${getStandardizedStatusColor(contract.status)}`}>
+                      {React.createElement(getStatusIcon(contract.status), { className: `w-3 h-3 ${getStatusIconColor(contract.status)}` })}
                       {contract.status}
                     </span>
                   </td>
@@ -274,7 +269,8 @@ const Contracts = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900">{selectedContract.title}</h3>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedContract.status)}`}>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStandardizedStatusColor(selectedContract.status)}`}>
+                {React.createElement(getStatusIcon(selectedContract.status), { className: `w-3 h-3 ${getStatusIconColor(selectedContract.status)}` })}
                 {selectedContract.status}
               </span>
             </div>

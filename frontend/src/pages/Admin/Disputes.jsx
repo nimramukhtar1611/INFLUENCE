@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { Eye, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Eye, RefreshCw, CheckCircle, AlertCircle, Download, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
+import Loader from '../../components/Common/Loader';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useTheme } from '../../hooks/useTheme';
 import { formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 
 const RESOLUTION_TYPES = [
   { value: 'refund_brand', label: 'Refund Brand' },
@@ -15,6 +18,8 @@ const RESOLUTION_TYPES = [
 ];
 
 const AdminDisputes = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { disputes, loading, refreshData, resolveDispute } = useAdminData();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -85,10 +90,36 @@ const AdminDisputes = () => {
     }
   };
 
+  const handleExport = () => {
+    // Generate CSV for disputes data
+    const csvContent = [
+      ['Dispute ID', 'Title', 'Type', 'Status', 'Raised By', 'Against', 'Amount', 'Created'].join(','),
+      ...filteredDisputes.map(dispute => [
+        dispute.dispute_id || dispute._id?.slice(-8) || '',
+        `"${dispute.title}"`,
+        dispute.dispute_type,
+        dispute.status,
+        `"${dispute.raised_by?.user_id?.fullName || dispute.raised_by?.user_id?.email || ''}"`,
+        `"${dispute.raised_against?.user_id?.fullName || dispute.raised_against?.user_id?.email || ''}"`,
+        dispute.amount || 0,
+        dispute.createdAt ? new Date(dispute.createdAt).toISOString().split('T')[0] : ''
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `disputes-export-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success('Disputes data exported successfully');
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="large" color="purple" />
       </div>
     );
   }
@@ -98,15 +129,21 @@ const AdminDisputes = () => {
   const resolvedCount = filteredDisputes.filter((d) => d.status === 'resolved').length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      {/* Header */}
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dispute Management</h1>
-          <p className="text-gray-600">Review and resolve disputes raised on the platform</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Dispute Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Review and resolve disputes raised on the platform</p>
         </div>
-        <Button variant="outline" icon={RefreshCw} onClick={refreshData}>
-          Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" icon={RefreshCw} onClick={refreshData}>
+            Refresh
+          </Button>
+          <Button variant="outline" icon={Download} onClick={handleExport}>
+            Export
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -148,72 +185,58 @@ const AdminDisputes = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispute</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Raised By</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispute</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Raised By</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredDisputes.length > 0 ? (
                 filteredDisputes.map((dispute) => {
                   const raisedBy = dispute?.raised_by?.user_id?.fullName || dispute?.raised_by?.user_id?.email || 'Unknown';
+                  const status = dispute.status || 'open';
+                  const statusClass = getStatusColor(status, 'status');
+                  
+                  const getStatusIcon = (status) => {
+                    switch(status?.toLowerCase()) {
+                      case 'resolved': return CheckCircle;
+                      case 'open': return AlertCircle;
+                      default: return AlertCircle;
+                    }
+                  };
+                  
+                  const StatusIcon = getStatusIcon(status);
+                  const iconColor = getStatusIconColor(status);
 
                   return (
-                    <tr key={dispute._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                    <tr 
+                      key={dispute._id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => openDetails(dispute)}
+                    >
+                      <td className="px-4 py-2">
                         <p className="text-sm font-medium text-gray-900">{dispute.title || dispute.dispute_id || 'Untitled dispute'}</p>
                         <p className="text-xs text-gray-500">ID: {dispute.dispute_id || dispute._id}</p>
                       </td>
-                      <td className="px-6 py-4 text-sm capitalize text-gray-700">{(dispute.dispute_type || 'unknown').replace(/_/g, ' ')}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{raisedBy}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          dispute.status === 'resolved'
-                            ? 'bg-green-100 text-green-700'
-                            : dispute.status === 'open'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {dispute.status || 'open'}
+                      <td className="px-4 py-2 text-sm capitalize text-gray-700">{(dispute.dispute_type || 'unknown').replace(/_/g, ' ')}</td>
+                      <td className="px-4 py-2 text-sm text-gray-700">{raisedBy}</td>
+                      <td className="px-4 py-2">
+                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusClass}`}>
+                          <StatusIcon className={`w-3 h-3 ${iconColor}`} />
+                          {status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        <p>{formatDate(dispute.createdAt)}</p>
-                        <p className="text-xs text-gray-400">{timeAgo(dispute.createdAt)}</p>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openDetails(dispute)}
-                            className="text-indigo-600 hover:text-indigo-800"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {dispute.status !== 'resolved' && dispute.status !== 'closed' && (
-                            <button
-                              onClick={() => openResolve(dispute)}
-                              className="text-green-600 hover:text-green-800"
-                              title="Resolve Dispute"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">No disputes found</td>
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">No disputes found</td>
                 </tr>
               )}
             </tbody>
@@ -229,9 +252,10 @@ const AdminDisputes = () => {
         }}
         title="Dispute Details"
         size="lg"
+        className="modal-scrollable"
       >
         {selectedDispute && (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
             <div>
               <p className="text-sm text-gray-500">Title</p>
               <p className="font-semibold text-gray-900">{selectedDispute.title || 'Untitled'}</p>

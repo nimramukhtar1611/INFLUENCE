@@ -8,7 +8,8 @@ import {
   AlertCircle, Clock, Send, X, ArrowLeft, Loader, Plus, ThumbsUp
 } from 'lucide-react';
 import dealService from '../../services/dealService';
-import { formatDate } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import toast from 'react-hot-toast';
 
@@ -128,13 +129,9 @@ const Deliverables = () => {
   };
 
   // ==================== STATUS HELPERS ====================
-  const statusColor = (s) => ({
-    approved:    'text-green-600 bg-green-100',
-    submitted:   'text-blue-600 bg-blue-100',
-    'in-progress':'text-purple-600 bg-purple-100',
-    revision:    'text-orange-600 bg-orange-100',
-    pending:     'text-yellow-600 bg-yellow-100'
-  }[s] || 'text-gray-600 bg-gray-100');
+  const statusColor = (s) => {
+    return getStatusColor(s, 'deliverable', false); // Brand Deliverables doesn't use theme yet
+  };
 
   const statusIcon = (s) => ({
     approved:    <CheckCircle className="w-5 h-5 text-green-600" />,
@@ -176,7 +173,7 @@ const Deliverables = () => {
           <span className="text-sm text-gray-600">{completed}/{total} approved</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-indigo-600 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          <div className="bg-gradient-to-r from-[#667eea] to-[#764ba2] h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
         </div>
         <div className="flex justify-between mt-2 text-xs text-gray-500">
           <span>Deadline: {deal.deadline ? formatDate(deal.deadline) : 'No deadline'}</span>

@@ -1,6 +1,7 @@
 // components/UI/Select.js - COMPLETE FIXED VERSION
 import React, { forwardRef, useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, X, Check, AlertCircle, Search } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 
 const Select = forwardRef(({
   label,
@@ -24,6 +25,8 @@ const Select = forwardRef(({
   loading = false,
   ...props
 }, ref) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -170,7 +173,9 @@ const Select = forwardRef(({
   return (
     <div className={`w-full ${containerClassName}`} ref={selectRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className={`block text-sm font-medium mb-1 ${
+          isDark ? 'text-gray-200' : 'text-gray-700'
+        }`}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -183,9 +188,9 @@ const Select = forwardRef(({
           className={`
             w-full min-h-[42px] px-4 py-2 border rounded-lg cursor-pointer
             flex items-center justify-between
-            ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white hover:border-indigo-500'}
-            ${error ? 'border-red-500' : 'border-gray-300'}
-            ${isOpen ? 'ring-2 ring-indigo-200 border-indigo-500' : ''}
+            ${disabled ? (isDark ? 'bg-gray-800 cursor-not-allowed' : 'bg-gray-100 cursor-not-allowed') : (isDark ? 'bg-gray-800 hover:border-[#667eea]' : 'bg-white hover:border-[#667eea]')}
+            ${error ? 'border-red-500' : (isDark ? 'border-gray-600' : 'border-gray-300')}
+            ${isOpen ? 'ring-2 ring-[#667eea]/20 border-[#667eea]' : ''}
             transition-all
             ${className}
           `}
@@ -199,13 +204,15 @@ const Select = forwardRef(({
                 selectedLabels.map((label, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-sm"
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm ${
+                      isDark ? 'bg-gradient-to-r from-[#667eea]/20 to-[#764ba2]/20 text-[#667eea]' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]'
+                    }`}
                   >
                     {label}
                     {clearable && (
                       <button
                         onClick={(e) => handleRemoveTag(value[index], e)}
-                        className="hover:text-indigo-600"
+                        className="hover:text-[#667eea]"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -213,10 +220,10 @@ const Select = forwardRef(({
                   </span>
                 ))
               ) : (
-                <span className="text-gray-400">{placeholder}</span>
+                <span className={isDark ? 'text-gray-400' : 'text-gray-400'}>{placeholder}</span>
               )
             ) : (
-              <span className={value ? 'text-gray-900' : 'text-gray-400'}>
+              <span className={value ? (isDark ? 'text-gray-100' : 'text-gray-900') : (isDark ? 'text-gray-400' : 'text-gray-400')}>
                 {options.find(opt => opt.value === value)?.label || placeholder}
               </span>
             )}
@@ -227,35 +234,43 @@ const Select = forwardRef(({
             {clearable && value && (multiple ? value.length > 0 : value) && (
               <button
                 onClick={handleClear}
-                className="p-1 hover:bg-gray-100 rounded-full"
+                className={`p-1 rounded-full ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
-                <X className="w-4 h-4 text-gray-400" />
+                <X className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
               </button>
             )}
             
             {isOpen ? (
-              <ChevronUp className="w-5 h-5 text-gray-400" />
+              <ChevronUp className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
             ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
+              <ChevronDown className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
             )}
           </div>
         </div>
 
         {/* Dropdown */}
         {isOpen && !disabled && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+          <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-60 overflow-auto ${
+            isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'
+          }`}>
             {/* Search Input */}
             {searchable && (
-              <div className="sticky top-0 p-2 bg-white border-b border-gray-200">
+              <div className={`sticky top-0 p-2 border-b ${
+                isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'
+              }`}>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                    isDark ? 'text-gray-400' : 'text-gray-400'
+                  }`} />
                   <input
                     ref={searchInputRef}
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search..."
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-[#667eea]' : 'bg-white border-gray-300 focus:ring-[#667eea]'
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
@@ -265,7 +280,7 @@ const Select = forwardRef(({
             {/* Options List */}
             <div className="py-1">
               {loading ? (
-                <div className="px-4 py-3 text-center text-gray-500">
+                <div className={`px-4 py-3 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   Loading...
                 </div>
               ) : filteredOptions.length > 0 ? (
@@ -281,21 +296,21 @@ const Select = forwardRef(({
                       onClick={() => handleOptionSelect(option)}
                       className={`
                         px-4 py-2 cursor-pointer flex items-center justify-between
-                        ${option.disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-indigo-50'}
-                        ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'}
-                        ${isHighlighted ? 'bg-indigo-50' : ''}
+                        ${option.disabled ? (isDark ? 'opacity-50 cursor-not-allowed bg-gray-700' : 'opacity-50 cursor-not-allowed bg-gray-50') : (isDark ? 'hover:bg-gray-700' : 'hover:bg-gradient-to-r hover:from-[#667eea]/10 hover:to-[#764ba2]/10')}
+                        ${isSelected ? 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea] font-medium' : ''}
+                        ${isHighlighted ? (isDark ? 'bg-gray-700' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10') : ''}
                         ${optionClassName}
                       `}
                     >
                       <span className="flex-1">{option.label}</span>
                       {isSelected && (
-                        <Check className="w-4 h-4 text-indigo-600" />
+                        <Check className="w-4 h-4 text-[#667eea]" />
                       )}
                     </div>
                   );
                 })
               ) : (
-                <div className="px-4 py-3 text-center text-gray-500">
+                <div className={`px-4 py-3 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   {noOptionsMessage}
                 </div>
               )}
@@ -304,7 +319,9 @@ const Select = forwardRef(({
               {showCreateOption && (
                 <div
                   onClick={handleCreateOption}
-                  className="px-4 py-2 cursor-pointer text-indigo-600 hover:bg-indigo-50 border-t border-gray-200"
+                  className={`px-4 py-2 cursor-pointer text-indigo-600 border-t ${
+                    isDark ? 'hover:bg-gray-700 border-gray-600' : 'hover:bg-indigo-50 border-gray-200'
+                  }`}
                 >
                   Create "{searchTerm}"
                 </div>
@@ -336,9 +353,12 @@ Select.displayName = 'Select';
 
 // ==================== OPTION GROUP COMPONENT ====================
 export const OptionGroup = ({ label, children, className = '' }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   return (
     <div className={className}>
-      <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50">
+      <div className={`px-4 py-2 text-xs font-semibold uppercase ${isDark ? 'text-gray-400 bg-gray-700/50' : 'text-gray-500 bg-gray-50'}`}>
         {label}
       </div>
       {children}

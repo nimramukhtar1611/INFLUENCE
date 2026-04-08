@@ -816,7 +816,7 @@ const CampaignBuilder = () => {
             <button
               type="button"
               onClick={addDeliverable}
-              className="flex items-center text-indigo-600 hover:text-indigo-700"
+              className="flex items-center text-[#667eea] hover:text-[#5a67d8] transition-colors"
             >
               <Plus className="w-5 h-5 mr-1" />
               Add Another Deliverable
@@ -839,13 +839,13 @@ const CampaignBuilder = () => {
                 />
                 <label htmlFor="asset-upload" className="cursor-pointer">
                   {uploadingAssets ? (
-                    <Loader className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-3" />
+                    <Loader className="w-12 h-12 text-[#667eea] animate-spin mx-auto mb-3" />
                   ) : (
                     <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   )}
                   <p className="text-sm text-gray-600">
                     Drag and drop files here, or{' '}
-                    <span className="text-indigo-600 font-medium">browse</span>
+                    <span className="text-[#667eea] font-medium">browse</span>
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Upload logos, product images, brand guidelines (Max 100MB)
@@ -1143,7 +1143,7 @@ const CampaignBuilder = () => {
                       >
                         <input
                           type="checkbox"
-                          className="mr-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          className="mr-3 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                           checked={formData.targetAudience.platforms.includes(platform)}
                           onChange={() => togglePlatform(platform)}
                         />
@@ -1180,7 +1180,7 @@ const CampaignBuilder = () => {
                   >
                     <input
                       type="checkbox"
-                      className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                       checked={formData.targetAudience.niches.includes(niche)}
                       onChange={() => toggleNiche(niche)}
                     />
@@ -1203,7 +1203,7 @@ const CampaignBuilder = () => {
                   >
                     <input
                       type="checkbox"
-                      className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                       checked={formData.targetAudience.ages.includes(age)}
                       onChange={() => toggleAgeGroup(age)}
                     />
@@ -1226,7 +1226,7 @@ const CampaignBuilder = () => {
                   >
                     <input
                       type="checkbox"
-                      className="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                       checked={formData.targetAudience.genders.includes(gender)}
                       onChange={() => toggleGender(gender)}
                     />
@@ -1313,7 +1313,7 @@ const CampaignBuilder = () => {
                       {d.quantity}x {d.type} on {d.platform}
                     </p>
                     {d.description && <p className="text-xs text-gray-500 mt-1">{d.description}</p>}
-                    <p className="text-xs font-medium text-indigo-600 mt-1">${d.budget || 0} each</p>
+                    <p className="text-xs font-medium text-[#667eea] mt-1">${d.budget || 0} each</p>
                   </div>
                 ))}
               </div>
@@ -1346,7 +1346,7 @@ const CampaignBuilder = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Total Budget</p>
-                  <p className="text-xl font-bold text-indigo-600">
+                  <p className="text-xl font-bold text-[#667eea]">
                     ${formData.budget.toLocaleString()}
                   </p>
                 </div>
@@ -1495,9 +1495,9 @@ const CampaignBuilder = () => {
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
                 ${
                   currentStep > step.number
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    ? 'bg-[#667eea] border-[#667eea] text-white'
                     : currentStep === step.number
-                    ? 'border-indigo-600 text-indigo-600'
+                    ? 'border-[#667eea] text-[#667eea]'
                     : 'border-gray-300 text-gray-400'
                 }`}
               >
@@ -1510,7 +1510,7 @@ const CampaignBuilder = () => {
               {index < steps.length - 1 && (
                 <div
                   className={`w-20 h-1 mx-2 transition-colors ${
-                    currentStep > step.number ? 'bg-indigo-600' : 'bg-gray-300'
+                    currentStep > step.number ? 'bg-[#667eea]' : 'bg-gray-300'
                   }`}
                 />
               )}
@@ -1548,7 +1548,7 @@ const CampaignBuilder = () => {
           <button
             onClick={handleSubmit}
             disabled={submitting || loading}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {submitting || loading ? (
               <>
@@ -1565,7 +1565,7 @@ const CampaignBuilder = () => {
         ) : (
           <button
             onClick={handleNext}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center"
+            className="px-8 py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] font-medium flex items-center transition-colors"
           >
             Next
             <ChevronRight className="w-5 h-5 ml-2" />

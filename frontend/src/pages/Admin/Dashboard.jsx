@@ -59,6 +59,9 @@ import {
 } from 'recharts';
 import { useAdminData } from '../../hooks/useAdminData';
 import { formatCurrency, formatNumber, timeAgo } from '../../utils/helpers';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import api from '../../services/api';
 import StatsCard from '../../components/Common/StatsCard';
 import ChartCard from '../../components/Common/ChartCard';
 import Button from '../../components/UI/Button';
@@ -66,6 +69,9 @@ import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const {
     loading,
     refreshing,
@@ -166,6 +172,28 @@ const AdminDashboard = () => {
     toast.success('Dashboard refreshed');
   };
 
+  const handleExport = () => {
+    // Generate CSV for dashboard data
+    const csvContent = [
+      ['Metric', 'Value', 'Change', 'Link'].join(','),
+      ...metricItems.map(item => [
+        `"${item.title}"`,
+        item.value,
+        item.change,
+        item.link || ''
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dashboard-export-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success('Dashboard data exported successfully');
+  };
+
   const metricItems = [
     {
       title: 'Total Users',
@@ -226,18 +254,18 @@ const AdminDashboard = () => {
   if (loading && !refreshing) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-10 h-10 animate-spin text-indigo-600" />
+        <Loader className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening on InfluenceX.</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Admin Dashboard</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Welcome back! Here's what's happening on InfluenceX.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -252,87 +280,89 @@ const AdminDashboard = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className={`px-4 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm ${
+              isDark ? 'bg-gray-800/50 border-gray-700/50 text-gray-100' : 'bg-white/50 border-gray-300/50 text-gray-900'
+            }`}
           >
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
             <option value="90d">Last 90 Days</option>
             <option value="12m">This Year</option>
           </select>
-          <Button variant="outline" size="sm" icon={Download}>
+          <Button variant="outline" size="sm" icon={Download} onClick={handleExport}>
             Export
           </Button>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {metricItems.map((metric, index) => (
-          <Link key={index} to={metric.link}>
-            <StatsCard {...metric} />
+          <Link key={index} to={metric.link} className="block h-full">
+            <StatsCard {...metric} className="h-full min-h-[180px]" />
           </Link>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Link to="/admin/users?filter=pending">
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link to="/admin/users?filter=pending" className="block h-full">
+          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+              <div className={`p-3 bg-blue-100/50 rounded-lg group-hover:bg-blue-200/50 transition-all duration-200 border border-blue-100/50 flex-shrink-0`}>
                 <UserPlus className="w-6 h-6 text-blue-600" />
               </div>
-              <span className="text-2xl font-bold text-blue-600">
+              <span className="text-2xl font-bold text-blue-600 break-words">
                 {stats.pendingVerifications || 0}
               </span>
             </div>
-            <h3 className="font-semibold text-gray-900">Pending Verifications</h3>
-            <p className="text-sm text-gray-500 mt-1">Review new users</p>
+            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Pending Verifications</h3>
+            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Review new users</p>
           </div>
         </Link>
 
-        <Link to="/admin/fraud-review">
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+        <Link to="/admin/fraud-review" className="block h-full">
+          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors">
+              <div className={`p-3 bg-yellow-100/50 rounded-lg group-hover:bg-yellow-200/50 transition-all duration-200 border border-yellow-100/50 flex-shrink-0`}>
                 <Shield className="w-6 h-6 text-yellow-600" />
               </div>
-              <span className="text-2xl font-bold text-yellow-600">
+              <span className="text-2xl font-bold text-yellow-600 break-words">
                 {dashboard?.campaigns?.pending || 0}
               </span>
             </div>
-            <h3 className="font-semibold text-gray-900">Pending Campaigns</h3>
-            <p className="text-sm text-gray-500 mt-1">Review & approve</p>
+            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Pending Campaigns</h3>
+            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Review & approve</p>
           </div>
         </Link>
 
-        <Link to="/admin/disputes">
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+        <Link to="/admin/disputes" className="block h-full">
+          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+              <div className={`p-3 bg-red-100/50 rounded-lg group-hover:bg-red-200/50 transition-all duration-200 border border-red-100/50 flex-shrink-0`}>
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
-              <span className="text-2xl font-bold text-red-600">
+              <span className="text-2xl font-bold text-red-600 break-words">
                 {stats.pendingDisputes || 0}
               </span>
             </div>
-            <h3 className="font-semibold text-gray-900">Open Disputes</h3>
-            <p className="text-sm text-gray-500 mt-1">Resolve issues</p>
+            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Open Disputes</h3>
+            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Resolve issues</p>
           </div>
         </Link>
 
-        <Link to="/admin/payments">
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+        <Link to="/admin/payments" className="block h-full">
+          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+              <div className={`p-3 bg-green-100/50 rounded-lg group-hover:bg-green-200/50 transition-all duration-200 border border-green-100/50 flex-shrink-0`}>
                 <CreditCard className="w-6 h-6 text-green-600" />
               </div>
-              <span className="text-2xl font-bold text-green-600">
+              <span className="text-2xl font-bold text-green-600 break-words">
                 {payments?.length || 0}
               </span>
             </div>
-            <h3 className="font-semibold text-gray-900">Recent Transactions</h3>
-            <p className="text-sm text-gray-500 mt-1">View payments</p>
+            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Transactions</h3>
+            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>View payments</p>
           </div>
         </Link>
       </div>
@@ -460,28 +490,28 @@ const AdminDashboard = () => {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Users */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Users</h2>
-            <Link to="/admin/users" className="text-indigo-600 text-sm hover:text-indigo-700 flex items-center">
+        <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+              <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Users</h2>
+            <Link to="/admin/users" className={`text-sm hover:underline flex items-center ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-200">
-            {users?.slice(0, 5).map((user, index) => (
-              <div key={user._id || index} className="p-4 hover:bg-gray-50 transition-colors">
+          <div className={`max-h-80 overflow-y-auto divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
+            {users?.map((user, index) => (
+              <div key={user._id || index} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {user.profilePicture ? (
                       <img src={user.profilePicture} alt={user.fullName} className="w-10 h-10 rounded-full" />
                     ) : (
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <div className={`border rounded-lg p-4 flex items-start gap-3 transition-all duration-200 ${isDark ? 'bg-yellow-900/30 border-yellow-700/30' : 'bg-yellow-50/50 border-yellow-200/50'}`}>
                         <Users className="w-5 h-5 text-indigo-600" />
                       </div>
                     )}
                     <div>
-                      <h3 className="font-medium text-gray-900">{user.fullName || user.name}</h3>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{user.fullName || user.name}</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           user.userType === 'brand' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
@@ -502,7 +532,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     {timeAgo(user.createdAt)}
                   </span>
                 </div>
@@ -512,42 +542,34 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Activity Feed */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+        <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+          <div className={`px-6 py-4 border-b ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Activity</h2>
           </div>
-          <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+          <div className={`max-h-80 overflow-y-auto divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
             {recentActivity.length > 0 ? (
               recentActivity.map((activity, index) => {
                 const Icon = activity.icon;
                 return (
-                  <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div key={index} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
                     <div className="flex items-start gap-3">
                       <div className={`p-2 ${activity.color} rounded-lg bg-opacity-10`}>
                         <Icon className={`w-4 h-4 ${activity.color.replace('bg-', 'text-')}`} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm text-gray-900">{activity.description}</p>
-                        <p className="text-xs text-gray-500 mt-1">{timeAgo(activity.createdAt)}</p>
+                        <p className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{activity.description}</p>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>{timeAgo(activity.createdAt)}</p>
                       </div>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No recent activity</p>
+              <div className="p-8 text-center">
+                <Activity className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-400' : 'text-gray-300'}`} />
+                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No recent activity</p>
               </div>
             )}
-          </div>
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={() => setShowActivityModal(true)}
-              className="text-indigo-600 hover:text-indigo-700 text-sm font-medium w-full text-center"
-            >
-              View All Activity
-            </button>
           </div>
         </div>
       </div>
@@ -631,37 +653,38 @@ const AdminDashboard = () => {
       </div>
 
       {/* Recent Campaigns */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Campaigns</h2>
-          <Link to="/admin/campaigns" className="text-indigo-600 text-sm hover:text-indigo-700 flex items-center">
+      <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+        <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+          <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Campaigns</h2>
+          <Link to="/admin/campaigns" className={`text-sm hover:underline flex items-center ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
             View All <ChevronRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
+        <div className="overflow-x-auto rounded-lg border border-gray-200/50">
+          <div className="min-w-full inline-block align-middle">
+            <table className="w-full divide-y divide-gray-200">
+            <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50/50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Budget</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creators</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Performance</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[120px]">Campaign</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[100px]">Brand</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[80px]">Budget</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[70px]">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[80px]">Creators</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[100px]">Performance</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200">
               {campaigns?.slice(0, 5).map((campaign) => (
-                <tr key={campaign._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{campaign.title}</div>
+                <tr key={campaign._id} className="hover:bg-gray-50/50 transition-colors duration-200">
+                  <td className="px-4 py-4">
+                    <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{campaign.title}</div>
                     <div className="text-xs text-gray-500">ID: {campaign._id?.slice(-6)}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{campaign.brandId?.brandName}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                  <td className="px-4 py-4 text-sm text-gray-900 truncate max-w-[150px]">{campaign.brandId?.brandName}</td>
+                  <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                     {formatCurrency(campaign.budget || 0)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       campaign.status === 'active' ? 'bg-green-100 text-green-800' :
                       campaign.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -671,10 +694,10 @@ const AdminDashboard = () => {
                       {campaign.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
                     {campaign.selectedCreators?.length || 0}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-green-600">{campaign.metrics?.engagement || '0'}%</div>
                     <div className="text-xs text-gray-500">{formatNumber(campaign.metrics?.impressions || 0)} impressions</div>
                   </td>
@@ -687,29 +710,29 @@ const AdminDashboard = () => {
 
       {/* Recent Disputes */}
       {disputes?.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Open Disputes</h2>
-            <Link to="/admin/disputes" className="text-indigo-600 text-sm hover:text-indigo-700 flex items-center">
+        <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+          <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Open Disputes</h2>
+            <Link to="/admin/disputes" className={`text-sm hover:underline flex items-center ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className={`divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
             {disputes.slice(0, 3).map((dispute) => (
-              <div key={dispute._id} className="p-4 hover:bg-gray-50">
+              <div key={dispute._id} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-red-100 rounded-lg">
                       <AlertTriangle className="w-4 h-4 text-red-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{dispute.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{dispute.description}</p>
+                      <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{dispute.title}</h3>
+                      <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{dispute.description}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="text-xs text-gray-500">
+                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           Raised by: {dispute.raisedBy?.userId?.fullName}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           vs {dispute.against?.userId?.fullName}
                         </span>
                       </div>
@@ -728,6 +751,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+      </div>
 
       {/* All Activity Modal */}
       <Modal
@@ -741,19 +765,19 @@ const AdminDashboard = () => {
             recentActivity.map((activity, index) => {
               const Icon = activity.icon;
               return (
-                <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className={`p-2 ${activity.color} rounded-lg`}>
+                <div key={index} className={`flex items-start gap-3 p-3 ${isDark ? 'bg-gray-800/50' : 'bg-gray-50/50'} rounded-lg border ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+                  <div className={`p-2 ${activity.color} rounded-lg border ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
                     <Icon className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">{new Date(activity.createdAt).toLocaleString()}</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{activity.description}</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>{new Date(activity.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
               );
             })
           ) : (
-            <p className="text-center text-gray-500 py-8">No activity found</p>
+            <p className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No activity found</p>
           )}
         </div>
       </Modal>

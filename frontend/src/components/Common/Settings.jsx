@@ -207,7 +207,7 @@ const Settings = ({ userType = 'user' }) => {
                   alt="Profile"
                   className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                 />
-                <button className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1.5 rounded-full hover:bg-indigo-700">
+                <button className="absolute bottom-0 right-0 bg-[#667eea] text-white p-1.5 rounded-full hover:bg-[#5a67d8] transition-colors">
                   <Camera className="w-4 h-4" />
                 </button>
               </div>
@@ -472,7 +472,7 @@ const Settings = ({ userType = 'user' }) => {
                 </div>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                  className="w-4 h-4 text-[#667eea] border-gray-300 rounded"
                   checked={settings.showEmail}
                   onChange={(e) => setSettings({...settings, showEmail: e.target.checked})}
                 />
@@ -485,7 +485,7 @@ const Settings = ({ userType = 'user' }) => {
                 </div>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                  className="w-4 h-4 text-[#667eea] border-gray-300 rounded"
                   checked={settings.showPhone}
                   onChange={(e) => setSettings({...settings, showPhone: e.target.checked})}
                 />
@@ -498,7 +498,7 @@ const Settings = ({ userType = 'user' }) => {
                 </div>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                  className="w-4 h-4 text-[#667eea] border-gray-300 rounded"
                   checked={settings.showLocation}
                   onChange={(e) => setSettings({...settings, showLocation: e.target.checked})}
                 />
@@ -511,7 +511,7 @@ const Settings = ({ userType = 'user' }) => {
                 </div>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                  className="w-4 h-4 text-[#667eea] border-gray-300 rounded"
                   checked={settings.showAnalytics}
                   onChange={(e) => setSettings({...settings, showAnalytics: e.target.checked})}
                 />
@@ -524,7 +524,7 @@ const Settings = ({ userType = 'user' }) => {
                 </div>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                  className="w-4 h-4 text-[#667eea] border-gray-300 rounded"
                   checked={settings.showEarnings}
                   onChange={(e) => setSettings({...settings, showEarnings: e.target.checked})}
                 />
@@ -579,7 +579,7 @@ const Settings = ({ userType = 'user' }) => {
                     <span className="text-sm text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-[#667eea] border-gray-300 rounded focus:ring-[#667eea]"
                       checked={value}
                       onChange={(e) => setSettings({
                         ...settings,
@@ -602,7 +602,7 @@ const Settings = ({ userType = 'user' }) => {
                     <span className="text-sm text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-[#667eea] border-gray-300 rounded focus:ring-[#667eea]"
                       checked={value}
                       onChange={(e) => setSettings({
                         ...settings,
@@ -642,7 +642,7 @@ const Settings = ({ userType = 'user' }) => {
                 <button
                   onClick={() => setSettings({...settings, theme: 'light'})}
                   className={`p-4 border-2 rounded-lg flex items-center gap-3 flex-1 ${
-                    settings.theme === 'light' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'
+                    settings.theme === 'light' ? 'border-[#667eea] bg-[#667eea]/10' : 'border-gray-200'
                   }`}
                 >
                   <Sun className="w-5 h-5" />
@@ -651,7 +651,7 @@ const Settings = ({ userType = 'user' }) => {
                 <button
                   onClick={() => setSettings({...settings, theme: 'dark'})}
                   className={`p-4 border-2 rounded-lg flex items-center gap-3 flex-1 ${
-                    settings.theme === 'dark' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'
+                    settings.theme === 'dark' ? 'border-[#667eea] bg-[#667eea]/10' : 'border-gray-200'
                   }`}
                 >
                   <Moon className="w-5 h-5" />
@@ -660,7 +660,7 @@ const Settings = ({ userType = 'user' }) => {
                 <button
                   onClick={() => setSettings({...settings, theme: 'system'})}
                   className={`p-4 border-2 rounded-lg flex items-center gap-3 flex-1 ${
-                    settings.theme === 'system' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'
+                    settings.theme === 'system' ? 'border-[#667eea] bg-[#667eea]/10' : 'border-gray-200'
                   }`}
                 >
                   <Monitor className="w-5 h-5" />
@@ -677,7 +677,7 @@ const Settings = ({ userType = 'user' }) => {
                     key={size}
                     onClick={() => setSettings({...settings, fontSize: size})}
                     className={`px-4 py-2 border-2 rounded-lg capitalize flex-1 ${
-                      settings.fontSize === size ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'
+                      settings.fontSize === size ? 'border-[#667eea] bg-[#667eea]/10' : 'border-gray-200'
                     }`}
                   >
                     {size}
@@ -716,7 +716,7 @@ const Settings = ({ userType = 'user' }) => {
                     key={density}
                     onClick={() => setSettings({...settings, density})}
                     className={`px-4 py-2 border-2 rounded-lg capitalize flex-1 ${
-                      settings.density === density ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'
+                      settings.density === density ? 'border-[#667eea] bg-[#667eea]/10' : 'border-gray-200'
                     }`}
                   >
                     {density}
@@ -842,7 +842,7 @@ const Settings = ({ userType = 'user' }) => {
               <button className={`px-4 py-2 rounded-lg text-sm font-medium ${
                 settings.twoFactorAuth 
                   ? 'bg-green-100 text-green-800' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'bg-[#667eea] text-white hover:bg-[#5a67d8] transition-colors'
               }`}>
                 {settings.twoFactorAuth ? 'Enabled' : 'Enable'}
               </button>
@@ -964,7 +964,7 @@ const Settings = ({ userType = 'user' }) => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                       activeTab === tab.id
-                        ? 'bg-indigo-100 text-indigo-600'
+                        ? 'bg-[#667eea]/10 text-[#667eea]'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >

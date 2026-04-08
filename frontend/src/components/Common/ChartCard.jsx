@@ -19,6 +19,7 @@ import {
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
+import { useTheme } from '../../hooks/useTheme';
 
 const ChartCard = ({
   title,
@@ -39,6 +40,8 @@ const ChartCard = ({
   headerClassName = '',
   bodyClassName = ''
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [showMenu, setShowMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -60,7 +63,7 @@ const ChartCard = ({
     try {
       const canvas = await html2canvas(chartRef.current, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: isDark ? '#1F2937' : '#ffffff',
         logging: false,
         allowTaint: true,
         useCORS: true
@@ -86,7 +89,7 @@ const ChartCard = ({
     try {
       const canvas = await html2canvas(chartRef.current, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: isDark ? '#1F2937' : '#ffffff',
         logging: false
       });
 
@@ -190,30 +193,44 @@ const ChartCard = ({
   // ==================== LOADING STATE ====================
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-sm animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-        <div className={`h-${height} bg-gray-200 rounded`}></div>
+      <div className={`p-6 rounded-xl shadow-sm animate-pulse ${
+        isDark ? 'bg-gray-800' : 'bg-white'
+      }`}>
+        <div className={`h-6 rounded w-1/3 mb-4 ${
+          isDark ? 'bg-gray-700' : 'bg-gray-200'
+        }`}></div>
+        <div className={`h-${height} rounded ${
+          isDark ? 'bg-gray-700' : 'bg-gray-200'
+        }`}></div>
       </div>
     );
   }
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all ${
+      className={`rounded-xl shadow-sm overflow-hidden transition-all ${
+        isDark ? 'bg-gray-800' : 'bg-white'
+      } ${
         isExpanded ? 'fixed inset-4 z-50 overflow-auto' : ''
       } ${className}`}
       style={isExpanded ? { height: 'auto' } : {}}
     >
       {/* Header */}
       <div
-        className={`px-6 py-4 border-b border-gray-200 flex items-center justify-between ${headerClassName}`}
+        className={`px-6 py-4 border-b flex items-center justify-between ${headerClassName} ${
+          isDark ? 'border-gray-700' : 'border-gray-200'
+        }`}
       >
         <div className="flex items-center gap-4">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className={`text-lg font-semibold ${
+            isDark ? 'text-gray-100' : 'text-gray-900'
+          }`}>{title}</h3>
 
           {/* Chart Type Switcher */}
           {chartType && onChartTypeChange && (
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className={`flex items-center gap-1 rounded-lg p-1 ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            }`}>
               {chartTypes.map(type => {
                 const Icon = type.icon;
                 return (
@@ -222,8 +239,8 @@ const ChartCard = ({
                     onClick={() => onChartTypeChange(type.value)}
                     className={`p-1.5 rounded-lg transition-colors ${
                       chartType === type.value
-                        ? 'bg-white text-indigo-600 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? isDark ? 'bg-gray-800 text-indigo-400 shadow-sm' : 'bg-white text-indigo-600 shadow-sm'
+                        : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
                     }`}
                     title={type.label}
                   >
@@ -238,7 +255,9 @@ const ChartCard = ({
         <div className="flex items-center gap-2">
           {/* Date Range */}
           {dateRange && (
-            <div className="flex items-center gap-1 text-sm text-gray-600">
+            <div className={`flex items-center gap-1 text-sm ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               <Calendar className="w-4 h-4" />
               <span>{dateRange}</span>
             </div>
@@ -248,10 +267,14 @@ const ChartCard = ({
           {onFilter && (
             <button
               onClick={onFilter}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              className={`p-1 rounded-lg transition-colors ${
+                isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
               title="Filter"
             >
-              <Filter className="w-4 h-4 text-gray-500" />
+              <Filter className={`w-4 h-4 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`} />
             </button>
           )}
 
@@ -259,23 +282,33 @@ const ChartCard = ({
           {onRefresh && (
             <button
               onClick={onRefresh}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              className={`p-1 rounded-lg transition-colors ${
+                isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
               title="Refresh"
             >
-              <RefreshCw className="w-4 h-4 text-gray-500" />
+              <RefreshCw className={`w-4 h-4 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`} />
             </button>
           )}
 
           {/* Expand Button */}
           <button
             onClick={handleExpand}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className={`p-1 rounded-lg transition-colors ${
+              isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+            }`}
             title={isExpanded ? 'Minimize' : 'Expand'}
           >
             {isExpanded ? (
-              <Minimize2 className="w-4 h-4 text-gray-500" />
+              <Minimize2 className={`w-4 h-4 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`} />
             ) : (
-              <Maximize2 className="w-4 h-4 text-gray-500" />
+              <Maximize2 className={`w-4 h-4 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`} />
             )}
           </button>
 
@@ -283,18 +316,26 @@ const ChartCard = ({
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                className={`p-1 rounded-lg transition-colors ${
+                  isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
                 title="Export"
               >
-                <Download className="w-4 h-4 text-gray-500" />
+                <Download className={`w-4 h-4 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`} />
               </button>
 
               {showMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border py-1 z-10 ${
+                  isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                }`}>
                   <button
                     onClick={exportAsPNG}
                     disabled={exporting}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 disabled:opacity-50 transition-colors ${
+                      isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <ImageIcon className="w-4 h-4" />
                     Export as PNG
@@ -303,7 +344,9 @@ const ChartCard = ({
                   <button
                     onClick={exportAsPDF}
                     disabled={exporting}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 disabled:opacity-50 transition-colors ${
+                      isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <FileText className="w-4 h-4" />
                     Export as PDF
@@ -311,12 +354,16 @@ const ChartCard = ({
 
                   {data && data.length > 0 && (
                     <>
-                      <div className="border-t border-gray-200 my-1"></div>
+                      <div className={`border-t my-1 ${
+                        isDark ? 'border-gray-700' : 'border-gray-200'
+                      }`}></div>
 
                       <button
                         onClick={exportAsCSV}
                         disabled={exporting}
-                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                        className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 disabled:opacity-50 transition-colors ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                       >
                         <FileText className="w-4 h-4" />
                         Export as CSV
@@ -325,7 +372,9 @@ const ChartCard = ({
                       <button
                         onClick={exportAsExcel}
                         disabled={exporting}
-                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                        className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 disabled:opacity-50 transition-colors ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                       >
                         <FileText className="w-4 h-4" />
                         Export as Excel
@@ -333,7 +382,9 @@ const ChartCard = ({
 
                       <button
                         onClick={copyAsJSON}
-                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                       >
                         {copied ? (
                           <>
@@ -370,10 +421,14 @@ const ChartCard = ({
 
       {/* Footer for expanded view */}
       {isExpanded && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className={`px-6 py-4 border-t ${
+          isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+        }`}>
           <button
             onClick={handleExpand}
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            className={`text-sm font-medium ${
+              isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'
+            }`}
           >
             Minimize
           </button>

@@ -14,13 +14,17 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import paymentService from '../../services/paymentService';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import StatsCard from '../../components/Common/StatsCard';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const Payments = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submittingDeposit, setSubmittingDeposit] = useState(false);
@@ -122,39 +126,25 @@ const Payments = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-      case 'released':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'in-escrow':
-        return 'bg-blue-100 text-blue-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      case 'refunded':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'payment', isDark);
   };
 
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
       case 'completed':
       case 'released':
-        return <CheckCircle className="w-4 h-4" />;
+        return CheckCircle;
       case 'pending':
-        return <Clock className="w-4 h-4" />;
+        return Clock;
       case 'in-escrow':
-        return <Wallet className="w-4 h-4" />;
+        return Wallet;
       case 'failed':
-        return <XCircle className="w-4 h-4" />;
+        return XCircle;
       case 'refunded':
-        return <AlertCircle className="w-4 h-4" />;
+        return RefreshCw;
       default:
-        return null;
+        return AlertCircle;
     }
   };
 
@@ -203,17 +193,17 @@ const Payments = () => {
   if (loading && transactions.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-12 h-12 animate-spin text-indigo-600" />
+        <Loader className="w-12 h-12 animate-spin text-[#667eea]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-          <p className="text-gray-600">Stripe securely handles all payment details and billing checkout.</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Payments</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Stripe securely handles all payment details and billing checkout.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -238,7 +228,7 @@ const Payments = () => {
           <Button
             variant="secondary"
             size="sm"
-            className="bg-white text-indigo-600 hover:bg-indigo-50"
+            className="bg-white text-[#667eea] hover:bg-gradient-to-r hover:from-[#667eea]/5 hover:to-[#764ba2]/5"
             onClick={() => setShowDepositModal(true)}
           >
             Add Funds
@@ -270,14 +260,16 @@ const Payments = () => {
         />
       </div>
 
-      <div className="border-b border-gray-200">
+      <div className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#667eea] text-[#667eea]'
+                : isDark
+                  ? 'border-transparent text-gray-400 hover:text-gray-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             Overview
@@ -286,8 +278,10 @@ const Payments = () => {
             onClick={() => setActiveTab('transactions')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'transactions'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#667eea] text-[#667eea]'
+                : isDark
+                  ? 'border-transparent text-gray-400 hover:text-gray-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             Transactions
@@ -296,8 +290,10 @@ const Payments = () => {
             onClick={() => setActiveTab('invoices')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'invoices'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#667eea] text-[#667eea]'
+                : isDark
+                  ? 'border-transparent text-gray-400 hover:text-gray-300'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             Invoices
@@ -306,28 +302,34 @@ const Payments = () => {
       </div>
 
       {activeTab === 'overview' && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+        <div className={`rounded-xl shadow-sm overflow-hidden ${
+          isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'
+        }`}>
+          <div className={`px-6 py-4 border-b flex justify-between items-center ${
+            isDark ? 'border-gray-700/50' : 'border-gray-200/50'
+          }`}>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Transactions</h2>
             <button
               onClick={() => setActiveTab('transactions')}
-              className="text-indigo-600 text-sm hover:text-indigo-700"
+              className={`text-sm hover:underline ${
+                isDark ? 'text-[#667eea] hover:text-[#5a67d8]' : 'text-[#667eea] hover:text-[#764ba2]'
+              }`}
             >
               View All
             </button>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className={`divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
             {transactions.slice(0, 6).map(transaction => (
-              <div key={transaction._id} className="p-4 hover:bg-gray-50">
+              <div key={transaction._id} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50'}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{transaction.description || 'Transaction'}</p>
-                    <p className="text-xs text-gray-500">{timeAgo(transaction.createdAt)} • {transaction.transactionId}</p>
+                    <p className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{transaction.description || 'Transaction'}</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{timeAgo(transaction.createdAt)} • {transaction.transactionId}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">{formatCurrency(transaction.amount || 0)}</p>
-                    <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(transaction.status)}`}>
-                      {getStatusIcon(transaction.status)}
+                    <p className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(transaction.amount || 0)}</p>
+                    <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColorClass(transaction.status)}`}>
+                      {React.createElement(getStatusIcon(transaction.status), { className: `w-3 h-3 ${getStatusIconColor(transaction.status)}` })}
                       {transaction.status}
                     </span>
                   </div>
@@ -339,27 +341,37 @@ const Payments = () => {
       )}
 
       {activeTab === 'transactions' && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className={`rounded-xl shadow-sm overflow-hidden ${
+          isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'
+        }`}>
+          <div className={`px-6 py-4 border-b ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-gray-900">All Transactions</h2>
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>All Transactions</h2>
 
               <div className="flex flex-wrap gap-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                      isDark 
+                        ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                    }`}
                   />
                 </div>
 
                 <select
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                 >
                   <option value="all">All Time</option>
                   <option value="7d">Last 7 Days</option>
@@ -371,37 +383,39 @@ const Payments = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Description</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Amount</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Status</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Type</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Reference</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {filteredTransactions.length > 0 ? (
                   filteredTransactions.map(transaction => (
-                    <tr key={transaction._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(transaction.createdAt)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{transaction.description || 'Payment'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{formatCurrency(transaction.amount || 0)}</td>
+                    <tr key={transaction._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(transaction.createdAt)}</td>
+                      <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{transaction.description || 'Payment'}</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(transaction.amount || 0)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(transaction.status)}`}>
                           {getStatusIcon(transaction.status)}
                           {transaction.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{transaction.type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500">{transaction.transactionId}</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {transaction.type}
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-xs font-mono ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{transaction.transactionId}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">No transactions found</td>
+                    <td colSpan="6" className={`px-6 py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No transactions found</td>
                   </tr>
                 )}
               </tbody>
@@ -411,43 +425,46 @@ const Payments = () => {
       )}
 
       {activeTab === 'invoices' && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Invoices</h2>
+        <div className={`rounded-xl shadow-sm overflow-hidden ${
+          isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'
+        }`}>
+          <div className={`px-6 py-4 border-b ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Invoices</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Invoice #</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Amount</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Status</th>
+                  <th className={`px-6 py-3 text-right text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {invoices.length > 0 ? (
                   invoices.map(invoice => (
-                    <tr key={invoice._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                    <tr key={invoice._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                         {invoice.invoiceNumber || invoice.transactionId}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {formatDate(invoice.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                         {formatCurrency(invoice.amount || 0)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(invoice.status)}`}>
+                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColorClass(invoice.status)}`}>
+                          {React.createElement(getStatusIcon(invoice.status), { className: `w-3 h-3 ${getStatusIconColor(invoice.status)}` })}
                           {invoice.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => paymentService.downloadInvoice(invoice._id)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className={`hover:${isDark ? 'text-[#667eea]' : 'text-[#764ba2]'}`}
                         >
                           <Download className="w-4 h-4" />
                         </button>
@@ -456,7 +473,7 @@ const Payments = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">No invoices found</td>
+                    <td colSpan="5" className={`px-6 py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No invoices found</td>
                   </tr>
                 )}
               </tbody>
@@ -468,9 +485,9 @@ const Payments = () => {
       <Modal isOpen={showDepositModal} onClose={() => setShowDepositModal(false)} title="Add Funds via Stripe">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Add</label>
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Amount to Add</label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
               <input
                 type="number"
                 value={depositAmount}
@@ -478,14 +495,18 @@ const Payments = () => {
                 placeholder="0.00"
                 min="10"
                 step="1"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Minimum deposit: $10</p>
+            <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Minimum deposit: $10</p>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-blue-800">
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/30 border border-blue-700/30' : 'bg-blue-50'}`}>
+            <p className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
               You will be redirected to Stripe Checkout to complete payment securely.
             </p>
           </div>

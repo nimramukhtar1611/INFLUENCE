@@ -212,8 +212,8 @@ const CreateDeal = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
           <div className="flex rounded-lg border border-gray-300 overflow-hidden">
-            <button type="button" onClick={() => setDealType('fixed')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${dealType === 'fixed' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}><DollarSign className="w-4 h-4" /> Fixed Payment</button>
-            <button type="button" onClick={() => setDealType('performance')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${dealType === 'performance' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}><BarChart3 className="w-4 h-4" /> Performance Based</button>
+            <button type="button" onClick={() => setDealType('fixed')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${dealType === 'fixed' ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}><DollarSign className="w-4 h-4" /> Fixed Payment</button>
+            <button type="button" onClick={() => setDealType('performance')} className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${dealType === 'performance' ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}><BarChart3 className="w-4 h-4" /> Performance Based</button>
           </div>
         </div>
 

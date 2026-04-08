@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../context/SocketContext';
+import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 import {
   Search,
@@ -35,9 +36,12 @@ import {
   Bell,
   BellOff,
   XCircle,
-  ChevronDown
+  ChevronDown,
+  CheckCircle
 } from 'lucide-react';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
 import { formatDistanceToNow, format } from 'date-fns';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 import toast from 'react-hot-toast';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
@@ -78,11 +82,11 @@ const MessageBubble = ({ message, isOwn, onReaction, onDelete, onReply }) => {
         <div className="relative">
           {showActions && !message.isDeleted && (
             <div className={`absolute ${isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 flex items-center gap-1 bg-white rounded-lg shadow-lg border border-gray-200 p-1 z-10`}>
-              <button onClick={() => setShowReactions(!showReactions)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Smile className="w-4 h-4 text-gray-600" /></button>
-              <button onClick={() => onReply(message)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Reply className="w-4 h-4 text-gray-600" /></button>
-              <button onClick={() => navigator.clipboard.writeText(message.content)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Copy className="w-4 h-4 text-gray-600" /></button>
+              <button onClick={() => setShowReactions(!showReactions)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Smile className="w-4 h-4 text-gray-700" /></button>
+              <button onClick={() => onReply(message)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Reply className="w-4 h-4 text-gray-700" /></button>
+              <button onClick={() => navigator.clipboard.writeText(message.content)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Copy className="w-4 h-4 text-gray-700" /></button>
               {isOwn && (
-                <button onClick={() => onDelete(message._id)} className="p-1.5 hover:bg-red-100 rounded-lg"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                <button onClick={() => onDelete(message._id)} className="p-1.5 hover:bg-red-100 rounded-lg"><Trash2 className="w-4 h-4 text-red-600" /></button>
               )}
             </div>
           )}
@@ -100,12 +104,12 @@ const MessageBubble = ({ message, isOwn, onReaction, onDelete, onReply }) => {
 
           <div className={`rounded-2xl p-3 ${
             message.isDeleted
-              ? 'bg-gray-100 text-gray-500 italic'
+              ? 'bg-gray-100 text-gray-600 italic'
               : message.contentType === 'deal_offer'
               ? 'bg-gradient-to-r from-green-500 to-teal-500 text-white'
               : isOwn
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-900 shadow-sm border border-gray-100'
+                ? 'bg-[#667eea] text-white'
+                : 'bg-white text-gray-900 shadow-sm border border-gray-200'
           }`}>
             {!message.isDeleted && message.replyTo && (
               <div className={`mb-2 p-2 rounded-lg text-sm ${isOwn ? 'bg-indigo-700' : 'bg-gray-100'}`}>
@@ -135,8 +139,8 @@ const MessageBubble = ({ message, isOwn, onReaction, onDelete, onReply }) => {
                       <video src={file.url} controls className="max-w-full max-h-64 rounded-lg" />
                     ) : (
                       <a href={file.url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-white rounded-lg p-2 border border-gray-200 hover:border-indigo-300">
-                        <FileText className="w-4 h-4 text-indigo-600" />
+                        className="flex items-center gap-2 bg-white rounded-lg p-2 border border-gray-200 hover:border-[#667eea] transition-colors">
+                        <FileText className="w-4 h-4 text-[#667eea]" />
                         <span className="text-sm text-gray-700 flex-1 truncate">{file.filename}</span>
                         <Download className="w-4 h-4 text-gray-400" />
                       </a>
@@ -170,6 +174,8 @@ const MessageBubble = ({ message, isOwn, onReaction, onDelete, onReply }) => {
 
 const CreatorInbox = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { socket, isConnected, joinConversation, leaveConversation, sendMessage: sendSocketMessage,
           startTyping, stopTyping, markAsRead, addReaction, deleteMessage } = useSocket();
 
@@ -260,6 +266,24 @@ const CreatorInbox = () => {
   const loadMoreMessages = () => {
     if (hasMore && !loadingMore && selectedConversation)
       loadMessages(selectedConversation._id, page + 1);
+  };
+
+  // Helper function for deal status with standardized colors
+  const getDealStatusDisplay = (status) => {
+    const statusClass = getStatusColor(status, 'deal', isDark);
+    
+    const getDealStatusIcon = (status) => {
+      switch(status?.toLowerCase()) {
+        case 'completed': return CheckCircle;
+        case 'in-progress': return Clock;
+        default: return AlertCircle;
+      }
+    };
+    
+    const StatusIcon = getDealStatusIcon(status);
+    const iconColor = getStatusIconColor(status);
+    
+    return { statusClass, StatusIcon, iconColor };
   };
 
   // Socket listeners – correct event names (underscore style)
@@ -429,7 +453,16 @@ const CreatorInbox = () => {
           ? { ...msg, readBy: [...(msg.readBy || []), { userId: user?._id, readAt: new Date() }] }
           : msg
       ));
-      setConversations(prev => prev.map(c => c._id === conversationId ? { ...c, unreadCount: 0 } : c));
+      setConversations(prev => prev.map(c => {
+        if (c._id === conversationId) {
+          // Calculate actual unread count
+          const actualUnreadCount = messages.filter(
+            msg => msg.senderId?._id !== user?._id && !msg.readBy?.some(r => r.userId === user?._id)
+          ).length;
+          return { ...c, unreadCount: actualUnreadCount };
+        }
+        return c;
+      }));
     }
   };
 
@@ -539,34 +572,34 @@ const CreatorInbox = () => {
   const totalUnread = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
   return (
-    <div className="h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm flex overflow-hidden border border-gray-200">
+    <div className={`h-[calc(100vh-100px)] rounded-xl shadow-sm flex overflow-hidden border ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
       {!onlineStatus && (
         <div className="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-sm z-50 flex items-center justify-center gap-2">
           <WifiOff className="w-4 h-4" /> You are offline.
         </div>
       )}
 
-      <div className="w-1/3 border-r border-gray-200 flex flex-col bg-gray-50">
-        <div className="p-4 border-b border-gray-200 bg-white">
+      <div className={`w-1/3 border-r flex flex-col ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+        <div className={`p-4 border-b ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Messages</h2>
+            <h2 className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Messages</h2>
             {totalUnread > 0 && (
-              <span className="bg-indigo-100 text-indigo-600 text-xs font-medium px-2.5 py-1 rounded-full">{totalUnread} unread</span>
+              <span className={`${isDark ? 'bg-[#667eea]/20 text-[#667eea]' : 'bg-[#667eea]/10 text-[#667eea]'} text-xs font-medium px-2.5 py-1 rounded-full`}>{totalUnread} unread</span>
             )}
           </div>
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input type="text" placeholder="Search conversations..." value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`} />
           </div>
           <div className="flex gap-2">
             {['all', 'unread', 'deals', 'pinned'].map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full capitalize ${filter === f ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                className={`px-3 py-1.5 text-xs font-medium rounded-full capitalize ${filter === f ? 'bg-[#667eea] text-white' : isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>
                 {f}
                 {f === 'unread' && totalUnread > 0 && (
-                  <span className={`ml-1 rounded-full w-4 h-4 inline-flex items-center justify-center text-xs ${filter === 'unread' ? 'bg-white text-indigo-600' : 'bg-indigo-600 text-white'}`}>{totalUnread}</span>
+                  <span className={`ml-1 rounded-full w-4 h-4 inline-flex items-center justify-center text-xs ${filter === 'unread' ? 'bg-white text-[#667eea]' : 'bg-[#667eea] text-white'}`}>{totalUnread}</span>
                 )}
               </button>
             ))}
@@ -575,51 +608,46 @@ const CreatorInbox = () => {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-indigo-600" /></div>
+            <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-[#667eea]" /></div>
           ) : filteredConversations.length > 0 ? (
             filteredConversations.map(conv => {
               const isSelected = selectedConversation?._id === conv._id;
               return (
                 <div key={conv._id} onClick={() => selectConversation(conv)}
-                  className={`p-4 border-b border-gray-200 cursor-pointer transition-all hover:bg-white ${isSelected ? 'bg-white shadow-sm' : ''}`}>
+                  className={`p-4 border-b cursor-pointer transition-all ${
+                    isSelected 
+                      ? isDark ? 'bg-gray-700 shadow-sm' : 'bg-white shadow-sm'
+                      : isDark ? 'hover:bg-gray-700' : 'hover:bg-white'
+                  } ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="flex items-start gap-3">
                     <div className="relative">
                       <img src={getConversationAvatar(conv)} alt={getConversationName(conv)}
-                        className="w-12 h-12 rounded-full object-cover bg-gray-200" />
+                        className={`w-12 h-12 rounded-full object-cover ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                       {isUserOnline(conv) && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <h3 className="font-bold text-gray-900 truncate">
+                        <h3 className={`font-bold truncate ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                           {conv.deal_id?.campaignId?.title || conv.campaign_id?.title || getConversationName(conv)}
                         </h3>
                         {conv.lastMessageAt && (
-                          <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                          <span className={`text-xs whitespace-nowrap ml-2 ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
                             {formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true })}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-indigo-600 font-medium mb-1 truncate">
+                      <div className={`text-xs font-medium mb-1 truncate ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`}>
                         Brand: {getConversationName(conv)}
                       </div>
-                      <p className="text-sm text-gray-500 truncate italic">
+                      <p className={`text-sm truncate italic ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {conv.lastMessage?.senderId?._id === user?._id || conv.lastMessage?.senderId === user?._id ? 'You: ' : ''}
                         {conv.lastMessage?.contentType === 'deal_offer' ? '💰 Deal offer' :
                          conv.lastMessage?.content || (conv.lastMessage?.attachments?.length > 0 ? '📷 Photo' : 'No messages yet')}
                       </p>
                       {conv.deal_id && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
-                          conv.deal_id.status === 'completed'   ? 'bg-green-100 text-green-800' :
-                          conv.deal_id.status === 'in-progress' ? 'bg-blue-100 text-blue-800'  :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          <DollarSign className="w-3 h-3 inline mr-1" />
-                          ${conv.deal_id.budget} • {conv.deal_id.status}
-                        </span>
-                      )}
-                      {conv.unreadCount > 0 && !isSelected && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                          {conv.unreadCount}
+                        <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block inline-flex items-center gap-1 ${getDealStatusDisplay(conv.deal_id.status).statusClass}`}>
+                          {React.createElement(getDealStatusDisplay(conv.deal_id.status).StatusIcon, { className: `w-3 h-3 ${getDealStatusDisplay(conv.deal_id.status).iconColor}` })}
+                          ${conv.deal_id.budget} · {conv.deal_id.status}
                         </span>
                       )}
                     </div>
@@ -628,29 +656,29 @@ const CreatorInbox = () => {
               );
             })
           ) : (
-            <div className="text-center py-12 px-4">
-              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <h3 className="text-base font-medium text-gray-900 mb-1">No conversations</h3>
-              <p className="text-sm text-gray-500">When brands message you, they'll appear here</p>
+            <div className={`text-center py-12 px-4 ${isDark ? 'bg-gray-800' : ''}`}>
+              <MessageSquare className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+              <h3 className={`text-base font-medium mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>No conversations</h3>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>When brands message you, they'll appear here</p>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col bg-white">
+      <div className={`flex-1 flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         {selectedConversation ? (
           <>
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <img src={getConversationAvatar(selectedConversation)} alt={getConversationName(selectedConversation)} className="w-10 h-10 rounded-full object-cover" />
                   {isUserOnline(selectedConversation) && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{getConversationName(selectedConversation)}</h3>
+                  <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{getConversationName(selectedConversation)}</h3>
                   <span className={`text-xs ${
-                    typingUsersState[selectedConversation._id] ? 'text-indigo-600 animate-pulse' :
-                    isUserOnline(selectedConversation) ? 'text-green-600' : 'text-gray-500'
+                    typingUsersState[selectedConversation._id] ? 'text-[#667eea] animate-pulse' :
+                    isUserOnline(selectedConversation) ? isDark ? 'text-green-400' : 'text-green-600' : isDark ? 'text-gray-400' : 'text-gray-500'
                   }`}>
                     {typingUsersState[selectedConversation._id]
                       ? `${typingUsersState[selectedConversation._id].fullName} is typing...`
@@ -661,45 +689,55 @@ const CreatorInbox = () => {
               <div className="flex items-center gap-2">
                 {selectedConversation.deal_id && (
                   <button onClick={() => { setDealDetails(selectedConversation.deal_id); setShowDealModal(true); }}
-                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 flex items-center gap-1">
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 ${
+                      isDark 
+                        ? 'bg-[#667eea]/20 text-[#667eea] hover:bg-[#667eea]/30'
+                        : 'bg-[#667eea]/10 text-[#667eea] hover:bg-[#667eea]/20'
+                    }`}>
                     <Briefcase className="w-4 h-4" /> View Deal
                   </button>
                 )}
                 <button onClick={() => { setSelectedConvSettings(selectedConversation); setShowSettingsModal(true); }}
-                  className="p-2 hover:bg-gray-100 rounded-lg">
-                  <MoreVertical className="w-5 h-5 text-gray-600" />
+                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                  <MoreVertical className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
                 </button>
               </div>
             </div>
 
             {selectedConversation.deal_id && (
-              <div className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 flex items-center justify-between">
+              <div className={`px-4 py-2 border-b flex items-center justify-between ${
+                isDark 
+                  ? 'bg-gradient-to-r from-indigo-900 to-purple-900 border-indigo-800'
+                  : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100'
+              }`}>
                 <div className="flex items-center gap-4">
-                  <Briefcase className="w-4 h-4 text-indigo-600" />
-                  <span className="text-sm text-gray-700"><span className="font-medium">Deal:</span> {selectedConversation.deal_id.campaignId?.title || 'Campaign'}</span>
-                  <span className="text-sm font-medium text-indigo-600">${selectedConversation.deal_id.budget}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    selectedConversation.deal_id.status === 'completed'   ? 'bg-green-100 text-green-800' :
-                    selectedConversation.deal_id.status === 'in-progress' ? 'bg-blue-100 text-blue-800'  : 'bg-yellow-100 text-yellow-800'
-                  }`}>{selectedConversation.deal_id.status}</span>
+                  <Briefcase className={`w-4 h-4 ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`} />
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}><span className="font-medium">Deal:</span> {selectedConversation.deal_id.campaignId?.title || 'Campaign'}</span>
+                  <span className={`text-sm font-medium ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`}>${selectedConversation.deal_id.budget}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${getDealStatusDisplay(selectedConversation.deal_id.status).statusClass}`}>
+                    {React.createElement(getDealStatusDisplay(selectedConversation.deal_id.status).StatusIcon, { className: `w-3 h-3 ${getDealStatusDisplay(selectedConversation.deal_id.status).iconColor}` })}
+                    {selectedConversation.deal_id.status}
+                  </span>
                 </div>
-                <Link to={`/creator/deals/${selectedConversation.deal_id._id}`} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View Details</Link>
+                <Link to={`/creator/deals/${selectedConversation.deal_id._id}`} className={`text-xs font-medium ${
+                  isDark ? 'text-[#667eea] hover:text-[#667eea]/80' : 'text-[#667eea] hover:text-[#5a67d8]'
+                }`}>View Details</Link>
               </div>
             )}
 
-            <div ref={messageContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              {loadingMore && <div className="flex justify-center py-2"><Loader className="w-5 h-5 animate-spin text-indigo-600" /></div>}
+            <div ref={messageContainerRef} onScroll={handleScroll} className={`flex-1 overflow-y-auto p-4 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              {loadingMore && <div className="flex justify-center py-2"><Loader className="w-5 h-5 animate-spin text-[#667eea]" /></div>}
               {messages.map(msg => (
                 <MessageBubble key={msg._id} message={msg}
                   isOwn={msg.senderId?._id?.toString() === user?._id?.toString() || msg.senderId?.toString() === user?._id?.toString()}
                   onReaction={addReaction} onDelete={deleteMessage} onReply={setReplyingTo} />
               ))}
               {typingUsersState[selectedConversation._id] && (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"><span className="text-xs">...</span></div>
-                  <div className="bg-white rounded-2xl px-4 py-2 shadow-sm">
+                <div className={`flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`}><span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>...</span></div>
+                  <div className={`rounded-2xl px-4 py-2 shadow-sm ${isDark ? 'bg-gray-700' : 'bg-white'}`}>
                     <div className="flex space-x-1">
-                      {[0, 150, 300].map(d => <div key={d} className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
+                      {[0, 150, 300].map(d => <div key={d} className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-gray-400' : 'bg-gray-400'}`} style={{ animationDelay: `${d}ms` }} />)}
                     </div>
                   </div>
                 </div>
@@ -708,27 +746,31 @@ const CreatorInbox = () => {
             </div>
 
             {replyingTo && (
-              <div className="px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex items-center justify-between">
+              <div className={`px-4 py-2 border-t flex items-center justify-between ${
+                isDark 
+                  ? 'bg-indigo-900 border-indigo-800'
+                  : 'bg-indigo-50 border-indigo-100'
+              }`}>
                 <div className="flex items-center gap-2">
-                  <Reply className="w-4 h-4 text-indigo-600" />
-                  <span className="text-sm text-gray-600">Replying to: {replyingTo.content?.substring(0, 50)}{replyingTo.content?.length > 50 ? '...' : ''}</span>
+                  <Reply className={`w-4 h-4 ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`} />
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Replying to: {replyingTo.content?.substring(0, 50)}{replyingTo.content?.length > 50 ? '...' : ''}</span>
                 </div>
-                <button onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                <button onClick={() => setReplyingTo(null)} className={`${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}><X className="w-4 h-4" /></button>
               </div>
             )}
 
             {attachments.length > 0 && (
-              <div className="px-4 py-2 border-t border-gray-200 flex flex-wrap gap-2 bg-white">
+              <div className={`px-4 py-2 border-t flex flex-wrap gap-2 ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
                 {attachments.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-xs">
+                  <div key={i} className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100'}`}>
                     <FileText className="w-3 h-3" /><span>{f.name}</span>
-                    <button onClick={() => removeAttachment(i)} className="text-gray-500 hover:text-gray-700"><X className="w-3 h-3" /></button>
+                    <button onClick={() => removeAttachment(i)} className={`${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}><X className="w-3 h-3" /></button>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="p-4 border-t border-gray-200 bg-white">
+            <div className={`p-4 border-t ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
               <div className="flex items-end gap-2">
                 <div className="flex-1 relative">
                   <textarea rows="1" value={messageInput}
@@ -736,15 +778,19 @@ const CreatorInbox = () => {
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                     placeholder={uploading ? 'Uploading...' : 'Type your message...'}
                     disabled={uploading || !onlineStatus}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 disabled:bg-gray-100"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 disabled:opacity-50 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 disabled:bg-gray-800'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 disabled:bg-gray-100'
+                    }`}
                     style={{ minHeight: '48px' }} />
                   <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                    <label className="cursor-pointer p-1.5 hover:bg-gray-100 rounded-lg">
+                    <label className={`cursor-pointer p-1.5 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                       <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" accept="image/*" />
-                      <Paperclip className="w-5 h-5 text-gray-500" />
+                      <Paperclip className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                     </label>
-                    <button className="p-1.5 hover:bg-gray-100 rounded-lg" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
-                      <Smile className="w-5 h-5 text-gray-500" />
+                    <button className={`p-1.5 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`} onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+                      <Smile className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                       {showEmojiPicker && (
                         <div className="absolute bottom-12 right-0 z-50">
                           <EmojiPicker onEmojiClick={e => { setMessageInput(prev => prev + e.emoji); setShowEmojiPicker(false); }} />
@@ -755,7 +801,7 @@ const CreatorInbox = () => {
                 </div>
                 <button onClick={handleSendMessage}
                   disabled={(!messageInput.trim() && attachments.length === 0) || uploading || !onlineStatus}
-                  className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                  className="px-4 py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] disabled:opacity-50 transition-colors">
                   {uploading ? <Loader className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>
               </div>
@@ -765,8 +811,8 @@ const CreatorInbox = () => {
         ) : (
           <div className="h-full flex items-center justify-center bg-gray-50">
             <div className="text-center max-w-sm px-4">
-              <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-10 h-10 text-indigo-600" />
+              <div className="w-20 h-20 bg-[#667eea]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-10 h-10 text-[#667eea]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Messages</h3>
               <p className="text-gray-600 mb-6">Select a conversation to start chatting</p>
@@ -786,18 +832,18 @@ const CreatorInbox = () => {
       <Modal isOpen={showDealModal} onClose={() => { setShowDealModal(false); setDealDetails(null); }} title="Deal Details">
         {dealDetails && (
           <div className="space-y-4">
-            <div className="bg-indigo-50 p-4 rounded-lg">
-              <p className="text-sm text-indigo-600 mb-1">Campaign</p>
+            <div className="bg-[#667eea]/10 p-4 rounded-lg">
+              <p className="text-sm text-[#667eea] mb-1">Campaign</p>
               <p className="font-semibold text-gray-900">{dealDetails.campaignId?.title || 'Campaign'}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><p className="text-xs text-gray-500 mb-1">Budget</p><p className="text-lg font-bold">${dealDetails.budget}</p></div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Status</p>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  dealDetails.status === 'completed'   ? 'bg-green-100 text-green-800' :
-                  dealDetails.status === 'in-progress' ? 'bg-blue-100 text-blue-800'  : 'bg-yellow-100 text-yellow-800'
-                }`}>{dealDetails.status}</span>
+                <span className={`text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 ${getDealStatusDisplay(dealDetails.status).statusClass}`}>
+                  {React.createElement(getDealStatusDisplay(dealDetails.status).StatusIcon, { className: `w-3 h-3 ${getDealStatusDisplay(dealDetails.status).iconColor}` })}
+                  {dealDetails.status}
+                </span>
               </div>
             </div>
             <Link to={`/creator/deals/${dealDetails._id}`}

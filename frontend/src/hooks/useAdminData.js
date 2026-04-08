@@ -284,9 +284,7 @@ export const useAdminData = () => {
         setReports(reportsRes.value.reports || []);
       }
 
-      if (showToast) {
-        toast.success('Dashboard refreshed');
-      }
+      // Toast is now handled in the component to prevent duplicates
 
     } catch (error) {
       console.error('Error fetching admin data:', error);

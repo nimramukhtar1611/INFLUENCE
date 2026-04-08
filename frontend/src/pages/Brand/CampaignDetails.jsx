@@ -380,7 +380,7 @@ const CampaignDetails = () => {
         </div>
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
-            className="bg-indigo-600 h-3 rounded-full transition-all duration-500"
+            className="bg-gradient-to-r from-[#667eea] to-[#764ba2] h-3 rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>

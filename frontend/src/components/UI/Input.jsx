@@ -1,6 +1,7 @@
 // components/UI/Input.js - COMPLETE FIXED VERSION
 import React, { forwardRef, useState } from 'react';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 
 const Input = forwardRef(({
   label,
@@ -25,6 +26,8 @@ const Input = forwardRef(({
   validate = null,
   ...props
 }, ref) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -58,15 +61,15 @@ const Input = forwardRef(({
   const getInputStyles = () => {
     let styles = 'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all';
     
-    if (disabled) styles += ' bg-gray-100 cursor-not-allowed';
-    if (readOnly) styles += ' bg-gray-50 cursor-default';
+    if (disabled) styles += isDark ? ' bg-gray-800 cursor-not-allowed' : ' bg-gray-100 cursor-not-allowed';
+    if (readOnly) styles += isDark ? ' bg-gray-800 cursor-default' : ' bg-gray-50 cursor-default';
     
     if (error || (touched && validationError)) {
       styles += ' border-red-500 focus:ring-red-200 focus:border-red-500';
     } else if (success || (touched && !validationError && value)) {
       styles += ' border-green-500 focus:ring-green-200 focus:border-green-500';
     } else {
-      styles += ' border-gray-300 focus:ring-indigo-200 focus:border-indigo-500';
+      styles += isDark ? ' border-gray-600 focus:ring-[#667eea] focus:border-[#667eea]' : ' border-gray-300 focus:ring-[#667eea]/20 focus:border-[#667eea]';
     }
     
     if (Icon) styles += ' pl-10';
@@ -81,7 +84,9 @@ const Input = forwardRef(({
   return (
     <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName}`}>
+        <label className={`block text-sm font-medium mb-1 ${labelClassName} ${
+          isDark ? 'text-gray-200' : 'text-gray-700'
+        }`}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -92,9 +97,9 @@ const Input = forwardRef(({
         {Icon && (
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
             <Icon className={`w-5 h-5 ${
-              disabled ? 'text-gray-300' : 
+              disabled ? (isDark ? 'text-gray-600' : 'text-gray-300') : 
               displayError ? 'text-red-400' :
-              success ? 'text-green-400' : 'text-gray-400'
+              success ? 'text-green-400' : (isDark ? 'text-gray-500' : 'text-gray-400')
             }`} />
           </div>
         )}
@@ -139,9 +144,9 @@ const Input = forwardRef(({
               tabIndex="-1"
             >
               {showPassword ? (
-                <EyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                <EyeOff className={`w-5 h-5 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
               ) : (
-                <Eye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                <Eye className={`w-5 h-5 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
               )}
             </button>
           )}
@@ -166,12 +171,12 @@ const Input = forwardRef(({
       
       {/* Hint Text */}
       {hint && !displayError && (
-        <p className="mt-1 text-xs text-gray-500">{hint}</p>
+        <p className={`mt-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{hint}</p>
       )}
       
       {/* Character Counter */}
       {maxLength && (
-        <p className="mt-1 text-xs text-gray-500 text-right">
+        <p className={`mt-1 text-xs text-right ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           {value?.length || 0}/{maxLength}
         </p>
       )}
@@ -198,10 +203,15 @@ export const Textarea = forwardRef(({
   containerClassName = '',
   ...props
 }, ref) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   return (
     <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className={`block text-sm font-medium mb-1 ${
+          isDark ? 'text-gray-200' : 'text-gray-700'
+        }`}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -219,10 +229,10 @@ export const Textarea = forwardRef(({
         maxLength={maxLength}
         className={`
           w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all
-          ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
+          ${disabled ? (isDark ? 'bg-gray-800 cursor-not-allowed' : 'bg-gray-100 cursor-not-allowed') : ''}
           ${error ? 'border-red-500 focus:ring-red-200' : 
             success ? 'border-green-500 focus:ring-green-200' : 
-            'border-gray-300 focus:ring-indigo-200 focus:border-indigo-500'}
+            (isDark ? 'border-gray-600 focus:ring-[#667eea] focus:border-[#667eea]' : 'border-gray-300 focus:ring-[#667eea]/20 focus:border-[#667eea]')}
           ${className}
         `}
         {...props}
@@ -233,7 +243,7 @@ export const Textarea = forwardRef(({
       )}
       
       {maxLength && (
-        <p className="mt-1 text-xs text-gray-500 text-right">
+        <p className={`mt-1 text-xs text-right ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           {value?.length || 0}/{maxLength}
         </p>
       )}

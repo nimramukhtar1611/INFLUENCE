@@ -24,7 +24,8 @@ import {
   DollarSign,
   TrendingUp,
   Users,
-  Star
+  Star,
+  LayoutDashboard
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -164,7 +165,7 @@ const Header = () => {
       case 'deal': return 'bg-green-100 text-green-600';
       case 'message': return 'bg-blue-100 text-blue-600';
       case 'payment': return 'bg-purple-100 text-purple-600';
-      case 'campaign': return 'bg-indigo-100 text-indigo-600';
+      case 'campaign': return 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]';
       case 'reminder': return 'bg-yellow-100 text-yellow-600';
       case 'alert': return 'bg-red-100 text-red-600';
       default: return 'bg-gray-100 text-gray-600';
@@ -172,23 +173,32 @@ const Header = () => {
   };
 
   return (
-    <header className={`px-6 py-3 sticky top-0 z-30 transition-colors ${
-      isDark ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-200'
-    }`}>
+    <header 
+      className={`px-4 sm:px-6 py-3 transition-all duration-200`}
+      style={{
+        background: isDark 
+          ? 'linear-gradient(135deg, #111827 0%, #1f2937 100%)'
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        borderBottom: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+        boxShadow: isDark 
+          ? '0 1px 3px rgba(0, 0, 0, 0.3)'
+          : '0 1px 3px rgba(0, 0, 0, 0.05)',
+      }}
+    >
       <div className="flex items-center justify-between">
         {/* Left Section - Logo & Search */}
-        <div className="flex items-center flex-1 max-w-2xl">
+        <div className="flex items-center flex-1 max-w-2xl gap-2 sm:gap-4">
           {/* Mobile Menu Button (hidden on desktop) */}
-          <button className={`lg:hidden mr-4 p-2 rounded-lg transition-colors ${
+          <button className={`lg:hidden p-1 rounded-md transition-colors shrink-0 flex items-center justify-center ${
             isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
           }`}>
-            <Menu className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+            <Menu className={`w-4 h-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
 
           {/* Search Bar */}
-          <div className="relative flex-1" ref={searchRef}>
+          <div className="relative flex-1 min-w-0" ref={searchRef}>
             <form onSubmit={handleSearch} className="relative">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+              <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
                 isDark ? 'text-gray-500' : 'text-gray-400'
               }`} />
               <input
@@ -197,11 +207,13 @@ const Header = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowResults(true)}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
-                  isDark
-                    ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500'
-                    : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400'
-                }`}
+                className={`w-full pl-12 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-all duration-200`}
+                style={{
+                  background: isDark ? '#374151' : '#f8fafc',
+                  color: isDark ? '#f3f4f6' : '#111827',
+                  borderColor: isDark ? '#4b5563' : '#e2e8f0',
+                  fontSize: '14px',
+                }}
               />
               {searchQuery && (
                 <button
@@ -221,27 +233,43 @@ const Header = () => {
 
             {/* Search Results Dropdown */}
             {showResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 max-h-96 overflow-y-auto z-50">
+              <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border py-2 max-h-96 overflow-y-auto z-50`} 
+                style={{
+                  background: isDark ? '#1f2937' : '#ffffff',
+                  borderColor: isDark ? '#374151' : '#e2e8f0',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
                 {searchResults.map((result, index) => (
                   <button
                     key={index}
                     onClick={() => handleResultClick(result)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
+                    className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200`}
+                    style={{
+                      background: 'transparent',
+                      color: isDark ? '#f3f4f6' : '#111827',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = isDark ? '#374151' : '#f1f5f9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                    }}
                   >
                     {result.type === 'creator' && (
                       <>
                         {result.image ? (
                           <img src={result.image} alt={result.name} className="w-8 h-8 rounded-full" />
                         ) : (
-                          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <User className="w-4 h-4 text-indigo-600" />
+                          <div className="w-8 h-8 bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-[#667eea]" />
                           </div>
                         )}
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{result.name}</p>
-                          <p className="text-xs text-gray-500">{result.handle}</p>
+                          <p className={`text-sm font-medium  ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{result.name}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{result.handle}</p>
                         </div>
-                        <span className="text-xs text-gray-400">{result.followers} followers</span>
+                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>{result.followers} followers</span>
                       </>
                     )}
                     
@@ -249,8 +277,8 @@ const Header = () => {
                       <>
                         <Briefcase className="w-5 h-5 text-gray-400" />
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{result.title}</p>
-                          <p className="text-xs text-gray-500">Budget: ${result.budget}</p>
+                          <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{result.title}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Budget: ${result.budget}</p>
                         </div>
                       </>
                     )}
@@ -265,7 +293,7 @@ const Header = () => {
                           </div>
                         )}
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{result.name}</p>
+                          <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{result.name}</p>
                         </div>
                       </>
                     )}
@@ -277,60 +305,94 @@ const Header = () => {
         </div>
 
         {/* Right Section - Icons & User Menu */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-lg transition-all border ${
-              isDark
-                ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-yellow-300'
-                : 'bg-white border-gray-200 hover:bg-gray-100 text-gray-700'
-            }`}
+            className={`p-2.5 rounded-xl transition-all duration-200 border ml-2 sm:ml-4`}
+            style={{
+              background: isDark ? '#374151' : '#f8fafc',
+              borderColor: isDark ? '#4b5563' : '#e2e8f0',
+              color: isDark ? '#f3f4f6' : '#374151',
+            }}
             title={theme === 'light' ? 'Theme: Light (switch to dark)' : 'Theme: Dark (switch to light)'}
             aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
             {theme === 'light' ? (
-              <Moon className="w-5 h-5" />
+              <Moon className="w-5 h-5" style={{ color: '#667eea' }} />
             ) : (
-              <Sun className="w-5 h-5" />
+              <Sun className="w-5 h-5" style={{ color: '#fbbf24' }} />
             )}
           </button>
 
           {/* Messages */}
-          {isMessagingUser ? (
+          {isMessagingUser && (
             <Link
               to={messageRoute}
-              className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className={`relative p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center`}
+              style={{
+                background: isDark ? '#374151' : '#f8fafc',
+                borderColor: isDark ? '#4b5563' : '#e2e8f0',
+                border: '1px solid ' + (isDark ? '#4b5563' : '#e2e8f0'),
+                color: isDark ? '#f3f4f6' : '#374151',
+              }}
             >
-              <MessageSquare className="w-5 h-5 text-gray-600" />
+              <MessageSquare className="w-5 h-5" />
               {messageUnread > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                <span 
+                  className="absolute top-1 right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center"
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                  }}
+                >
                   {messageUnread > 9 ? '9+' : messageUnread}
                 </span>
               )}
             </Link>
-          ) : null}
+          )}
 
           {/* Notifications */}
           <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className={`relative p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center`}
+              style={{
+                background: isDark ? '#374151' : '#f8fafc',
+                borderColor: isDark ? '#4b5563' : '#e2e8f0',
+                border: '1px solid ' + (isDark ? '#4b5563' : '#e2e8f0'),
+                color: isDark ? '#f3f4f6' : '#374151',
+              }}
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+              <Bell className="w-5 h-5" />
               {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span 
+                  className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  }}
+                ></span>
               )}
             </button>
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-2 border-b border-gray-200 flex justify-between items-center">
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
+              <div className={`absolute right-0 mt-2 w-80 rounded-xl shadow-xl border py-2 z-50`} 
+                style={{
+                  background: isDark ? '#1f2937' : '#ffffff',
+                  borderColor: isDark ? '#374151' : '#e2e8f0',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <div className={`px-4 py-2 border-b flex justify-between items-center ${
+                  isDark ? 'border-gray-700' : 'border-gray-200'
+                }`}>
+                  <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Notifications</h3>
                   <Link
                     to={notificationsRoute}
-                    className="text-xs text-indigo-600 hover:text-indigo-700"
+                    className={`text-xs hover:underline ${
+                      isDark ? 'text-[#667eea] hover:text-[#667eea]/80' : 'text-[#667eea] hover:text-[#667eea]/800'
+                    }`}
                     onClick={() => setShowNotifications(false)}
                   >
                     View All
@@ -343,7 +405,7 @@ const Header = () => {
                       <Link
                         key={notif._id}
                         to={notif.data?.url || '#'}
-                        className="block px-4 py-3 hover:bg-gray-50"
+                        className={`block px-4 py-3 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                         onClick={() => setShowNotifications(false)}
                       >
                         <div className="flex items-start gap-3">
@@ -351,22 +413,22 @@ const Header = () => {
                             {getNotificationIcon(notif.type)}
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{notif.title}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{notif.title}</p>
+                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{notif.message}</p>
+                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                               {new Date(notif.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                           {!notif.read && (
-                            <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
+                            <span className="w-2 h-2 bg-[#667eea] rounded-full"></span>
                           )}
                         </div>
                       </Link>
                     ))}
                   </div>
                 ) : (
-                  <div className="px-4 py-8 text-center text-gray-500">
-                    <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <div className={`px-4 py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <Bell className={`w-8 h-8 mx-auto mb-2 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
                     <p className="text-sm">No new notifications</p>
                   </div>
                 )}
@@ -376,14 +438,21 @@ const Header = () => {
 
           {/* User Menu */}
           <div className="relative" ref={userMenuRef}>
-            <div className="flex items-center pl-2 border-l border-gray-200">
+            <div className="flex items-center gap-3">
+              {/* User Profile Section */}
               <button
                 type="button"
                 onClick={() => {
                   navigate(settingsRoute);
                   setShowUserMenu(false);
                 }}
-                className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-1"
+                className={`flex items-center gap-3 rounded-xl p-2 transition-all duration-200 ${
+                  isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                style={{
+                  background: isDark ? 'transparent' : '#f8fafc',
+                  border: '1px solid ' + (isDark ? '#4b5563' : '#e2e8f0'),
+                }}
               >
                 {user?.profilePicture ? (
                   <img
@@ -392,61 +461,31 @@ const Header = () => {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <UserCircle className="w-5 h-5 text-indigo-600" />
+                  <div className="w-8 h-8 bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 rounded-full flex items-center justify-center">
+                    <UserCircle className="w-5 h-5 text-[#667eea]" />
                   </div>
                 )}
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-700">{user?.fullName || 'User'}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.userType || 'Guest'}</p>
+                  <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-700'}`}>{user?.fullName || 'User'}</p>
+                  <p className={`text-xs capitalize ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user?.userType || 'Guest'}</p>
                 </div>
               </button>
 
+              {/* Logout Button */}
               <button
-                type="button"
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="p-1 ml-1 hover:bg-gray-50 rounded-lg"
-                aria-label="Open user menu"
+                onClick={logout}
+                className={`p-2.5 rounded-xl transition-all duration-200`}
+                style={{
+                  background: isDark ? '#374151' : '#fef2f2',
+                  borderColor: isDark ? '#4b5563' : '#fecaca',
+                  border: '1px solid ' + (isDark ? '#4b5563' : '#fecaca'),
+                  color: isDark ? '#f87171' : '#dc2626',
+                }}
+                title="Logout"
               >
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                <LogOut className="w-5 h-5" />
               </button>
             </div>
-
-            {/* User Dropdown Menu */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <Link
-                  to={getDashboardLink()}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <div className="flex items-center gap-2">
-                    <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
-                  </div>
-                </Link>
-                
-                <Link
-                  to={settingsRoute}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </div>
-                </Link>
-                
-                
-                <button
-                  onClick={logout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

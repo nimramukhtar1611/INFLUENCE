@@ -32,6 +32,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import brandService from '../../services/brandService';
 import campaignService from '../../services/campaignService';
 import dealService from '../../services/dealService';
@@ -44,6 +45,8 @@ import toast from 'react-hot-toast';
 
 const BrandDashboard = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -189,7 +192,7 @@ const BrandDashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
+          <Loader className="w-12 h-12 animate-spin text-[#667eea] mx-auto mb-4" />
           <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -233,12 +236,12 @@ const BrandDashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Brand Dashboard</h1>
-          <p className="text-gray-600">
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Brand Dashboard</h1>
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Welcome back, {profile?.brandName || user?.fullName || 'Brand'}!
           </p>
         </div>
@@ -247,7 +250,9 @@ const BrandDashboard = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm ${
+              isDark ? 'bg-gray-800/50 border-gray-700/50 text-gray-100' : 'bg-white/50 border-gray-300/50 text-gray-900'
+            }`}
           >
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -273,10 +278,10 @@ const BrandDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
-          <Link key={index} to={metric.link}>
-            <StatsCard {...metric} />
+          <Link key={index} to={metric.link} className="block h-full">
+            <StatsCard {...metric} className="h-full min-h-[180px]" />
           </Link>
         ))}
       </div>
@@ -308,7 +313,7 @@ const BrandDashboard = () => {
               </AreaChart>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-gray-400">No campaign data yet</p>
+                <p className={`${isDark ? 'text-gray-400' : 'text-gray-400'}`}>No campaign data yet</p>
               </div>
             )}
           </ResponsiveContainer>
@@ -337,7 +342,7 @@ const BrandDashboard = () => {
               </PieChart>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-gray-400">No platform data yet</p>
+                <p className={`${isDark ? 'text-gray-400' : 'text-gray-400'}`}>No platform data yet</p>
               </div>
             )}
           </ResponsiveContainer>
@@ -345,26 +350,32 @@ const BrandDashboard = () => {
       </div>
 
       {/* Recent Campaigns */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Campaigns</h2>
-          <Link to="/brand/campaigns" className="text-indigo-600 text-sm hover:text-indigo-700">
+      <div className={`rounded-xl shadow-sm overflow-hidden border ${
+        isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'
+      }`}>
+        <div className={`px-6 py-4 border-b flex justify-between items-center ${
+          isDark ? 'border-gray-700/50' : 'border-gray-200/50'
+        }`}>
+          <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Campaigns</h2>
+          <Link to="/brand/campaigns" className={`text-sm hover:underline transition-colors ${
+            isDark ? 'text-[#667eea] hover:text-[#5a67d8]' : 'text-[#667eea] hover:text-[#764ba2]'
+          }`}>
             View All
           </Link>
         </div>
 
-        <div className="divide-y divide-gray-200">
+        <div className={`divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
           {campaigns.length > 0 ? (
             campaigns.slice(0, 5).map((campaign) => (
               <Link
                 key={campaign._id}
                 to={`/brand/campaigns/${campaign._id}`}
-                className="block p-4 hover:bg-gray-50 transition-colors"
+                className={`block p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{campaign.title}</h3>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                    <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{campaign.title}</h3>
+                    <div className={`flex items-center gap-4 mt-1 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       <span>Budget: {formatCurrency(campaign.budget || 0)}</span>
                       <span>Progress: {campaign.progress || 0}%</span>
                       {campaign.endDate && (
@@ -377,23 +388,23 @@ const BrandDashboard = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      campaign.status === 'active' ? 'bg-green-100 text-green-800' :
-                      campaign.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                      campaign.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                      campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      campaign.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                      campaign.status === 'draft' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' :
+                      campaign.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                      campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                     }`}>
                       {campaign.status}
                     </span>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                   </div>
                 </div>
               </Link>
             ))
           ) : (
             <div className="p-8 text-center">
-              <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 mb-4">No campaigns yet</p>
+              <Target className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+              <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No campaigns yet</p>
               <Link to="/brand/campaigns/new">
                 <Button variant="primary" size="sm" icon={Plus}>
                   Create Campaign
@@ -405,38 +416,44 @@ const BrandDashboard = () => {
       </div>
 
       {/* Recent Deals */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Deals</h2>
-          <Link to="/brand/deals" className="text-indigo-600 text-sm hover:text-indigo-700">
+      <div className={`rounded-xl shadow-sm overflow-hidden border ${
+        isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'
+      }`}>
+        <div className={`px-6 py-4 border-b flex justify-between items-center ${
+          isDark ? 'border-gray-700/50' : 'border-gray-200/50'
+        }`}>
+          <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Deals</h2>
+          <Link to="/brand/deals" className={`text-sm hover:underline ${
+            isDark ? 'text-[#667eea] hover:text-[#5a67d8]' : 'text-[#667eea] hover:text-[#764ba2]'
+          }`}>
             View All
           </Link>
         </div>
 
-        <div className="divide-y divide-gray-200">
+        <div className={`divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
           {deals.length > 0 ? (
             deals.slice(0, 5).map((deal) => (
               <Link
                 key={deal._id}
                 to={`/brand/deals/${deal._id}`}
-                className="block p-4 hover:bg-gray-50 transition-colors"
+                className={`block p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">
+                    <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                       {deal.creatorId?.displayName || 'Creator'}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">{deal.campaignId?.title}</p>
+                    <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{deal.campaignId?.title}</p>
                     <div className="flex items-center gap-4 mt-2 text-sm">
-                      <span className="font-medium text-indigo-600">
+                      <span className="font-medium text-[#667eea]">
                         {formatCurrency(deal.budget || 0)}
                       </span>
                       <span className={`px-2 py-0.5 text-xs rounded-full ${
                         deal.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        deal.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                        deal.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        deal.status === 'revision' ? 'bg-orange-100 text-orange-800' :
-                        'bg-gray-100 text-gray-800'
+                        deal.status === 'in-progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        deal.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                        deal.status === 'revision' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                       }`}>
                         {deal.status}
                       </span>
@@ -448,8 +465,8 @@ const BrandDashboard = () => {
             ))
           ) : (
             <div className="p-8 text-center">
-              <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No deals yet</p>
+              <Briefcase className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No deals yet</p>
             </div>
           )}
         </div>
@@ -457,27 +474,29 @@ const BrandDashboard = () => {
 
       {/* Recent Transactions */}
       {transactions.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+        <div className={`rounded-xl shadow-sm overflow-hidden ${
+        isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white/90 border border-gray-200/50'
+      }`}>
+          <div className="px-6 py-4 border-b border-gray-200/50">
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Transactions</h2>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className={`divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
             {transactions.slice(0, 3).map((transaction) => (
-              <div key={transaction._id} className="p-4 hover:bg-gray-50">
+              <div key={transaction._id} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                       {transaction.description || 'Payment'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">{timeAgo(transaction.createdAt)}</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{timeAgo(transaction.createdAt)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">{formatCurrency(transaction.amount || 0)}</p>
+                    <p className={`font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(transaction.amount || 0)}</p>
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      transaction.status === 'in-escrow' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
+                      transaction.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                      transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                      transaction.status === 'in-escrow' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                     }`}>
                       {transaction.status}
                     </span>
@@ -492,42 +511,48 @@ const BrandDashboard = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link to="/brand/search">
-          <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+          <div className={`p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border ${
+            isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'
+          }`}>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                <Users className="w-5 h-5 text-indigo-600" />
+              <div className={`p-2 bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 rounded-lg group-hover:from-[#667eea]/20 group-hover:to-[#764ba2]/20 transition-all duration-200 border border-[#667eea]/20`}>
+                <Users className="w-5 h-5 text-[#667eea]" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Find Creators</h3>
-                <p className="text-xs text-gray-500">Discover new talent</p>
+                <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Find Creators</h3>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Discover new talent</p>
               </div>
             </div>
           </div>
         </Link>
 
         <Link to="/brand/analytics">
-          <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+          <div className={`p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border ${
+            isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'
+          }`}>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+              <div className={`p-2 bg-green-100/50 rounded-lg group-hover:bg-green-200/50 transition-all duration-200 border border-green-100/50`}>
                 <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">View Analytics</h3>
-                <p className="text-xs text-gray-500">Track performance</p>
+                <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>View Analytics</h3>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Track performance</p>
               </div>
             </div>
           </div>
         </Link>
 
         <Link to="/brand/payments">
-          <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+          <div className={`p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border ${
+            isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'
+          }`}>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+              <div className={`p-2 bg-purple-100/50 rounded-lg group-hover:bg-purple-200/50 transition-all duration-200 border border-purple-100/50`}>
                 <DollarSign className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Add Funds</h3>
-                <p className="text-xs text-gray-500">{formatCurrency(balance)} available</p>
+                <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Add Funds</h3>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{formatCurrency(balance)} available</p>
               </div>
             </div>
           </div>
@@ -536,7 +561,7 @@ const BrandDashboard = () => {
 
       {/* Alerts */}
       {deals.filter(d => d.status === 'revision').length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+        <div className="bg-yellow-50/50 border border-yellow-200/50 rounded-lg p-4 flex items-start gap-3 transition-all duration-200 shadow-sm">
           <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
           <div>
             <h3 className="font-medium text-yellow-800">Revision Requests</h3>

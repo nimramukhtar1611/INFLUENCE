@@ -129,11 +129,18 @@ const markAllAsRead = asyncHandler(async (req, res) => {
 // @route  DELETE /api/notifications/:notificationId
 // @access Private
 const deleteNotification = asyncHandler(async (req, res) => {
-  const notification = await Notification.findById(req.params.notificationId);
+  // Validate notification ID format
+  const { notificationId } = req.params;
+  if (!notificationId || !notificationId.match(/^[0-9a-fA-F]{24}$/)) {
+    res.status(400);
+    throw new Error('Invalid notification ID format');
+  }
+
+  const notification = await Notification.findById(notificationId);
 
   if (!notification) {
-    res.status(404);
-    throw new Error('Notification not found');
+    // Return success if notification doesn't exist (already deleted)
+    return res.json({ success: true, message: 'Notification already deleted or never existed' });
   }
 
   if (notification.userId.toString() !== req.user._id.toString()) {

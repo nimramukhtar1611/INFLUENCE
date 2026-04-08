@@ -13,7 +13,8 @@ import brandService from '../../services/brandService';
 import Input from '../../components/UI/Input';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
-import { formatCurrency, formatDate } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import toast from 'react-hot-toast';
 
 const toSocialUrl = (platform, value) => {
@@ -331,7 +332,7 @@ const BrandProfile = () => {
                   {formData.brandName || 'Your Brand Name'}
                 </h2>
                 {profile?.isVerified && (
-                  <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                  <span className={`${getStatusColor('verified', 'status', false)} text-xs px-3 py-1 rounded-full flex items-center gap-1`}>
                     <CheckCircle className="w-3 h-3" />
                     Verified Brand
                   </span>
@@ -672,7 +673,7 @@ const BrandProfile = () => {
         title="Profile Updated"
       >
         <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className={`w-16 h-16 ${getStatusColor('completed', 'status', false).split(' ')[0]} rounded-full flex items-center justify-center mx-auto mb-4`}>
             <Check className="w-8 h-8 text-green-600" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Updated Successfully!</h3>

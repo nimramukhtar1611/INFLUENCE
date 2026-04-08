@@ -17,6 +17,7 @@ import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import Input from '../../components/UI/Input';
 import Select from '../../components/UI/Select';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 
 const Disputes = () => {
   const [showNewDisputeModal, setShowNewDisputeModal] = useState(false);
@@ -90,13 +91,17 @@ const Disputes = () => {
     }
   ];
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'open': return 'bg-red-100 text-red-800';
-      case 'in-progress': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getStandardizedStatusColor = (status) => {
+    return getStatusColor(status, 'status', false);
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status?.toLowerCase()) {
+      case 'resolved': return CheckCircle;
+      case 'open': return AlertCircle;
+      case 'in-progress': return Clock;
+      case 'closed': return XCircle;
+      default: return AlertCircle;
     }
   };
 
@@ -235,7 +240,8 @@ const Disputes = () => {
                 </div>
                 
                 <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(dispute.status)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${getStandardizedStatusColor(dispute.status)}`}>
+                    {React.createElement(getStatusIcon(dispute.status), { className: `w-3 h-3 ${getStatusIconColor(dispute.status)}` })}
                     {dispute.status}
                   </span>
                   <p className={`text-xs mt-2 font-medium ${getPriorityColor(dispute.priority)}`}>
@@ -361,7 +367,8 @@ const Disputes = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900">{selectedDispute.title}</h3>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedDispute.status)}`}>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center gap-1 ${getStandardizedStatusColor(selectedDispute.status)}`}>
+                {React.createElement(getStatusIcon(selectedDispute.status), { className: `w-3 h-3 ${getStatusIconColor(selectedDispute.status)}` })}
                 {selectedDispute.status}
               </span>
             </div>

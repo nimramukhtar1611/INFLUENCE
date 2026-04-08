@@ -13,6 +13,7 @@ import {
   Filter,
   X
 } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 
 const Table = ({
   columns = [],
@@ -39,6 +40,8 @@ const Table = ({
   stickyHeader = false,
   maxHeight
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [localData, setLocalData] = useState(data);
   const [localSort, setLocalSort] = useState({ column: sortColumn, direction: sortDirection });
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,19 +160,19 @@ const Table = ({
 
   // ==================== TABLE CLASSES ====================
   const tableClasses = [
-    'min-w-full divide-y divide-gray-200',
-    bordered ? 'border border-gray-200' : '',
+    'min-w-full divide-y',
+    isDark ? 'divide-gray-700' : 'divide-gray-200',
+    bordered ? (isDark ? 'border border-gray-700' : 'border border-gray-200') : '',
     className
   ].join(' ');
 
   const headerClasses = [
-    'bg-gray-50',
-    stickyHeader ? 'sticky top-0 z-10' : ''
+    isDark ? 'bg-gray-800' : 'bg-gray-50'
   ].join(' ');
 
   const rowClasses = (index) => [
-    hoverable ? 'hover:bg-gray-50' : '',
-    striped && index % 2 === 1 ? 'bg-gray-50' : 'bg-white',
+    hoverable ? (isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50') : '',
+    striped && index % 2 === 1 ? (isDark ? 'bg-gray-800' : 'bg-gray-50') : (isDark ? 'bg-gray-900' : 'bg-white'),
     'transition-colors'
   ].join(' ');
 
@@ -187,13 +190,19 @@ const Table = ({
         <div className="flex flex-wrap gap-4 items-center justify-between">
           {onSearch && (
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                isDark ? 'text-gray-500' : 'text-gray-400'
+              }`} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                  isDark 
+                    ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
               />
               {searchTerm && (
                 <button
@@ -209,7 +218,9 @@ const Table = ({
           {(Object.keys(filters).length > 0 || searchTerm) && (
             <button
               onClick={clearFilters}
-              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+              className={`text-sm flex items-center gap-1 ${
+                isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               <X className="w-4 h-4" />
               Clear Filters
@@ -220,7 +231,9 @@ const Table = ({
 
       {/* Table Container */}
       <div 
-        className="overflow-x-auto rounded-lg border border-gray-200"
+        className={`overflow-x-auto rounded-lg border ${
+          isDark ? 'border-gray-700' : 'border-gray-200'
+        }`}
         style={{ maxHeight: maxHeight }}
       >
         <table className={tableClasses}>
@@ -233,7 +246,7 @@ const Table = ({
                     type="checkbox"
                     checked={selectedRows.length === data.length && data.length > 0}
                     onChange={onSelectAll}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                   />
                 </th>
               )}
@@ -242,12 +255,15 @@ const Table = ({
                 <th
                   key={column.key}
                   onClick={() => handleSort(column)}
-                  className={`
-                    px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                    ${column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''}
-                    ${column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : ''}
-                    ${column.width ? `w-${column.width}` : ''}
-                  `}
+                  className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDark ? 'text-gray-400' : 'text-gray-500'
+                  } ${
+                    column.sortable ? (isDark ? 'cursor-pointer hover:bg-gray-700' : 'cursor-pointer hover:bg-gray-100') : ''
+                  } ${
+                    column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : ''
+                  } ${
+                    column.width ? `w-${column.width}` : ''
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     {column.title}
@@ -261,7 +277,9 @@ const Table = ({
                       value={filters[column.key] || ''}
                       onChange={(e) => handleFilter(column.key, e.target.value)}
                       placeholder={`Filter ${column.title}`}
-                      className="mt-2 w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className={`mt-2 w-full px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-[#667eea] ${
+                        isDark ? 'bg-gray-800 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                       onClick={(e) => e.stopPropagation()}
                     />
                   )}
@@ -271,7 +289,7 @@ const Table = ({
           </thead>
 
           {/* Body */}
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
             {loading ? (
               <tr>
                 <td 
@@ -307,7 +325,7 @@ const Table = ({
                         checked={selectedRows.includes(row[rowKey])}
                         onChange={() => onRowSelect?.(row)}
                         onClick={(e) => e.stopPropagation()}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-gray-300 text-[#667eea] focus:ring-[#667eea]"
                       />
                     </td>
                   )}
@@ -326,10 +344,12 @@ const Table = ({
 
       {/* Pagination */}
       {pagination && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+        <div className={`flex items-center justify-between px-4 py-3 border-t sm:px-6 ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-gray-700">
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Showing <span className="font-medium">{pagination.from}</span> to{' '}
                 <span className="font-medium">{pagination.to}</span> of{' '}
                 <span className="font-medium">{pagination.total}</span> results
@@ -340,7 +360,9 @@ const Table = ({
               <button
                 onClick={() => onPageChange(1)}
                 disabled={pagination.currentPage === 1}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`p-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'
+                }`}
                 title="First Page"
               >
                 <ChevronsLeft className="w-4 h-4" />
@@ -349,20 +371,24 @@ const Table = ({
               <button
                 onClick={() => onPageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`p-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'
+                }`}
                 title="Previous Page"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               
-              <span className="px-4 py-2 text-sm text-gray-700">
+              <span className={`px-4 py-2 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Page {pagination.currentPage} of {pagination.totalPages}
               </span>
               
               <button
                 onClick={() => onPageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination.totalPages}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`p-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'
+                }`}
                 title="Next Page"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -371,7 +397,9 @@ const Table = ({
               <button
                 onClick={() => onPageChange(pagination.totalPages)}
                 disabled={pagination.currentPage === pagination.totalPages}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`p-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'
+                }`}
                 title="Last Page"
               >
                 <ChevronsRight className="w-4 h-4" />

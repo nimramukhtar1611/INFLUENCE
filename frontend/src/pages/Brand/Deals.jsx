@@ -24,11 +24,15 @@ import {
   MoreVertical
 } from 'lucide-react';
 import dealService from '../../services/dealService';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const Deals = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deals, setDeals] = useState([]);
@@ -44,15 +48,15 @@ const Deals = () => {
 
   // ==================== STATUS CONFIGURATION ====================
   const statusConfig = {
-    pending:      { label: 'Pending',      color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
-    accepted:     { label: 'Accepted',     color: 'bg-blue-100 text-blue-800',     icon: CheckCircle },
-    'in-progress':{ label: 'In Progress',  color: 'bg-purple-100 text-purple-800', icon: Clock      },
-    completed:    { label: 'Completed',    color: 'bg-green-100 text-green-800',   icon: CheckCircle },
-    cancelled:    { label: 'Cancelled',    color: 'bg-red-100 text-red-800',       icon: XCircle    },
-    declined:     { label: 'Declined',     color: 'bg-red-100 text-red-800',       icon: XCircle    },
-    revision:     { label: 'Revision',     color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
-    negotiating:  { label: 'Negotiating',  color: 'bg-indigo-100 text-indigo-800', icon: Clock     },
-    disputed:     { label: 'Disputed',     color: 'bg-red-100 text-red-800',       icon: AlertCircle }
+    pending:      { label: 'Pending',      color: getStatusColor('pending', 'deal', false), icon: AlertCircle },
+    accepted:     { label: 'Accepted',     color: getStatusColor('accepted', 'deal', false), icon: CheckCircle },
+    'in-progress':{ label: 'In Progress',  color: getStatusColor('in-progress', 'deal', false), icon: Clock      },
+    completed:    { label: 'Completed',    color: getStatusColor('completed', 'deal', false), icon: CheckCircle },
+    cancelled:    { label: 'Cancelled',    color: getStatusColor('cancelled', 'deal', false), icon: XCircle    },
+    declined:     { label: 'Declined',     color: getStatusColor('rejected', 'deal', false), icon: XCircle    },
+    revision:     { label: 'Revision',     color: getStatusColor('revision', 'deliverable', false), icon: AlertCircle },
+    negotiating:  { label: 'Negotiating',  color: getStatusColor('pending', 'status', false), icon: Clock     },
+    disputed:     { label: 'Disputed',     color: getStatusColor('failed', 'status', false), icon: AlertCircle }
   };
 
   // ==================== STATUS FILTER OPTIONS ====================
@@ -126,18 +130,18 @@ const Deals = () => {
   if (loading && deals.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-12 h-12 animate-spin text-indigo-600" />
+        <Loader className="w-12 h-12 animate-spin text-[#667eea]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Deals</h1>
-          <p className="text-gray-600">Manage all your creator collaborations</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Deals</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage all your creator collaborations</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={RefreshCw} onClick={() => fetchDeals(true)} loading={refreshing}>
@@ -151,20 +155,20 @@ const Deals = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Total Deals</p>
-          <p className="text-2xl font-bold text-gray-900">{pagination.total}</p>
+        <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-sm mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Total Deals</p>
+          <p className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{pagination.total}</p>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Active</p>
+        <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-sm mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Active</p>
           <p className="text-2xl font-bold text-blue-600">{activeCount}</p>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Pending</p>
+        <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-sm mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending</p>
           <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Completed</p>
+        <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-sm mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Completed</p>
           <p className="text-2xl font-bold text-green-600">{completedCount}</p>
         </div>
       </div>
@@ -180,7 +184,7 @@ const Deals = () => {
             }}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === option.value
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -190,134 +194,123 @@ const Deals = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
+      <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
           <input
             type="text"
             placeholder="Search by campaign, creator, or deal ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+              isDark 
+                ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+            }`}
           />
         </div>
       </div>
 
       {/* Deals Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className={`rounded-xl shadow-sm overflow-hidden border ${
+        isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white border-gray-200/50'
+      }`}>
         {deals.length > 0 ? (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deal Info</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creator</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Budget</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deadline</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deal Info</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Creator</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Budget</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Status</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deadline</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Progress</th>
+                    <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Payment</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                   {deals.map((deal) => {
                     const StatusIcon = statusConfig[deal.status]?.icon || AlertCircle;
                     const statusStyles = statusConfig[deal.status] || statusConfig.pending;
                     
                     return (
-                      <tr key={deal._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
+                      <tr 
+                        key={deal._id} 
+                        className={`${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer transition-colors duration-200`}
+                        onClick={() => window.location.href = `/brand/deals/${deal._id}`}
+                      >
+                        <td className="px-4 py-3">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                               {deal.campaignId?.title || 'Campaign'}
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                               ID: {deal._id?.slice(-8)}
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center">
-                            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                              <User className="w-4 h-4 text-indigo-600" />
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${isDark ? 'bg-gray-700' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10'}`}>
+                              <User className={`w-4 h-4 ${isDark ? 'text-gray-300' : 'text-[#667eea]'}`} />
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                 {deal.creatorId?.displayName || 'Creator'}
                               </div>
-                              <div className="text-xs text-gray-500">{deal.creatorId?.handle || ''}</div>
+                              <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{deal.creatorId?.handle || ''}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-bold text-gray-900">
+                        <td className="px-4 py-3">
+                          <div className={`text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                             {formatCurrency(deal.budget || 0)}
                           </div>
                           {deal.platformFee > 0 && (
-                            <div className="text-xs text-gray-500">
+                            <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                               Fee: {formatCurrency(deal.platformFee)}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3">
                           <span className={`px-2 py-1 text-xs rounded-full flex items-center w-fit gap-1 ${statusStyles.color}`}>
                             <StatusIcon className="w-3 h-3" />
                             {statusStyles.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500">
+                        <td className="px-4 py-3">
+                          <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                             {deal.deadline ? formatDate(deal.deadline) : 'No deadline'}
                           </div>
                           {deal.deadline && (
-                            <div className="text-xs text-gray-400 mt-1">
+                            <div className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                               {timeAgo(deal.deadline)}
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div className={`w-12 rounded-full h-1.5 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                               <div 
-                                className="bg-indigo-600 h-2 rounded-full" 
+                                className="bg-gradient-to-r from-[#667eea] to-[#764ba2] h-1.5 rounded-full" 
                                 style={{ width: `${deal.progress || 0}%` }}
                               />
                             </div>
-                            <span className="text-xs text-gray-600">{deal.progress || 0}%</span>
+                            <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{deal.progress || 0}%</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            deal.paymentStatus === 'released' ? 'bg-green-100 text-green-800' :
-                            deal.paymentStatus === 'in-escrow' ? 'bg-blue-100 text-blue-800' :
-                            deal.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            deal.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
-                            'bg-gray-100 text-gray-800'
+                            deal.paymentStatus === 'released' ? getStatusColor('completed', 'payment', false) :
+                            deal.paymentStatus === 'in-escrow' ? getStatusColor('processing', 'payment', false) :
+                            deal.paymentStatus === 'pending' ? getStatusColor('pending', 'payment', false) :
+                            deal.paymentStatus === 'refunded' ? getStatusColor('failed', 'payment', false) :
+                            getStatusColor('inactive', 'status', false)
                           }`}>
                             {deal.paymentStatus || 'pending'}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link
-                              to={`/brand/deals/${deal._id}`}
-                              className="text-indigo-600 hover:text-indigo-900"
-                              title="View Details"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Link>
-                            {deal.messages?.length > 0 && (
-                              <div className="relative">
-                                <MessageSquare className="w-4 h-4 text-gray-400" />
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                                  {deal.messages.length}
-                                </span>
-                              </div>
-                            )}
-                         
-                          </div>
                         </td>
                       </tr>
                     );
@@ -328,30 +321,48 @@ const Deals = () => {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="text-sm text-gray-700">
+              <div className={`px-6 py-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              }`}>
+                <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
                   {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
                   {pagination.total} results
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => goToPage(1)} disabled={pagination.page === 1}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+                    className={`p-2 border rounded-lg disabled:opacity-50 ${
+                      isDark 
+                        ? 'border-gray-600 hover:bg-gray-700/50'
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}>
                     <ChevronsLeft className="w-4 h-4" />
                   </button>
                   <button onClick={prevPage} disabled={pagination.page === 1}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+                    className={`p-2 border rounded-lg disabled:opacity-50 ${
+                      isDark 
+                        ? 'border-gray-600 hover:bg-gray-700/50'
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}>
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="px-4 py-2 text-sm text-gray-700">
+                  <span className={`px-4 py-2 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                     Page {pagination.page} of {pagination.pages}
                   </span>
                   <button onClick={nextPage} disabled={pagination.page === pagination.pages}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+                    className={`p-2 border rounded-lg disabled:opacity-50 ${
+                      isDark 
+                        ? 'border-gray-600 hover:bg-gray-700/50'
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                   <button onClick={() => goToPage(pagination.pages)} disabled={pagination.page === pagination.pages}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+                    className={`p-2 border rounded-lg disabled:opacity-50 ${
+                      isDark 
+                        ? 'border-gray-600 hover:bg-gray-700/50'
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}>
                     <ChevronsRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -360,8 +371,8 @@ const Deals = () => {
           </>
         ) : (
           <div className="text-center py-12">
-            <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No deals found</p>
+            <Briefcase className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No deals found</p>
             <Link to="/brand/search">
               <Button variant="primary" size="sm">Find Creators</Button>
             </Link>

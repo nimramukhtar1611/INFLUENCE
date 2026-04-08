@@ -6,9 +6,9 @@ const PlaceholderImage = ({ type = 'user', size = 40, className = '' }) => {
   
   // Generate a consistent color based on the type
   const colors = {
-    user: 'bg-indigo-100 text-indigo-600',
-    brand: 'bg-purple-100 text-purple-600',
-    campaign: 'bg-green-100 text-green-600'
+    user: 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]',
+    brand: 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]',
+    campaign: 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]'
   };
   
   const icons = {

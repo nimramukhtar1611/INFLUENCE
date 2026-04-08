@@ -104,13 +104,24 @@ export const formatNumber = (num) => {
 };
 
 /**
- * Format currency
+ * Format currency with abbreviations for large amounts
  * @param {number} amount - Amount to format
  * @param {string} currency - Currency code (USD, EUR, GBP, etc.)
  * @returns {string}
  */
 export const formatCurrency = (amount, currency = 'USD') => {
   if (amount === null || amount === undefined) return '$0';
+  
+  // Handle very large amounts with abbreviations
+  if (amount >= 1000000000) {
+    return `$${(amount / 1000000000).toFixed(1)}B`;
+  }
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  }
+  if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(1)}K`;
+  }
   
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

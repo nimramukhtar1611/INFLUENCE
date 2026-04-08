@@ -1,6 +1,7 @@
 // pages/Admin/Payments.jsx - COMPLETE FIXED VERSION
 import React, { useState, useEffect } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useTheme } from '../../hooks/useTheme';
 import {
   Search,
   Filter,
@@ -19,12 +20,17 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import Button from '../../components/UI/Button';
-import StatsCard from '../../components/Common/StatsCard';
 import Modal from '../../components/Common/Modal';
+import StatsCard from '../../components/Common/StatsCard';
+import Loader from '../../components/Common/Loader';
 import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
+import toast from 'react-hot-toast';
 
 const AdminPayments = () => {
   const { payments, loading, refreshData, stats, approveWithdrawal } = useAdminData();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -136,41 +142,22 @@ const AdminPayments = () => {
   };
 
   // ==================== STATUS HELPERS ====================
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed':
-      case 'released':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      case 'refunded':
-        return 'bg-purple-100 text-purple-800';
-      case 'in-escrow':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch(status?.toLowerCase()) {
       case 'completed':
       case 'released':
-        return <CheckCircle className="w-4 h-4" />;
+        return CheckCircle;
       case 'pending':
       case 'processing':
-        return <Clock className="w-4 h-4" />;
+        return Clock;
       case 'failed':
-        return <XCircle className="w-4 h-4" />;
+        return XCircle;
       case 'refunded':
-        return <RefreshCw className="w-4 h-4" />;
+        return RefreshCw;
       case 'in-escrow':
-        return <Wallet className="w-4 h-4" />;
+        return Wallet;
       default:
-        return <AlertCircle className="w-4 h-4" />;
+        return AlertCircle;
     }
   };
 
@@ -218,21 +205,21 @@ const AdminPayments = () => {
   // ==================== LOADING STATE ====================
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="large" color="purple" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payment Management</h1>
-          <p className="text-gray-600">Monitor all financial transactions on the platform</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Payment Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Monitor all financial transactions on the platform</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" icon={RefreshCw} onClick={refreshData}>
             Refresh
           </Button>
@@ -379,54 +366,39 @@ const AdminPayments = () => {
 
       {/* Payments Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Transaction ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  From / To
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredPayments.length > 0 ? (
                 filteredPayments.map((payment) => (
-                  <tr key={payment._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                  <tr 
+                    key={payment._id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewDetails(payment)}
+                  >
+                    <td className="px-4 py-3">
                       <div className="text-sm font-mono font-medium text-gray-900">{payment.transactionId}</div>
                       {payment.invoiceNumber && (
                         <div className="text-xs text-gray-500">Invoice: {payment.invoiceNumber}</div>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        <span className="text-xs text-gray-500 block">From:</span>
-                        {payment.from?.brandName || payment.from?.fullName || '—'}
-                      </div>
-                      <div className="text-sm text-gray-900 mt-1">
-                        <span className="text-xs text-gray-500 block">To:</span>
-                        {payment.to?.displayName || payment.to?.fullName || '—'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="text-sm font-bold text-gray-900">{formatCurrency(payment.amount || 0)}</div>
                       {payment.fee > 0 && (
                         <div className="text-xs text-gray-500">Fee: {formatCurrency(payment.fee)}</div>
@@ -435,47 +407,23 @@ const AdminPayments = () => {
                         <div className="text-xs text-green-600">Net: {formatCurrency(payment.netAmount)}</div>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(payment.status)}`}>
-                        {getStatusIcon(payment.status)}
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(payment.status, 'payment')}`}>
+                        {React.createElement(getStatusIcon(payment.status), { className: `w-3 h-3 ${getStatusIconColor(payment.status)}` })}
                         {payment.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         {getTypeIcon(payment.type)}
                         <span className="text-sm capitalize">{payment.type}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(payment.createdAt)}
-                      <div className="text-xs text-gray-400">{timeAgo(payment.createdAt)}</div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleViewDetails(payment)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {payment.status === 'pending' && payment.type === 'withdrawal' && (
-                          <button
-                            onClick={() => handleApproveWithdrawal(payment)}
-                            className="text-green-600 hover:text-green-700"
-                            title="Approve Withdrawal"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
                     No payments found
                   </td>
                 </tr>
@@ -491,17 +439,18 @@ const AdminPayments = () => {
         onClose={() => setShowDetailsModal(false)}
         title="Payment Details"
         size="lg"
+        className="modal-scrollable"
       >
         {selectedPayment && (
-          <div className="space-y-6">
+          <div className="space-y-6 pr-2">
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-gray-500">Transaction ID</p>
                   <p className="font-mono text-lg font-semibold">{selectedPayment.transactionId}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center gap-1 ${getStatusColor(selectedPayment.status)}`}>
-                  {getStatusIcon(selectedPayment.status)}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center gap-1 ${getStatusColor(selectedPayment.status, 'payment')}`}>
+                  {React.createElement(getStatusIcon(selectedPayment.status), { className: `w-3 h-3 ${getStatusIconColor(selectedPayment.status)}` })}
                   {selectedPayment.status}
                 </span>
               </div>

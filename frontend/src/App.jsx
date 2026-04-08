@@ -79,8 +79,6 @@ import Disputes from './components/Common/Disputes';
 import HelpCenter from './components/Common/HelpCenter';
 import Contracts from './components/Common/Contracts';
 import Pricing from './pages/Pricing';
-import Terms from './pages/Terms';
-import Privacy from './pages/Privacy';
 import SubscriptionManager from './pages/Common/SubscriptionManager';
 
 const normalizePlanId = (value) => {
@@ -154,8 +152,6 @@ function App() {
                           <Route path="/verify-email" element={<VerifyEmail />} />
                           <Route path="/2fa-verify" element={<Verify2FA />} />
                           <Route path="/pricing" element={<Pricing />} />
-                          <Route path="/terms" element={<Terms />} />
-                          <Route path="/privacy" element={<Privacy />} />
                          <Route path="/admin/login" element={<AdminLogin />} />
 
                           {/* Brand Routes */}

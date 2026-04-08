@@ -16,7 +16,6 @@ import {
   Ban,
   Download,
   RefreshCw,
-  Loader,
   ChevronDown,
   Star,
   DollarSign,
@@ -31,12 +30,17 @@ import {
 } from 'lucide-react';
 import { useAdminData } from '../../hooks/useAdminData';
 import { formatCurrency, formatDate, formatNumber, timeAgo } from '../../utils/helpers';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import StatsCard from '../../components/Common/StatsCard';
+import Loader from '../../components/Common/Loader';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const AdminUsers = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const {
     loading,
     refreshing,
@@ -59,7 +63,7 @@ const AdminUsers = () => {
   const [suspendDuration, setSuspendDuration] = useState('7');
   const [filters, setFilters] = useState({
     search: '',
-    userType: '',
+    user_type: '',
     status: '',
     verified: '',
     sortBy: 'createdAt',
@@ -72,8 +76,10 @@ const AdminUsers = () => {
   }, [currentPage, filters]);
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
     setCurrentPage(1);
+    fetchUsers(1, newFilters);
   };
 
   const handleSearch = (e) => {
@@ -115,13 +121,41 @@ const AdminUsers = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleExport = () => {
+    // Generate CSV for users data
+    const csvContent = [
+      ['Name', 'Email', 'Type', 'Status', 'Verified', 'Joined', 'Last Active'].join(','),
+      ...users.map(user => [
+        `"${user.fullName || user.name}"`,
+        `"${user.email}"`,
+        user.userType,
+        user.status,
+        user.isVerified ? 'Verified' : 'Pending',
+        user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : '',
+        user.lastLogin ? new Date(user.lastLogin).toISOString().split('T')[0] : 'Never'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-export-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success('Users data exported successfully');
+  };
+
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'status', isDark);
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status?.toLowerCase()) {
+      case 'active': return CheckCircle;
+      case 'suspended': return Ban;
+      case 'inactive': return Clock;
+      default: return AlertCircle;
     }
   };
 
@@ -136,20 +170,20 @@ const AdminUsers = () => {
   if (loading && users.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader size="lg" />
+        <Loader size="large" color="purple" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600">Manage all users on the platform</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>User Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage all users on the platform</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -159,7 +193,7 @@ const AdminUsers = () => {
           >
             Refresh
           </Button>
-          <Button variant="outline" size="sm" icon={Download}>
+          <Button variant="outline" size="sm" icon={Download} onClick={handleExport}>
             Export
           </Button>
         </div>
@@ -198,14 +232,18 @@ const AdminUsers = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
+      <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             <input
               type="text"
               placeholder="Search users by name or email..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+              }`}
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />
@@ -213,9 +251,13 @@ const AdminUsers = () => {
           
           <div className="flex flex-wrap gap-2">
             <select
-              value={filters.userType}
-              onChange={(e) => handleFilterChange('userType', e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={filters.user_type}
+              onChange={(e) => handleFilterChange('user_type', e.target.value)}
+              className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="">All Types</option>
               <option value="brand">Brands</option>
@@ -225,7 +267,11 @@ const AdminUsers = () => {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -237,7 +283,11 @@ const AdminUsers = () => {
             <select
               value={filters.verified}
               onChange={(e) => handleFilterChange('verified', e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="">All Verification</option>
               <option value="true">Verified</option>
@@ -248,96 +298,97 @@ const AdminUsers = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className={`rounded-xl shadow-sm overflow-hidden ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   Verification
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   Joined
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   Last Active
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-4 py-3 text-right text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {users.length > 0 ? users.map((user) => {
                 const TypeIcon = getUserTypeIcon(user.userType);
                 return (
-                  <tr key={user._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={user._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {user.profilePicture ? (
                           <img src={user.profilePicture} alt={user.fullName} className="w-10 h-10 rounded-full" />
                         ) : (
-                          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-indigo-600" />
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-gradient-to-r from-[#667eea]/20 to-[#764ba2]/20' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10'}`}>
+                            <User className="w-5 h-5 text-[#667eea]" />
                           </div>
                         )}
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="ml-3">
+                          <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[150px]`}>{user.fullName}</div>
+                          <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[150px]`}>{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full flex items-center w-fit gap-1 ${
                         user.userType === 'brand' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
+                          ? getStatusColor('brand', 'userType', isDark)
+                          : getStatusColor('creator', 'userType', isDark)
                       }`}>
                         <TypeIcon className="w-3 h-3" />
                         {user.userType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(user.status)}`}>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColorClass(user.status)}`}>
+                        {React.createElement(getStatusIcon(user.status), { className: `w-3 h-3 ${getStatusIconColor(user.status)}` })}
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       {user.isVerified ? (
-                        <span className="flex items-center text-green-600">
+                        <span className={`flex items-center ${getStatusColor('verified', 'status', isDark).split(' ')[1]}`}>
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Verified
                         </span>
                       ) : (
-                        <span className="flex items-center text-yellow-600">
+                        <span className={`flex items-center ${getStatusColor('unverified', 'status', isDark).split(' ')[1]}`}>
                           <Clock className="w-4 h-4 mr-1" />
                           Pending
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatDate(user.createdAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {user.lastLogin ? timeAgo(user.lastLogin) : 'Never'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => {
                             setSelectedUser(user);
                             setShowUserModal(true);
                           }}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className={`hover:${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`}
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
@@ -346,7 +397,7 @@ const AdminUsers = () => {
                         {!user.isVerified && (
                           <button
                             onClick={() => handleVerify(user._id)}
-                            className="text-green-600 hover:text-green-900"
+                            className={`hover:${isDark ? 'text-green-400' : 'text-green-900'}`}
                             title="Verify User"
                           >
                             <CheckCircle className="w-4 h-4" />
@@ -359,7 +410,7 @@ const AdminUsers = () => {
                               setSelectedUser(user);
                               setShowSuspendModal(true);
                             }}
-                            className="text-yellow-600 hover:text-yellow-900"
+                            className={`hover:${isDark ? 'text-yellow-400' : 'text-yellow-900'}`}
                             title="Suspend User"
                           >
                             <Ban className="w-4 h-4" />
@@ -367,7 +418,7 @@ const AdminUsers = () => {
                         ) : user.status === 'suspended' ? (
                           <button
                             onClick={() => handleActivate(user._id)}
-                            className="text-green-600 hover:text-green-900"
+                            className={`hover:${isDark ? 'text-green-400' : 'text-green-900'}`}
                             title="Activate User"
                           >
                             <ThumbsUp className="w-4 h-4" />
@@ -379,7 +430,7 @@ const AdminUsers = () => {
                             setSelectedUser(user);
                             setShowDeleteModal(true);
                           }}
-                          className="text-red-600 hover:text-red-900"
+                          className={`hover:${isDark ? 'text-red-400' : 'text-red-900'}`}
                           title="Delete User"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -390,7 +441,7 @@ const AdminUsers = () => {
                 );
               }) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="7" className={`px-4 py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     No users found
                   </td>
                 </tr>
@@ -401,8 +452,8 @@ const AdminUsers = () => {
 
         {/* Pagination */}
         {pagination.users.pages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+          <div className={`px-4 py-4 border-t flex items-center justify-between ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Showing {((pagination.users.page - 1) * pagination.users.limit) + 1} to{' '}
               {Math.min(pagination.users.page * pagination.users.limit, pagination.users.total)} of{' '}
               {pagination.users.total} results
@@ -411,17 +462,25 @@ const AdminUsers = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-3 py-1 border rounded-lg hover:disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark
+                    ? 'border-gray-600 hover:bg-gray-700/50'
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
               >
                 Previous
               </button>
-              <span className="px-4 py-1 text-sm text-gray-700">
+              <span className={`px-4 py-1 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Page {currentPage} of {pagination.users.pages}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(pagination.users.pages, prev + 1))}
                 disabled={currentPage === pagination.users.pages}
-                className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-3 py-1 border rounded-lg hover:disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark
+                    ? 'border-gray-600 hover:bg-gray-700/50'
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
               >
                 Next
               </button>
@@ -441,34 +500,34 @@ const AdminUsers = () => {
         size="lg"
       >
         {selectedUser && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center gap-4">
               {selectedUser.profilePicture ? (
                 <img src={selectedUser.profilePicture} alt={selectedUser.fullName} className="w-16 h-16 rounded-full" />
               ) : (
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-indigo-600" />
+                <div className="w-16 h-16 bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-[#667eea]" />
                 </div>
               )}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{selectedUser.fullName}</h3>
-                <p className="text-gray-600">{selectedUser.email}</p>
+                <h3 className={`text-xl font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedUser.fullName}</h3>
+                <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>{selectedUser.email}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    selectedUser.userType === 'brand' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    selectedUser.userType === 'brand' ? getStatusColor('brand', 'userType', isDark) : getStatusColor('creator', 'userType', isDark)
                   }`}>
                     {selectedUser.userType}
                   </span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(selectedUser.status)}`}>
+                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColorClass(selectedUser.status)}`}>
                     {selectedUser.status}
                   </span>
                   {selectedUser.isVerified ? (
-                    <span className="flex items-center text-xs text-green-600">
+                    <span className={`flex items-center text-xs ${getStatusColor('verified', 'status', isDark).split(' ')[1]}`}>
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Verified
                     </span>
                   ) : (
-                    <span className="flex items-center text-xs text-yellow-600">
+                    <span className={`flex items-center text-xs ${getStatusColor('unverified', 'status', isDark).split(' ')[1]}`}>
                       <Clock className="w-3 h-3 mr-1" />
                       Pending
                     </span>
@@ -477,65 +536,65 @@ const AdminUsers = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Phone</p>
-                <p className="font-medium flex items-center">
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
+                <p className={`text-sm font-medium flex items-center ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                   {selectedUser.phone || 'Not provided'}
                 </p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Joined</p>
-                <p className="font-medium flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Joined</p>
+                <p className={`text-sm font-medium flex items-center ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <Calendar className={`w-3 h-3 mr-2 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
                   {formatDate(selectedUser.createdAt)}
                 </p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Last Active</p>
-                <p className="font-medium flex items-center">
-                  <Clock className="w-4 h-4 mr-2 text-gray-400" />
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Last Active</p>
+                <p className={`text-sm font-medium flex items-center ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <Clock className={`w-3 h-3 mr-2 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
                   {selectedUser.lastLogin ? timeAgo(selectedUser.lastLogin) : 'Never'}
                 </p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Login Count</p>
-                <p className="font-medium">{selectedUser.loginCount || 0}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Login Count</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedUser.loginCount || 0}</p>
               </div>
             </div>
 
             {/* Stats */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">Activity</h4>
-              <div className="grid grid-cols-3 gap-4">
+              <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Activity</h4>
+              <div className="grid grid-cols-3 gap-3">
                 {selectedUser.userType === 'brand' ? (
                   <>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-indigo-600">{selectedUser.stats?.campaigns || 0}</p>
-                      <p className="text-xs text-gray-600">Campaigns</p>
+                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-xl font-bold text-[#667eea]">{selectedUser.stats?.campaigns || 0}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Campaigns</p>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{formatCurrency(selectedUser.stats?.spent || 0)}</p>
-                      <p className="text-xs text-gray-600">Spent</p>
+                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-xl font-bold text-green-600">{formatCurrency(selectedUser.stats?.spent || 0)}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Spent</p>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{selectedUser.stats?.creators || 0}</p>
-                      <p className="text-xs text-gray-600">Creators</p>
+                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-xl font-bold text-purple-600">{selectedUser.stats?.creators || 0}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Creators</p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-indigo-600">{formatNumber(selectedUser.stats?.followers || 0)}</p>
-                      <p className="text-xs text-gray-600">Followers</p>
+                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-xl font-bold text-[#667eea]">{formatNumber(selectedUser.stats?.followers || 0)}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Followers</p>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{selectedUser.stats?.engagement || 0}%</p>
-                      <p className="text-xs text-gray-600">Engagement</p>
+                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-xl font-bold text-green-600">{selectedUser.stats?.engagement || 0}%</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Engagement</p>
                     </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{formatCurrency(selectedUser.stats?.earnings || 0)}</p>
-                      <p className="text-xs text-gray-600">Earnings</p>
+                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-xl font-bold text-purple-600">{formatCurrency(selectedUser.stats?.earnings || 0)}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Earnings</p>
                     </div>
                   </>
                 )}
@@ -543,10 +602,12 @@ const AdminUsers = () => {
             </div>
 
             {/* Actions */}
-            <div className="border-t border-gray-200 pt-4 flex gap-2">
+            <div className={`border-t pt-3 flex gap-2 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               <button
                 type="button"
-                className="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
+                className={`flex-1 py-2 rounded-lg text-sm font-medium hover:from-[#5a67d8] hover:to-[#6b4c9a] ${
+                  isDark ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
+                }`}
                 onClick={() => setShowUserModal(false)}
               >
                 Close
@@ -554,7 +615,9 @@ const AdminUsers = () => {
               {!selectedUser.isVerified && (
                 <button
                   onClick={() => handleVerify(selectedUser._id)}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700"
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium hover:bg-green-700 ${
+                    isDark ? 'bg-green-600 text-white' : 'bg-green-600 text-white'
+                  }`}
                 >
                   Verify User
                 </button>
@@ -575,34 +638,42 @@ const AdminUsers = () => {
         title="Suspend User"
       >
         <div className="space-y-4">
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <p className="text-sm text-yellow-800">
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/30 border border-yellow-700/30' : 'bg-yellow-50'}`}>
+            <p className={`text-sm ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>
               <strong>Warning:</strong> Suspending this user will prevent them from accessing their account and all active deals will be paused.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Reason for Suspension *
             </label>
             <textarea
               value={suspendReason}
               onChange={(e) => setSuspendReason(e.target.value)}
               rows="3"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                isDark
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+              }`}
               placeholder="Enter reason for suspension..."
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Suspension Duration
             </label>
             <select
               value={suspendDuration}
               onChange={(e) => setSuspendDuration(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+                isDark
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="1">1 day</option>
               <option value="3">3 days</option>
@@ -634,14 +705,14 @@ const AdminUsers = () => {
         title="Delete User"
       >
         <div className="space-y-4">
-          <div className="flex items-center gap-3 text-red-600 bg-red-50 p-4 rounded-lg">
+          <div className={`flex items-center gap-3 text-red-600 p-4 rounded-lg ${isDark ? 'bg-red-900/30' : 'bg-red-50'}`}>
             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
             <p className="text-sm">
               This action is permanent and cannot be undone. All user data including campaigns, deals, and messages will be permanently deleted.
             </p>
           </div>
 
-          <p className="text-sm text-gray-600">
+          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Are you sure you want to delete <strong>{selectedUser?.fullName}</strong>?
           </p>
         </div>

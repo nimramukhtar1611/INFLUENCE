@@ -17,8 +17,11 @@ import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import ChartCard from '../../components/Common/ChartCard';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const Analytics = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [analytics,  setAnalytics]  = useState(null);
@@ -96,31 +99,43 @@ const Analytics = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-[#667eea] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics & Reports</h1>
-          <p className="text-gray-600">Track your campaign performance and ROI</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Analytics & Reports</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Track your campaign performance and ROI</p>
         </div>
         <div className="flex flex-wrap gap-3">
           {/* Chart type toggle */}
-          <div className="flex items-center bg-white rounded-lg border border-gray-300 overflow-hidden">
+          <div className={`flex items-center rounded-lg border overflow-hidden shadow-sm ${
+            isDark ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-300/50'
+          }`}>
             {['area', 'bar', 'line'].map((t, i) => (
               <button key={t} onClick={() => setChartType(t)}
-                className={`px-3 py-2 text-sm font-medium capitalize ${i > 0 ? 'border-l border-gray-300' : ''} ${chartType === t ? 'bg-indigo-600 text-white' : 'hover:bg-gray-50'}`}>
+                className={`px-3 py-2 text-sm font-medium capitalize ${i > 0 ? 'border-l' : ''} ${
+                  chartType === t 
+                    ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' 
+                    : isDark 
+                      ? 'hover:bg-gray-700/50 text-gray-300' 
+                      : 'hover:bg-gray-50 text-gray-700'
+                } ${
+                  i > 0 ? (isDark ? 'border-gray-700/50' : 'border-gray-300/50') : ''
+                }`}>
                 {t}
               </button>
             ))}
           </div>
           <select value={dateRange} onChange={e => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] shadow-sm ${
+              isDark ? 'bg-gray-800/50 border-gray-700/50 text-gray-100' : 'bg-white/50 border-gray-300/50 text-gray-900'
+            }`}>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
             <option value="90d">Last 90 Days</option>
@@ -130,14 +145,16 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {metrics.map((m, i) => <StatsCard key={i} {...m} />)}
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      {/* Performance chart */}
-      <ChartCard title="Campaign Performance" showExport={false}>
-        {performanceData.length > 0 ? (
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          {metrics.map((m, i) => <StatsCard key={i} {...m} />)}
+        </div>
+
+        {/* Performance chart */}
+        <ChartCard title="Campaign Performance" showExport={false}>
+          {performanceData.length > 0 ? (
           <ResponsiveContainer width="100%" height={400}>
             {chartType === 'area' ? (
               <AreaChart data={performanceData}>
@@ -172,18 +189,18 @@ const Analytics = () => {
               </LineChart>
             )}
           </ResponsiveContainer>
-        ) : (
-          <div className="h-48 flex items-center justify-center text-gray-400">
-            No campaign data for this period
-          </div>
-        )}
-      </ChartCard>
+          ) : (
+            <div className={`h-48 flex items-center justify-center rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900/50 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
+              No campaign data for this period
+            </div>
+          )}
+        </ChartCard>
 
-      {/* Charts grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Platform distribution */}
-        <ChartCard title="Platform Distribution" showExport={false}>
-          {platformData.length > 0 ? (
+        {/* Charts grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Platform distribution */}
+          <ChartCard title="Platform Distribution" showExport={false}>
+            {platformData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={platformData} cx="50%" cy="50%" labelLine={false}
@@ -196,14 +213,14 @@ const Analytics = () => {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="h-48 flex items-center justify-center text-gray-400">No platform data yet</div>
-          )}
-        </ChartCard>
+            ) : (
+              <div className={`h-48 flex items-center justify-center rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900/50 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>No platform data yet</div>
+            )}
+          </ChartCard>
 
-        {/* Deal status */}
-        <ChartCard title="Deal Status" showExport={false}>
-          {dealData.length > 0 ? (
+          {/* Deal status */}
+          <ChartCard title="Deal Status" showExport={false}>
+            {dealData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={dealData} cx="50%" cy="50%" labelLine={false}
@@ -216,14 +233,14 @@ const Analytics = () => {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="h-48 flex items-center justify-center text-gray-400">No deals yet</div>
-          )}
-        </ChartCard>
+            ) : (
+              <div className={`h-48 flex items-center justify-center rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900/50 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>No deals yet</div>
+            )}
+          </ChartCard>
 
-        {/* Monthly trends */}
-        <ChartCard title="Monthly Trends" showExport={false}>
-          {performanceData.length > 0 ? (
+          {/* Monthly trends */}
+          <ChartCard title="Monthly Trends" showExport={false}>
+            {performanceData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart data={performanceData.slice(-12)}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -233,20 +250,20 @@ const Analytics = () => {
                 <Line yAxisId="right" type="monotone" dataKey="deals" name="Deals" stroke="#10B981" strokeWidth={2} />
               </ComposedChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="h-48 flex items-center justify-center text-gray-400">No data yet</div>
-          )}
-        </ChartCard>
+            ) : (
+              <div className={`h-48 flex items-center justify-center rounded-lg border ${isDark ? 'border-gray-700 bg-gray-900/50 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>No data yet</div>
+            )}
+          </ChartCard>
 
-        {/* ── KEY PERFORMANCE INDICATORS ─────────────────────────────────────
-            FIX 28: Was 78%, 4.8%, 4.6/5, 12.5K all hardcoded.
-            Now reads from analytics.summary. Shows 0 / empty state if no data.
-        ──────────────────────────────────────────────────────────────────── */}
-        <ChartCard title="Key Performance Indicators" showExport={false}>
-          <div className="space-y-5 p-2">
+          {/* ── KEY PERFORMANCE INDICATORS ─────────────────────────────────────
+              FIX 28: Was 78%, 4.8%, 4.6/5, 12.5K all hardcoded.
+              Now reads from analytics.summary. Shows 0 / empty state if no data.
+          ──────────────────────────────────────────────────────────────────── */}
+          <ChartCard title="Key Performance Indicators" showExport={false}>
+            <div className="space-y-5 p-2">
             {!hasAnyData ? (
-              <div className="py-8 text-center text-gray-400">
-                <Target className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <div className={`py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
+                <Target className={`w-10 h-10 mx-auto mb-2 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
                 <p>No performance data yet.</p>
                 <p className="text-sm">Launch a campaign to start tracking KPIs.</p>
               </div>
@@ -255,10 +272,10 @@ const Analytics = () => {
                 {/* Campaign success rate */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-700">Campaign Success Rate</span>
-                    <span className="text-sm font-bold text-gray-900">{successRate}%</span>
+                    <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Campaign Success Rate</span>
+                    <span className={`text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{successRate}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                     <div className="bg-green-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${successRate}%` }} />
                   </div>
@@ -267,72 +284,73 @@ const Analytics = () => {
                 {/* Average engagement */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-700">Average Engagement</span>
-                    <span className="text-sm font-bold text-gray-900">
+                    <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Average Engagement</span>
+                    <span className={`text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                       {avgEngagement > 0 ? `${avgEngagement.toFixed(1)}%` : '—'}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                     <div className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(avgEngagement * 10, 100)}%` }} />
                   </div>
                   {avgEngagement === 0 && (
-                    <p className="text-xs text-gray-400 mt-1">Engagement data collected from deal metrics</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Engagement data collected from deal metrics</p>
                   )}
                 </div>
 
                 {/* Creator satisfaction */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-700">Creator Satisfaction</span>
-                    <span className="text-sm font-bold text-gray-900">
+                    <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Creator Satisfaction</span>
+                    <span className={`text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                       {avgRating > 0 ? `${avgRating.toFixed(1)}/5` : '—'}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                     <div className="bg-purple-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${ratingPct}%` }} />
                   </div>
                   {avgRating === 0 && (
-                    <p className="text-xs text-gray-400 mt-1">Rating collected after deal completion</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Rating collected after deal completion</p>
                   )}
                 </div>
 
                 {/* Social engagement grid */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="bg-gray-50 p-3 rounded-lg text-center">
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <Heart className="w-5 h-5 text-pink-600 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-gray-900">
-                      {totalLikes > 0 ? formatNumber(totalLikes) : <span className="text-gray-400 text-sm">No data</span>}
+                    <p className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                      {totalLikes > 0 ? formatNumber(totalLikes) : <span className={isDark ? 'text-gray-400' : 'text-gray-400'}>No data</span>}
                     </p>
-                    <p className="text-xs text-gray-500">Total Likes</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Total Likes</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg text-center">
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <MessageSquare className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-gray-900">
-                      {totalComments > 0 ? formatNumber(totalComments) : <span className="text-gray-400 text-sm">No data</span>}
+                    <p className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                      {totalComments > 0 ? formatNumber(totalComments) : <span className={isDark ? 'text-gray-400' : 'text-gray-400'}>No data</span>}
                     </p>
-                    <p className="text-xs text-gray-500">Comments</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Comments</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg text-center">
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <Share2 className="w-5 h-5 text-green-600 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-gray-900">
-                      {totalShares > 0 ? formatNumber(totalShares) : <span className="text-gray-400 text-sm">No data</span>}
+                    <p className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                      {totalShares > 0 ? formatNumber(totalShares) : <span className={isDark ? 'text-gray-400' : 'text-gray-400'}>No data</span>}
                     </p>
-                    <p className="text-xs text-gray-500">Shares</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Shares</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg text-center">
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <Eye className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                    <p className="text-xl font-bold text-gray-900">
-                      {totalImpressions > 0 ? formatNumber(totalImpressions) : <span className="text-gray-400 text-sm">No data</span>}
+                    <p className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                      {totalImpressions > 0 ? formatNumber(totalImpressions) : <span className={isDark ? 'text-gray-400' : 'text-gray-400'}>No data</span>}
                     </p>
-                    <p className="text-xs text-gray-500">Impressions</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Impressions</p>
                   </div>
                 </div>
               </>
             )}
-          </div>
-        </ChartCard>
+            </div>
+          </ChartCard>
+        </div>
       </div>
     </div>
   );

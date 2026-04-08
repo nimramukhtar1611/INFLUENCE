@@ -288,8 +288,8 @@ const SubscriptionManager = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
           <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Subscription & Billing</h1>
           <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage plans, invoices, and billing through Stripe Checkout.</p>
@@ -404,36 +404,36 @@ const SubscriptionManager = () => {
                   }
                 }}
                 disabled={isFreePlan}
-                className={`text-left p-4 rounded-xl border transition ${
+                className={`text-left p-4 rounded-xl border-2 transition-all flex flex-col text-start items-start ${
                   isActive
-                    ? 'border-blue-500 bg-blue-50'
+                    ? (isDark ? 'border-indigo-500 bg-gradient-to-br from-gray-800 to-gray-900 ring-2 ring-indigo-700 shadow-lg' : 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 ring-2 ring-indigo-200 shadow-lg')
                     : isSelected
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : isFreePlan
-                        ? (isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50')
-                        : (isDark ? 'border-gray-700 hover:border-gray-600 bg-gray-900' : 'border-gray-200 hover:border-gray-300')
+                      ? (isDark ? 'border-indigo-500 bg-gradient-to-br from-gray-800 to-gray-900 ring-2 ring-indigo-700 shadow-lg transform scale-105' : 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 ring-2 ring-indigo-200 shadow-lg transform scale-105')
+                      : (isDark ? 'border-indigo-600 bg-gradient-to-br from-gray-800 to-gray-900' : 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50')
                 } ${isFreePlan ? 'cursor-not-allowed opacity-80' : ''}`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between w-full">
                   <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{plan.name}</h3>
                   <div className="flex items-center gap-2">
                     {isFreePlan ? (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Included</span>
-                    ) : null}
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white">Included</span>
+                    ) : (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white">Premium</span>
+                    )}
                     {isActive ? <CheckCircle className="w-5 h-5 text-blue-600" /> : null}
                   </div>
                 </div>
-                <p className={`mt-1 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{roleCopy.description}</p>
-                <p className={`mt-3 text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(displayPrice, plan.currency)}</p>
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{roleCopy.description}</p>
+                <p className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(displayPrice, plan.currency)}</p>
                 <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>per {interval}</p>
-                <ul className={`mt-3 space-y-1 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                  {roleCopy.features.map((feature) => (
-                    <li key={String(feature)} className="flex items-start">
-                      <ShieldCheck className="w-4 h-4 text-indigo-600 mr-2 mt-0.5" />
-                      <span>{typeof feature === 'string' ? feature : feature?.name || 'Feature'}</span>
-                    </li>
-                  ))}
-                </ul>
+                <ul className={`space-y-1 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    {roleCopy.features.map((feature) => (
+                      <li key={String(feature)} className="flex items-start">
+                        <ShieldCheck className="w-4 h-4 text-indigo-600 mr-2 mt-0.5" />
+                        <span>{typeof feature === 'string' ? feature : feature?.name || 'Feature'}</span>
+                      </li>
+                    ))}
+                  </ul>
               </button>
             );
           })}
@@ -444,7 +444,7 @@ const SubscriptionManager = () => {
             type="button"
             onClick={handleSubscribeOrChange}
             disabled={!selectedPlan || busy || isSelectedPlanFree}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:from-[#5a67d8] hover:to-[#6b46a2] disabled:opacity-60"
           >
             {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             {isSelectedPlanFree

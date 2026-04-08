@@ -7,25 +7,29 @@ import {
   ChevronsRight, X, User, Briefcase, ThumbsUp, ThumbsDown, RefreshCw
 } from 'lucide-react';
 import dealService from '../../services/dealService';
-import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const CreatorDeals = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState([]);
   const [filter, setFilter] = useState('all');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
 
   const statusConfig = {
-    pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
-    accepted: { label: 'Accepted', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-    'in-progress': { label: 'In Progress', color: 'bg-purple-100 text-purple-800', icon: Clock },
-    completed: { label: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: XCircle },
-    declined: { label: 'Declined', color: 'bg-red-100 text-red-800', icon: XCircle },
-    revision: { label: 'Revision', color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
-    negotiating: { label: 'Negotiating', color: 'bg-indigo-100 text-indigo-800', icon: Clock }
+    pending: { label: 'Pending', color: getStatusColor('pending', 'deal', isDark), icon: AlertCircle },
+    accepted: { label: 'Accepted', color: getStatusColor('accepted', 'deal', isDark), icon: CheckCircle },
+    'in-progress': { label: 'In Progress', color: getStatusColor('in-progress', 'deal', isDark), icon: Clock },
+    completed: { label: 'Completed', color: getStatusColor('completed', 'deal', isDark), icon: CheckCircle },
+    cancelled: { label: 'Cancelled', color: getStatusColor('cancelled', 'deal', isDark), icon: XCircle },
+    declined: { label: 'Declined', color: getStatusColor('rejected', 'deal', isDark), icon: XCircle },
+    revision: { label: 'Revision', color: getStatusColor('revision', 'deliverable', isDark), icon: AlertCircle },
+    negotiating: { label: 'Negotiating', color: getStatusColor('pending', 'status', isDark), icon: Clock }
   };
 
   useEffect(() => {
@@ -50,11 +54,11 @@ const CreatorDeals = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Deals</h1>
-          <p className="text-gray-600">Manage all your brand collaborations</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>My Deals</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage all your brand collaborations</p>
         </div>
         <Link to="/creator/available-deals">
           <Button variant="primary" size="sm" icon={Briefcase}>Find Deals</Button>
@@ -68,7 +72,11 @@ const CreatorDeals = () => {
             key={s}
             onClick={() => { setFilter(s); setPagination(p => ({ ...p, page: 1 })); }}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${
-              filter === s ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === s 
+                ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' 
+                : isDark
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             {s === 'all' ? 'All' : s}
@@ -77,40 +85,42 @@ const CreatorDeals = () => {
       </div>
 
       {/* Deals table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className={`rounded-xl shadow-sm overflow-hidden border ${
+        isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white border-gray-200/50'
+      }`}>
         {deals.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Budget</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deadline</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Campaign</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Brand</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Budget</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Status</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deadline</th>
+                  <th className={`px-6 py-3 text-right text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {deals.map(deal => {
                   const StatusIcon = statusConfig[deal.status]?.icon || AlertCircle;
                   const statusColor = statusConfig[deal.status]?.color || 'bg-gray-100 text-gray-800';
                   return (
-                    <tr key={deal._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{deal.campaignId?.title || 'Campaign'}</td>
-                      <td className="px-6 py-4">{deal.brandId?.brandName || 'Brand'}</td>
-                      <td className="px-6 py-4 font-bold text-gray-900">{formatCurrency(deal.budget)}</td>
+                    <tr key={deal._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
+                      <td className={`px-6 py-4 text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{deal.campaignId?.title || 'Campaign'}</td>
+                      <td className={`px-6 py-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{deal.brandId?.brandName || 'Brand'}</td>
+                      <td className={`px-6 py-4 font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(deal.budget)}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusColor}`}>
                           <StatusIcon className="w-3 h-3" />
                           {statusConfig[deal.status]?.label || deal.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                         {deal.deadline ? formatDate(deal.deadline) : 'No deadline'}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link to={`/creator/deals/${deal._id}`} className="text-indigo-600 hover:text-indigo-900">
+                        <Link to={`/creator/deals/${deal._id}`} className={`hover:${isDark ? 'text-indigo-400' : 'text-indigo-900'}`}>
                           <Eye className="w-4 h-4" />
                         </Link>
                       </td>
@@ -121,10 +131,10 @@ const CreatorDeals = () => {
             </table>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No deals found</p>
-            <Link to="/creator/available-deals" className="text-indigo-600 hover:text-indigo-700">Browse deals</Link>
+          <div className={`text-center py-12 rounded-xl ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+            <Briefcase className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No deals found</p>
+            <Link to="/creator/available-deals" className={`hover:underline ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>Browse deals</Link>
           </div>
         )}
       </div>
@@ -133,12 +143,20 @@ const CreatorDeals = () => {
       {pagination.pages > 1 && (
         <div className="flex justify-center gap-2">
           <button onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))} disabled={pagination.page === 1}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+            className={`p-2 border rounded-lg disabled:opacity-50 ${
+              isDark
+                ? 'border-gray-600 hover:bg-gray-700/50'
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}>
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="px-4 py-2 text-gray-600">Page {pagination.page} of {pagination.pages}</span>
+          <span className={`px-4 py-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Page {pagination.page} of {pagination.pages}</span>
           <button onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))} disabled={pagination.page === pagination.pages}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+            className={`p-2 border rounded-lg disabled:opacity-50 ${
+              isDark
+                ? 'border-gray-600 hover:bg-gray-700/50'
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

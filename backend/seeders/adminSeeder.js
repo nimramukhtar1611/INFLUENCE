@@ -16,7 +16,6 @@ const createAdmin = async () => {
       console.log('⚠️ Admin already exists');
       process.exit(0);
     }
-
     const admin = new Admin({
       email: 'InfluenceX102@gmail.com',
       password: 'chsyen382738jsi2',     

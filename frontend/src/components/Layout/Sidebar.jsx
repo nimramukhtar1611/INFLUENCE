@@ -136,7 +136,7 @@ const normalizePlanId = (value) => {
   const getActiveStyles = (to, exact = false) => {
     const active = isActive(to, exact);
     return active
-      ? 'bg-indigo-600 text-white shadow-md'
+      ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-md'
       : isDark
         ? 'text-gray-300 hover:bg-gray-800'
         : 'text-gray-700 hover:bg-gray-100';
@@ -144,7 +144,7 @@ const normalizePlanId = (value) => {
 
   // ==================== HANDLE LOGOUT ====================
   const handleLogout = async () => {
-    await logout();
+    // Logout function is now handled in Header component
   };
 
   // ==================== MOBILE SIDEBAR ====================
@@ -153,25 +153,60 @@ const normalizePlanId = (value) => {
       <>
         {/* Overlay */}
         <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 lg:hidden"
+          className={`fixed inset-0 z-40 lg:hidden backdrop-blur-md ${
+            theme === 'dark' 
+              ? 'bg-black/20' 
+              : 'bg-black/10'
+          }`}
           onClick={() => setIsMobileOpen(false)}
         />
 
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 w-64 shadow-xl z-50 lg:hidden overflow-y-auto transition-colors ${
-          isDark ? 'bg-gray-900 border-r border-gray-700' : 'bg-white'
-        }`}>
-          <div className={`p-4 flex items-center justify-between border-b ${
-            isDark ? 'border-gray-700' : 'border-gray-200'
-          }`}>
+        <div className={`fixed inset-y-0 left-0 w-72 shadow-2xl z-50 lg:hidden overflow-y-auto transform transition-transform duration-300 ease-in-out ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`} 
+          style={{
+            background: isDark 
+              ? 'linear-gradient(135deg, #111827 0%, #1f2937 100%)'
+              : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+            borderRight: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+          }} 
+        >
+          <div className={`p-4 flex items-center justify-between border-b`} 
+            style={{
+              borderBottom: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+            }}
+          >
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">IX</span>
+              <div 
+                style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+                }}
+              >
+                <span className="text-white font-bold text-xs">IX</span>
               </div>
-              <span className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>InfluenceX</span>
+              <span style={{
+                fontSize: 18, fontWeight: 700,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.5px'
+              }}>InfluenceX</span>
             </div>
-            <button onClick={() => setIsMobileOpen(false)}>
-              <X className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+            <button 
+              onClick={() => setIsMobileOpen(false)}
+              className={`p-2 rounded-lg transition-all duration-200`}
+              style={{
+                background: isDark ? '#374151' : '#f1f5f9',
+                borderColor: isDark ? '#4b5563' : '#e2e8f0',
+                border: '1px solid ' + (isDark ? '#4b5563' : '#e2e8f0'),
+              }}
+            >
+              <X className="w-6 h-6" style={{ color: isDark ? '#f3f4f6' : '#374151' }} />
             </button>
           </div>
 
@@ -182,24 +217,38 @@ const normalizePlanId = (value) => {
                 to={item.to}
                 onClick={() => setIsMobileOpen(false)}
                 className={({ isActive }) => `
-                  flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
-                  ${isActive ? 'bg-indigo-600 text-white' : isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}
+                  flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200
                 `}
+                style={({ isActive }) => ({
+                  background: isActive 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'transparent',
+                  color: isActive ? '#ffffff' : (isDark ? '#d1d5db' : '#374151'),
+                  border: isActive ? 'none' : `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+                })}
               >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.label}
+                <item.icon className="w-5 h-5 mr-3 self-center" style={{ color: 'inherit' }} />
+                <span style={{ fontWeight: 600, letterSpacing: '0.01em' }}>{item.label}</span>
               </NavLink>
             ))}
 
-            <div className={`pt-4 mt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`pt-4 mt-4 border-t`} 
+              style={{
+                borderTop: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+              }}
+            >
               <button
                 onClick={handleLogout}
-                className={`w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 rounded-lg transition-colors ${
-                  isDark ? 'hover:bg-red-900/30' : 'hover:bg-red-50'
-                }`}
+                className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200`}
+                style={{
+                  background: isDark ? '#374151' : '#fef2f2',
+                  borderColor: isDark ? '#4b5563' : '#fecaca',
+                  border: '1px solid ' + (isDark ? '#4b5563' : '#fecaca'),
+                  color: isDark ? '#f87171' : '#dc2626',
+                }}
               >
                 <LogOut className="w-5 h-5 mr-3" />
-                Logout
+                <span style={{ fontWeight: 600 }}>Logout</span>
               </button>
             </div>
           </nav>
@@ -214,30 +263,53 @@ const normalizePlanId = (value) => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className={`fixed top-4 left-4 z-30 lg:hidden p-2 rounded-lg shadow-md transition-colors ${
-          isDark ? 'bg-gray-900 border border-gray-700' : 'bg-white'
-        }`}
+        className={`fixed top-4 left-4 z-50 lg:hidden p-3 rounded-xl shadow-lg transition-all duration-200`}
+        style={{
+          background: isDark 
+            ? 'linear-gradient(135deg, #111827 0%, #1f2937 100%)'
+            : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          borderColor: isDark ? '#374151' : '#e2e8f0',
+          border: '1px solid ' + (isDark ? '#374151' : '#e2e8f0'),
+        }}
       >
-        <Menu className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+        <Menu className="w-6 h-6" style={{ color: isDark ? '#f3f4f6' : '#374151' }} />
       </button>
 
       {/* Desktop Sidebar */}
       <aside
         className={`
-          hidden lg:block transition-all duration-300
+          hidden lg:block transition-all duration-300 flex-shrink-0 fixed top-0 left-0 h-screen z-30
           ${isDark ? 'bg-gray-900 border-r border-gray-700' : 'bg-white border-r border-gray-200'}
           ${sidebarCollapsed ? 'w-20' : 'w-64'}
         `}
+        style={{
+          background: isDark ? '#111827' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          borderRight: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+        }}
       >
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col overflow-hidden">
           {/* Logo */}
           <div className={`p-6 flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">IX</span>
+              <div 
+                style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+                }}
+              >
+                <span className="text-white font-bold text-xs">IX</span>
               </div>
               {!sidebarCollapsed && (
-                <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <span style={{
+                  fontSize: 18, fontWeight: 700,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.5px'
+                }}>
                   InfluenceX
                 </span>
               )}
@@ -245,71 +317,70 @@ const normalizePlanId = (value) => {
 
             <button
               onClick={toggleSidebar}
-              className={`p-1.5 rounded-lg transition-colors hidden lg:block ${
+              className={`p-2 rounded-lg transition-all duration-200 lg:block relative z-10 flex-shrink-0 ${
                 isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
               }`}
+              style={{
+                background: isDark ? '#374151' : '#f1f5f9',
+                border: '1px solid ' + (isDark ? '#4b5563' : '#e2e8f0'),
+              }}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {sidebarCollapsed ? (
-                <ChevronRight className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
               ) : (
-                <ChevronLeft className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                <ChevronLeft className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
               )}
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) => `
-                  flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group
-                  ${isActive ? 'bg-indigo-600 text-white' : isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}
+                  flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative group min-w-0
+                  ${isActive 
+                    ? 'shadow-lg' 
+                    : isDark 
+                      ? 'text-gray-300 hover:bg-gray-800' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }
                 `}
-                title={sidebarCollapsed ? item.label : ''}
+                style={({ isActive }) => ({
+                  background: isActive 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'transparent',
+                  color: isActive ? '#ffffff' : (isDark ? '#d1d5db' : '#374151'),
+                  border: isActive ? 'none' : `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
+                })}
               >
-                <item.icon className={`w-5 h-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'}`} />
-                {!sidebarCollapsed && item.label}
+                <item.icon className={`w-4 h-4 flex-shrink-0 ${sidebarCollapsed ? 'mx-auto' : 'mr-3 self-center'}`} style={{
+                  color: 'inherit'
+                }} />
+                {!sidebarCollapsed && (
+                  <span className="truncate text-xs flex-1 min-w-0" style={{
+                    fontWeight: 500,
+                    letterSpacing: '0.01em'
+                  }}>{item.label}</span>
+                )}
 
                 {/* Tooltip for collapsed mode */}
                 {sidebarCollapsed && (
-                  <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                  <span className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-all duration-200 shadow-lg" 
+                    style={{
+                      backdropFilter: 'blur(8px)',
+                      background: 'rgba(17, 24, 39, 0.95)',
+                    }}
+                  >
                     {item.label}
                   </span>
                 )}
               </NavLink>
             ))}
           </nav>
-          <div className={`p-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-            {sidebarCollapsed ? (
-              <button
-                onClick={handleLogout}
-                className={`w-full p-3 text-red-600 rounded-lg transition-colors group relative ${
-                  isDark ? 'hover:bg-red-900/30' : 'hover:bg-red-50'
-                }`}
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5 mx-auto" />
-                <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
-                  Logout
-                </span>
-              </button>
-            ) : (
-              <div className="space-y-3">
-
-                <button
-                  onClick={handleLogout}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 rounded-lg transition-colors ${
-                    isDark ? 'hover:bg-red-900/30' : 'hover:bg-red-50'
-                  }`}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </aside>
     </>

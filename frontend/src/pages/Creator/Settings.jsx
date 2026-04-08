@@ -12,6 +12,8 @@ import authService from '../../services/authService';
 import api from '../../services/api';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import { useTheme } from '../../hooks/useTheme';
 
 // ---------- Local UI Components ----------
@@ -34,7 +36,7 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, icon: Icon,
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 ${
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-[#667eea] focus:border-[#667eea] ${
             Icon ? 'pl-10' : ''
           } ${disabled
             ? (isDark ? 'bg-gray-800 text-gray-500 border-gray-700' : 'bg-gray-100 text-gray-500 border-gray-300')
@@ -51,7 +53,7 @@ const Button = ({ variant = 'primary', size = 'md', children, onClick, disabled,
   const isDark = theme === 'dark';
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg focus:outline-none transition-colors';
   const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300',
+    primary: 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:from-[#5a67d8] hover:to-[#6b4c9a] disabled:from-[#9ca3af] disabled:to-[#9ca3af]',
     secondary: isDark
       ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 disabled:bg-gray-800'
       : 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
@@ -221,7 +223,7 @@ const ProfileSettings = ({ settings, setSettings, user, refreshUser }) => {
           <select
             value={settings.gender}
             onChange={(e) => setSettings({ ...settings, gender: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#667eea] focus:border-[#667eea]"
           >
             <option value="">Prefer not to say</option>
             <option value="female">Female</option>
@@ -237,7 +239,7 @@ const ProfileSettings = ({ settings, setSettings, user, refreshUser }) => {
           rows="4"
           value={settings.bio}
           onChange={(e) => setSettings({ ...settings, bio: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#667eea] focus:border-[#667eea]"
           placeholder="Tell brands about yourself..."
         />
       </div>
@@ -247,6 +249,8 @@ const ProfileSettings = ({ settings, setSettings, user, refreshUser }) => {
 
 // ---------- Social Links ----------
 const SocialLinksSettings = ({ settings, setSettings, onVerify }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [verifying, setVerifying] = useState({});
   const formatStat = (value) => Number(value || 0).toLocaleString();
 
@@ -347,7 +351,7 @@ const SocialLinksSettings = ({ settings, setSettings, onVerify }) => {
               <span className="font-medium capitalize">{platform}</span>
             </div>
             {settings.socialMedia?.[platform]?.verified && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center gap-1">
+              <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${getStatusColor('verified', 'status', isDark)}`}>
                 <CheckCircle className="w-3 h-3" />
                 Verified
               </span>
@@ -495,7 +499,7 @@ const SecuritySettingsComp = ({
 
         {showDeleteForm && (
           <div className="mt-4 border-t border-red-200 pt-4 space-y-4">
-            <div className="flex items-start gap-3 text-red-600 bg-red-100 p-4 rounded-lg">
+            <div className={`flex items-start gap-3 ${getStatusColor('failed', 'status', isDark)} p-4 rounded-lg`}>
               <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-medium">This action is permanent!</p>
@@ -810,17 +814,16 @@ const CreatorSettings = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
+    <div className={`space-y-6 max-w-6xl mx-auto ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className={`sticky top-0 z-10 ${isDark ? 'bg-gray-900 border-b border-gray-800' : 'bg-white border-b border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Settings</h1>
-            <Button variant="primary" icon={Save} onClick={handleSaveSettings} loading={saving}>
-              Save Changes
-            </Button>
-          </div>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
+        <div>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Settings</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage your creator profile and preferences</p>
         </div>
+        <Button variant="primary" icon={Save} onClick={handleSaveSettings} loading={saving}>
+          Save Changes
+        </Button>
       </div>
 
       {/* Main Content */}
@@ -838,7 +841,7 @@ const CreatorSettings = () => {
                       onClick={() => setActiveTab(tab.id)}
                       className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg ${
                         activeTab === tab.id
-                          ? (isDark ? 'bg-indigo-950 text-indigo-300' : 'bg-indigo-100 text-indigo-600')
+                          ? (isDark ? 'bg-gradient-to-r from-[#667eea]/20 to-[#764ba2]/20 text-[#667eea]' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[#667eea]')
                           : (isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100')
                       }`}
                     >
@@ -889,13 +892,13 @@ const CreatorSettings = () => {
                   <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48" />
                 ) : (
                   <div className={`w-48 h-48 flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    <Loader className="w-8 h-8 text-indigo-500 animate-spin" />
+                    <Loader className="w-8 h-8 text-[#667eea] animate-spin" />
                   </div>
                 )}
               </div>
               <div className={`text-left p-3 rounded-lg border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                 <p className={`text-xs font-medium uppercase mb-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Manual Entry Key</p>
-                <code className="text-sm font-mono break-all text-indigo-600 font-bold block text-center">
+                <code className="text-sm font-mono break-all text-[#667eea] font-bold block text-center">
                   {qrCodeData?.secret}
                 </code>
               </div>
@@ -914,7 +917,7 @@ const CreatorSettings = () => {
                 type="text"
                 maxLength={6}
                 autoFocus
-                className={`w-full px-4 py-3 border rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                className={`w-full px-4 py-3 border rounded-lg text-center text-3xl tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
                   isDark ? 'bg-gray-900 border-gray-700 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
                 }`}
                 placeholder="000000"
@@ -941,7 +944,7 @@ const CreatorSettings = () => {
           {twoFactorStep === 'success' && (
             <div className="space-y-4 text-center">
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                <div className={`w-16 h-16 ${getStatusColor('completed', 'status', isDark).split(' ')[0]} ${getStatusColor('completed', 'status', isDark).split(' ')[1]} rounded-full flex items-center justify-center`}>
                   <CheckCircle className="w-10 h-10" />
                 </div>
               </div>

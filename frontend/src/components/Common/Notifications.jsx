@@ -32,8 +32,11 @@ import api from '../../services/api';
 import Button from '../UI/Button';
 import { timeAgo } from '../../utils/helpers';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const Notifications = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
   
@@ -304,17 +307,19 @@ const Notifications = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600">Stay updated with your latest activities</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Notifications</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Stay updated with your latest activities</p>
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+            isDark ? 'bg-gray-800/50' : 'bg-gray-100'
+          }`}>
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-xs text-gray-600">
+            <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               {isConnected ? 'Live' : 'Offline'}
             </span>
           </div>
@@ -348,7 +353,7 @@ const Notifications = () => {
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
               filter === 'all'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -362,7 +367,7 @@ const Notifications = () => {
             onClick={() => setFilter('unread')}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
               filter === 'unread'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -378,7 +383,7 @@ const Notifications = () => {
               onClick={() => setFilter(type)}
               className={`px-4 py-2 rounded-lg text-sm font-medium capitalize whitespace-nowrap ${
                 filter === type
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

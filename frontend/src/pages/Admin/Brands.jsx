@@ -1,6 +1,7 @@
 // pages/Admin/Brands.jsx
 import React, { useState, useEffect } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useTheme } from '../../hooks/useTheme';
 import {
   Search,
   Filter,
@@ -24,11 +25,15 @@ import {
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import Modal from '../../components/Common/Modal';
+import Loader from '../../components/Common/Loader';
 import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import toast from 'react-hot-toast';
 
 const Brands = () => {
   const { brands, loading, refreshData, stats } = useAdminData();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [filteredBrands, setFilteredBrands] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -115,34 +120,29 @@ const Brands = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'status', false); // Brands page doesn't use theme yet
   };
 
   const industries = [...new Set(brands?.map(b => b.industry).filter(Boolean))];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="large" color="purple" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Brand Management</h1>
-          <p className="text-gray-600">Manage all brands on the platform</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Brand Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Manage all brands on the platform</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" icon={Download} onClick={handleExport}>
             Export
           </Button>
@@ -274,28 +274,28 @@ const Brands = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Brand
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Industry
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Joined
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Campaigns
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Spent
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Creators
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -304,7 +304,7 @@ const Brands = () => {
               {filteredBrands.length > 0 ? (
                 filteredBrands.map((brand) => (
                   <tr key={brand._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {brand.logo ? (
                           <img src={brand.logo} alt={brand.brandName} className="w-10 h-10 rounded-full object-cover" />
@@ -313,31 +313,31 @@ const Brands = () => {
                             <Building2 className="w-5 h-5 text-indigo-600" />
                           </div>
                         )}
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{brand.brandName}</div>
-                          <div className="text-sm text-gray-500">{brand.email}</div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{brand.brandName}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-[150px]">{brand.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{brand.industry || '—'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(brand.status)}`}>
+                    <td className="px-4 py-4 text-sm text-gray-500 truncate max-w-[100px]">{brand.industry || '—'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColorClass(brand.status)}`}>
                         {brand.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
                       {formatDate(brand.createdAt)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
                       {brand.stats?.totalCampaigns || 0}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                       {formatCurrency(brand.stats?.totalSpent || 0)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
                       {brand.stats?.totalCreators || 0}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewDetails(brand)}
@@ -353,16 +353,13 @@ const Brands = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="8" className="px-4 py-12 text-center text-gray-500">
                     No brands found
                   </td>
                 </tr>
@@ -393,11 +390,11 @@ const Brands = () => {
                 <h3 className="text-xl font-semibold text-gray-900">{selectedBrand.brandName}</h3>
                 <p className="text-gray-600">{selectedBrand.email}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(selectedBrand.status)}`}>
+                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColorClass(selectedBrand.status)}`}>
                     {selectedBrand.status}
                   </span>
                   {selectedBrand.isVerified && (
-                    <span className="flex items-center text-xs text-green-600">
+                    <span className={`flex items-center text-xs ${getStatusColor('verified', 'status', false).split(' ')[1]}`}>
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Verified
                     </span>

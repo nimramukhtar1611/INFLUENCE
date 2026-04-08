@@ -77,7 +77,7 @@ const CreatorGrowthOS = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
           <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Loading Creator Growth OS...</p>
@@ -112,7 +112,7 @@ const CreatorGrowthOS = () => {
   ];
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       <div className={`sticky top-0 z-10 ${isDark ? 'bg-gray-900 border-b border-gray-800' : 'bg-white border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

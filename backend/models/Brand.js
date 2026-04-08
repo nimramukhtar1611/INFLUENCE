@@ -234,21 +234,12 @@ const brandSchema = new mongoose.Schema({
     }
   }],
 
-  // Role templates for quick assignment
-  roleTemplates: [{
-    name: String,
-    description: String,
-    permissions: [String],
-    isDefault: { type: Boolean, default: false }
-  }],
-
   preferences: {
-    preferredNiches: [String],
-    preferredPlatforms: [String],
     minFollowers: Number,
     maxFollowers: Number,
     minEngagement: Number,
     autoApprove: { type: Boolean, default: false },
+    aiCounterEnabled: { type: Boolean, default: false },
     notificationPreferences: {
       newApplications: { type: Boolean, default: true },
       dealUpdates: { type: Boolean, default: true },

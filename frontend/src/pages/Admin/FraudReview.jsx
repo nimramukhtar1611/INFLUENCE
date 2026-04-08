@@ -3,8 +3,11 @@ import { AlertTriangle, Eye, RefreshCw, ShieldCheck, ShieldAlert } from 'lucide-
 import toast from 'react-hot-toast';
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
+import Loader from '../../components/Common/Loader';
 import adminService from '../../services/adminService';
+import { useTheme } from '../../hooks/useTheme';
 import { formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 
 const queueOptions = [
   { value: 'manual_review', label: 'Manual Review' },
@@ -13,12 +16,12 @@ const queueOptions = [
 ];
 
 const getRiskClass = (riskLevel) => {
-  if (riskLevel === 'high') return 'bg-red-100 text-red-700';
-  if (riskLevel === 'medium') return 'bg-yellow-100 text-yellow-700';
-  return 'bg-green-100 text-green-700';
+  return getStatusColor(riskLevel || 'low', 'status');
 };
 
 const AdminFraudReview = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [queue, setQueue] = useState('manual_review');
@@ -155,27 +158,30 @@ const AdminFraudReview = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <Loader size="large" color="purple" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      {/* Header */}
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Fraud Review Queue</h1>
-          <p className="text-gray-600">Review creators flagged by fraud detection and manage manual holds.</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Fraud Review Queue</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Review creators flagged by fraud detection and manage manual holds.</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          icon={RefreshCw}
-          loading={refreshing}
-          onClick={() => fetchQueue(true)}
-        >
-          Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            icon={RefreshCw}
+            loading={refreshing}
+            onClick={() => fetchQueue(true)}
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -197,7 +203,7 @@ const AdminFraudReview = () => {
         </div>
         <div className="bg-white rounded-xl shadow-sm p-4">
           <p className="text-sm text-gray-500">Current Queue</p>
-          <p className="text-lg font-semibold text-indigo-700 capitalize">{queue.replace('_', ' ')}</p>
+          <p className="text-lg font-semibold capitalize" style={{color: '#667eea'}}>{queue.replace('_', ' ')}</p>
         </div>
       </div>
 
@@ -245,17 +251,17 @@ const AdminFraudReview = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="w-full">
+          <table className="w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Followers</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engagement</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manual Review</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Evaluated</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="w-[25%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
+                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Followers</th>
+                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engagement</th>
+                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk</th>
+                <th className="w-[15%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manual Review</th>
+                <th className="w-[15%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Evaluated</th>
+                <th className="w-[15%] px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -265,69 +271,67 @@ const AdminFraudReview = () => {
                   const manualReviewRequired = Boolean(risk.manualReviewRequired);
 
                   return (
-                    <tr key={creator._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-900">{creator.displayName || 'Unnamed creator'}</p>
-                        <p className="text-xs text-gray-500">{creator.handle || 'No handle'}</p>
+                    <tr 
+                      key={creator._id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => openDetails(creator._id)}
+                    >
+                      <td className="w-[25%] px-2 py-2">
+                        <p className="text-sm font-medium text-gray-900 truncate">{creator.displayName || 'Unnamed creator'}</p>
+                        <p className="text-xs text-gray-500 truncate">{creator.handle || 'No handle'}</p>
                         {risk.holdReason ? (
-                          <p className="text-xs text-gray-500 mt-1 truncate max-w-xs">Hold: {risk.holdReason}</p>
+                          <p className="text-xs text-gray-500 mt-1 truncate">Hold: {risk.holdReason}</p>
                         ) : null}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{Number(creator.totalFollowers || 0).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{Number(creator.averageEngagement || 0).toFixed(2)}%</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs rounded-full capitalize ${getRiskClass(risk.riskLevel)}`}>
+                      <td className="w-[10%] px-2 py-2 text-sm text-gray-700 truncate">{Number(creator.totalFollowers || 0).toLocaleString()}</td>
+                      <td className="w-[10%] px-2 py-2 text-sm text-gray-700 truncate">{Number(creator.averageEngagement || 0).toFixed(2)}%</td>
+                      <td className="w-[10%] px-2 py-2">
+                        <div className="flex flex-col gap-1">
+                          <span className={`px-2 py-1 text-xs rounded-full capitalize inline-flex items-center gap-1 ${getRiskClass(risk.riskLevel)}`}>
+                            <AlertTriangle className={`w-3 h-3 ${getStatusIconColor(risk.riskLevel || 'low')}`} />
                             {risk.riskLevel || 'low'}
                           </span>
                           <span className="text-xs text-gray-600">{Number(risk.riskScore || 0)}/100</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${manualReviewRequired ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                      <td className="w-[15%] px-2 py-2">
+                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(manualReviewRequired ? 'pending' : 'completed', 'status')}`}>
+                          <AlertTriangle className={`w-3 h-3 ${getStatusIconColor(manualReviewRequired ? 'pending' : 'completed')}`} />
                           {manualReviewRequired ? 'Required' : 'Not Required'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="w-[15%] px-2 py-2 text-sm text-gray-600">
                         {risk.lastEvaluatedAt ? (
-                          <>
-                            <p>{formatDate(risk.lastEvaluatedAt)}</p>
-                            <p className="text-xs text-gray-400">{timeAgo(risk.lastEvaluatedAt)}</p>
-                          </>
+                          <div>
+                            <p className="text-xs truncate">{formatDate(risk.lastEvaluatedAt)}</p>
+                            <p className="text-xs text-gray-400 truncate">{timeAgo(risk.lastEvaluatedAt)}</p>
+                          </div>
                         ) : (
-                          <span className="text-gray-400">Not evaluated</span>
+                          <span className="text-gray-400 text-xs">Not evaluated</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="w-[15%] px-2 py-2">
+                        <div className="flex flex-col gap-1">
                           <Button
                             size="xs"
                             variant="outline"
-                            icon={Eye}
-                            onClick={() => openDetails(creator._id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDetails(creator._id);
+                            }}
                           >
-                            View
+                            <Eye className="w-3 h-3" />
                           </Button>
-
-                          {manualReviewRequired ? (
-                            <Button
-                              size="xs"
-                              variant="success"
-                              icon={ShieldCheck}
-                              onClick={() => openReviewAction(creator, 'clear_hold')}
-                            >
-                              Clear Hold
-                            </Button>
-                          ) : (
-                            <Button
-                              size="xs"
-                              variant="warning"
-                              icon={ShieldAlert}
-                              onClick={() => openReviewAction(creator, 'mark_manual_review')}
-                            >
-                              Mark Review
-                            </Button>
-                          )}
+                          <Button
+                            size="xs"
+                            variant={manualReviewRequired ? "success" : "warning"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openReviewAction(creator, manualReviewRequired ? 'clear_hold' : 'mark_review');
+                            }}
+                          >
+                            {manualReviewRequired ? 'Clear Hold' : 'Mark Hold'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -371,6 +375,7 @@ const AdminFraudReview = () => {
         }}
         title="Fraud Assessment Details"
         size="2xl"
+        className="modal-scrollable"
       >
         {detailsLoading ? (
           <div className="py-10 text-center text-gray-500">Loading details...</div>
@@ -409,13 +414,14 @@ const AdminFraudReview = () => {
 
             <div>
               <p className="text-sm font-semibold text-gray-900 mb-2">Signals</p>
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-2">
+              <div className="space-y-2">
                 {(selectedCreator.fraudDetection?.signals || []).length > 0 ? (
                   selectedCreator.fraudDetection.signals.map((signal, index) => (
                     <div key={`${signal.type}-${index}`} className="border border-gray-200 rounded-lg p-3">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-gray-900 capitalize">{(signal.type || 'unknown').replace(/_/g, ' ')}</span>
-                        <span className={`px-2 py-1 text-xs rounded-full capitalize ${getRiskClass(signal.severity)}`}>
+                        <span className={`px-2 py-1 text-xs rounded-full capitalize inline-flex items-center gap-1 ${getRiskClass(signal.severity)}`}>
+                          <AlertTriangle className={`w-3 h-3 ${getStatusIconColor(signal.severity || 'low')}`} />
                           {signal.severity || 'low'}
                         </span>
                       </div>
@@ -431,7 +437,7 @@ const AdminFraudReview = () => {
 
             <div>
               <p className="text-sm font-semibold text-gray-900 mb-2">Recent Social History</p>
-              <div className="max-h-44 overflow-y-auto pr-2 space-y-2">
+              <div className="space-y-2">
                 {(selectedCreator.fraudDetection?.history || []).slice(-5).reverse().map((entry, index) => (
                   <div key={`${entry.platform}-${entry.capturedAt}-${index}`} className="border border-gray-200 rounded-lg p-2 text-sm text-gray-700">
                     <p className="font-medium capitalize">{entry.platform || 'unknown'} • {Number(entry.followers || 0).toLocaleString()} followers</p>

@@ -23,7 +23,8 @@ import disputeService from '../../services/disputeService'; // assume exists
 import Button from '../../components/UI/Button';
 import Modal from '../../components/Common/Modal';
 import Input from '../../components/UI/Input';
-import { formatDate, timeAgo } from '../../utils/helpers';
+import { formatNumber, formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
+import { getStatusColor } from '../../utils/colorScheme';
 import toast from 'react-hot-toast';
 
 const Disputes = () => {
@@ -139,14 +140,8 @@ const Disputes = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'open': return 'bg-red-100 text-red-800';
-      case 'in-progress': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColorClass = (status) => {
+    return getStatusColor(status, 'status', false); // Brand Disputes doesn't use theme yet
   };
 
   const getPriorityColor = (priority) => {
@@ -279,9 +274,9 @@ const Disputes = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-lg ${
-                      dispute.type === 'deliverables' ? 'bg-orange-100' :
-                      dispute.type === 'payment' ? 'bg-red-100' :
-                      'bg-blue-100'
+                      dispute.type === 'deliverables' ? getStatusColor('revision', 'deliverable', false) :
+                      dispute.type === 'payment' ? getStatusColor('failed', 'status', false) :
+                      getStatusColor('accepted', 'status', false)
                     }`}>
                       <TypeIcon className={`w-6 h-6 ${
                         dispute.type === 'deliverables' ? 'text-orange-600' :

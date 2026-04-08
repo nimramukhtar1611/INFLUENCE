@@ -17,6 +17,7 @@ import Button from '../../components/UI/Button';
 import ChartCard from '../../components/Common/ChartCard';
 import StatsCard from '../../components/Common/StatsCard';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const EmptyChart = ({ message = 'No data available yet' }) => (
   <div className="flex flex-col items-center justify-center h-full text-gray-400 py-8">
@@ -26,6 +27,8 @@ const EmptyChart = ({ message = 'No data available yet' }) => (
 );
 
 const Analytics = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState(null);
@@ -121,17 +124,17 @@ const Analytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-              <p className="text-gray-600">Track your performance and growth metrics</p>
-            </div>
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
+        <div>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Analytics Dashboard</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Track your performance and growth metrics</p>
+        </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-white rounded-lg border border-gray-300 overflow-hidden">
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center rounded-lg border overflow-hidden shadow-sm ${
+                isDark ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-300/50'
+              }`}>
                 {[
                   { type: 'area', icon: LineChartIcon },
                   { type: 'bar',  icon: BarChart3     },
@@ -140,8 +143,14 @@ const Analytics = () => {
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-2 text-sm font-medium ${i > 0 ? 'border-l border-gray-300' : ''} ${
-                      chartType === type ? 'bg-indigo-600 text-white' : 'hover:bg-gray-50'
+                    className={`px-3 py-2 text-sm font-medium ${i > 0 ? 'border-l' : ''} ${
+                      chartType === type 
+                        ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' 
+                        : isDark 
+                          ? 'hover:bg-gray-700/50 text-gray-300' 
+                          : 'hover:bg-gray-50 text-gray-700'
+                    } ${
+                      i > 0 ? (isDark ? 'border-gray-700/50' : 'border-gray-300/50') : ''
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -162,7 +171,9 @@ const Analytics = () => {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm ${
+                  isDark ? 'bg-gray-800/50 border-gray-700/50 text-gray-100' : 'bg-white/50 border-gray-300/50 text-gray-900'
+                }`}
               >
                 <option value="7d">Last 7 Days</option>
                 <option value="30d">Last 30 Days</option>
@@ -170,16 +181,14 @@ const Analytics = () => {
                 <option value="12m">Last 12 Months</option>
               </select>
             </div>
-          </div>
-
-          {error && (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
         </div>
-      </div>
+
+        {error && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
@@ -297,7 +306,7 @@ const Analytics = () => {
           </ChartCard>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm mt-8">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Brands</h2>
           {analytics?.topBrands && analytics.topBrands.length > 0 ? (
             <div className="space-y-3">
@@ -330,7 +339,7 @@ const Analytics = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Age Groups</h2>
             {Object.keys(analytics?.demographics?.ageGroups || {}).length > 0 ? (
               <div className="space-y-3">
@@ -347,11 +356,11 @@ const Analytics = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 text-sm text-center py-4">No demographic data available</p>
+              <p className="text-gray-400 text-sm text-center py-4 border border-gray-200 rounded-lg bg-gray-50">No demographic data available</p>
             )}
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Gender Distribution</h2>
             {Object.keys(analytics?.demographics?.gender || {}).length > 0 ? (
               <div className="space-y-3">
@@ -374,11 +383,11 @@ const Analytics = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 text-sm text-center py-4">No gender data available</p>
+              <p className="text-gray-400 text-sm text-center py-4 border border-gray-200 rounded-lg bg-gray-50">No gender data available</p>
             )}
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Locations</h2>
             {analytics?.demographics?.locations && analytics.demographics.locations.length > 0 ? (
               <div className="space-y-3">
@@ -390,7 +399,7 @@ const Analytics = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 text-sm text-center py-4">No location data available</p>
+              <p className="text-gray-400 text-sm text-center py-4 border border-gray-200 rounded-lg bg-gray-50">No location data available</p>
             )}
           </div>
         </div>

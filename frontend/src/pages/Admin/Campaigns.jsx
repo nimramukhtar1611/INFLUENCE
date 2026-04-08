@@ -4,8 +4,6 @@ import { useAdminData } from '../../hooks/useAdminData';
 import {
   Search,
   Filter,
-  Eye,
-  Edit,
   CheckCircle,
   XCircle,
   Clock,
@@ -25,11 +23,15 @@ import {
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
 import Modal from '../../components/Common/Modal';
+import Loader from '../../components/Common/Loader';
 import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
 import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../hooks/useTheme';
 
 const Campaigns = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { campaigns, loading, refreshData, stats } = useAdminData();
   const [filteredCampaigns, setFilteredCampaigns] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,21 +155,21 @@ const Campaigns = () => {
   // ==================== LOADING STATE ====================
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="large" color="purple" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Campaign Management</h1>
-          <p className="text-gray-600">Monitor and manage all campaigns on the platform</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Campaign Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Monitor and manage all campaigns on the platform</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" icon={Download} onClick={handleExport}>
             Export
           </Button>
@@ -302,125 +304,81 @@ const Campaigns = () => {
 
       {/* Campaigns Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Campaign
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Brand
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Budget
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Spent
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Creators
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dates
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  Created
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredCampaigns.length > 0 ? (
                 filteredCampaigns.map((campaign) => (
-                  <tr key={campaign._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{campaign.title}</div>
+                  <tr 
+                    key={campaign._id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewDetails(campaign)}
+                  >
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{campaign.title}</div>
                       <div className="text-xs text-gray-500">ID: {campaign._id?.slice(-8)}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {campaign.brandId?.logo ? (
-                          <img src={campaign.brandId.logo} alt={campaign.brandId.brandName} className="w-6 h-6 rounded-full mr-2" />
-                        ) : (
-                          <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center mr-2">
-                            <span className="text-xs font-bold text-indigo-600">B</span>
-                          </div>
-                        )}
-                        <span className="text-sm text-gray-900">{campaign.brandId?.brandName || '—'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{campaign.category || '—'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(campaign.status)}`}>
-                        {getStatusIcon(campaign.status)}
+                    <td className="px-4 py-4 text-sm text-gray-900 truncate max-w-[120px]">{campaign.brandId?.brandName}</td>
+                    <td className="px-4 py-4 text-sm text-gray-500 truncate max-w-[100px]">{campaign.category}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        campaign.status === 'active' ? 'bg-green-100 text-green-800' :
+                        campaign.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        campaign.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        campaign.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
                         {campaign.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                       {formatCurrency(campaign.budget || 0)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm font-medium text-green-600 whitespace-nowrap">
                       {formatCurrency(campaign.spent || 0)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
                       {campaign.selectedCreators?.length || 0}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-xs text-gray-900">
-                        Start: {campaign.startDate ? formatDate(campaign.startDate) : 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        End: {campaign.endDate ? formatDate(campaign.endDate) : 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleViewDetails(campaign)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {campaign.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedCampaign(campaign);
-                                setStatusAction({ status: 'active', reason: '' });
-                                setShowStatusModal(true);
-                              }}
-                              className="text-green-600 hover:text-green-700"
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedCampaign(campaign);
-                                setStatusAction({ status: 'rejected', reason: '' });
-                                setShowStatusModal(true);
-                              }}
-                              className="text-red-600 hover:text-red-700"
-                              title="Reject"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
+                    <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
+                      <div className="text-xs">
+                        {campaign.createdAt && formatDate(campaign.createdAt)}
+                        <div className="text-xs text-gray-400">{timeAgo(campaign.createdAt)}</div>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="8" className="px-4 py-12 text-center text-gray-500">
                     No campaigns found
                   </td>
                 </tr>
@@ -555,6 +513,32 @@ const Campaigns = () => {
                     <p className="text-xs text-gray-500 text-center">+{selectedCampaign.applications.length - 3} more</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Action buttons for pending campaigns */}
+            {selectedCampaign.status === 'pending' && (
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setStatusAction({ status: 'rejected', reason: '' });
+                    setShowStatusModal(true);
+                    setShowDetailsModal(false);
+                  }}
+                >
+                  Reject
+                </Button>
+                <Button
+                  variant="success"
+                  onClick={() => {
+                    setStatusAction({ status: 'active', reason: '' });
+                    setShowStatusModal(true);
+                    setShowDetailsModal(false);
+                  }}
+                >
+                  Approve
+                </Button>
               </div>
             )}
           </div>

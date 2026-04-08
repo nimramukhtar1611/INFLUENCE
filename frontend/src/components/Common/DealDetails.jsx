@@ -48,9 +48,12 @@ import {
   Ban,
   Trash2
 } from 'lucide-react';
-import Button from '../UI/Button';
-import Modal from './Modal';
-import Input from '../UI/Input';
+import Button from '../../components/UI/Button';
+import Modal from '../../components/Common/Modal';
+import Input from '../../components/UI/Input';
+import Select from '../../components/UI/Select';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
+import { formatCurrency, formatDate, timeAgo } from '../../utils/helpers';
 
 const DealDetails = ({ userType = 'brand' }) => {
   const { id } = useParams();
@@ -327,28 +330,20 @@ const DealDetails = ({ userType = 'brand' }) => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'revision': return 'bg-orange-100 text-orange-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'in-escrow': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStandardizedStatusColor = (status, type = 'status') => {
+    return getStatusColor(status, type, false);
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
-      case 'completed': return <CheckCircle className="w-4 h-4" />;
-      case 'approved': return <ThumbsUp className="w-4 h-4" />;
-      case 'pending': return <Clock className="w-4 h-4" />;
-      case 'in-progress': return <RefreshCw className="w-4 h-4" />;
-      case 'revision': return <AlertCircle className="w-4 h-4" />;
-      case 'cancelled': return <Ban className="w-4 h-4" />;
-      default: return <AlertCircle className="w-4 h-4" />;
+    switch(status?.toLowerCase()) {
+      case 'completed': 
+      case 'approved': return CheckCircle;
+      case 'pending': 
+      case 'in-progress': return Clock;
+      case 'revision': return AlertCircle;
+      case 'cancelled': return AlertCircle;
+      case 'in-escrow': return AlertCircle;
+      default: return AlertCircle;
     }
   };
 
@@ -411,7 +406,7 @@ const DealDetails = ({ userType = 'brand' }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-screen overflow-hidden space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -423,8 +418,8 @@ const DealDetails = ({ userType = 'brand' }) => {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900">{deal.campaign}</h1>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(deal.status)}`}>
-              {getStatusIcon(deal.status)}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStandardizedStatusColor(deal.status, 'deal')}`}>
+              {React.createElement(getStatusIcon(deal.status), { className: `w-3 h-3 ${getStatusIconColor(deal.status)}` })}
               {deal.status}
             </span>
           </div>
@@ -501,7 +496,7 @@ const DealDetails = ({ userType = 'brand' }) => {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="h-[calc(100vh-200px)] overflow-y-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Deal Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
@@ -553,7 +548,8 @@ const DealDetails = ({ userType = 'brand' }) => {
                         <p className="text-xs text-gray-500">{del.description}</p>
                       </div>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(del.status)}`}>
+                    <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStandardizedStatusColor(del.status, 'deliverable')}`}>
+                      {React.createElement(getStatusIcon(del.status), { className: `w-3 h-3 ${getStatusIconColor(del.status)}` })}
                       {del.status}
                     </span>
                   </div>
@@ -633,13 +629,10 @@ const DealDetails = ({ userType = 'brand' }) => {
                 )}
               </div>
 
-              <Link 
-                to={userType === 'brand' ? `/brand/creators/${deal.creator?.id}` : `/brands/${deal.brand?.id}`}
-                className="mt-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center"
-              >
-                View Full Profile
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+              <div className="mt-4 text-gray-500 text-sm font-medium flex items-center">
+                Profile Information
+                <ChevronRight className="w-4 h-4 ml-1 text-gray-400" />
+              </div>
             </div>
 
             {/* Actions */}
@@ -760,7 +753,8 @@ const DealDetails = ({ userType = 'brand' }) => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Status</span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(deal.payment.status)}`}>
+                  <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStandardizedStatusColor(deal.payment.status, 'payment')}`}>
+                    {React.createElement(getStatusIcon(deal.payment.status), { className: `w-3 h-3 ${getStatusIconColor(deal.payment.status)}` })}
                     {deal.payment.status}
                   </span>
                 </div>
@@ -776,7 +770,7 @@ const DealDetails = ({ userType = 'brand' }) => {
       )}
 
       {activeTab === 'deliverables' && (
-        <div className="space-y-6">
+        <div className="h-[calc(100vh-200px)] overflow-y-auto space-y-6">
           {deal.deliverables.map((del) => (
             <div key={del.id} className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center justify-between mb-4">
@@ -863,7 +857,7 @@ const DealDetails = ({ userType = 'brand' }) => {
       )}
 
       {activeTab === 'messages' && (
-        <div className="bg-white rounded-xl shadow-sm h-[600px] flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm h-[calc(100vh-200px)] flex flex-col">
           <div className="p-4 border-b border-gray-200">
             <h2 className="font-semibold text-gray-900">
               Messages with {userType === 'brand' ? deal.creator.name : deal.brand.name}
@@ -953,7 +947,7 @@ const DealDetails = ({ userType = 'brand' }) => {
       )}
 
       {activeTab === 'timeline' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="h-[calc(100vh-200px)] overflow-y-auto bg-white p-6 rounded-xl shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Timeline</h2>
           <div className="relative">
             {deal.timeline.map((item, index) => (
@@ -984,7 +978,7 @@ const DealDetails = ({ userType = 'brand' }) => {
       )}
 
       {activeTab === 'contract' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="h-[calc(100vh-200px)] overflow-y-auto bg-white p-6 rounded-xl shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Contract Details</h2>
             <Button variant="outline" icon={Download}>
@@ -1029,7 +1023,7 @@ const DealDetails = ({ userType = 'brand' }) => {
       )}
 
       {activeTab === 'payment' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="h-[calc(100vh-200px)] overflow-y-auto bg-white p-6 rounded-xl shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Payment Details</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

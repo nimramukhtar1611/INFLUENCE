@@ -1,13 +1,44 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Handshake, RefreshCw, DollarSign, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Handshake, RefreshCw, DollarSign, Clock, CheckCircle, AlertTriangle, Download, XCircle, Eye } from 'lucide-react';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useTheme } from '../../hooks/useTheme';
 import { formatCurrency, formatDate } from '../../utils/helpers';
+import { getStatusColor, getStatusIconColor } from '../../utils/colorScheme';
 import Button from '../../components/UI/Button';
 import StatsCard from '../../components/Common/StatsCard';
+import Modal from '../../components/Common/Modal';
 
 const AdminDeals = () => {
   const { deals, refreshing, refreshData, stats } = useAdminData();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const [filteredDeals, setFilteredDeals] = useState(deals || []);
+  const [selectedDeal, setSelectedDeal] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  const handleExport = () => {
+    // Generate CSV for deals data
+    const csvContent = [
+      ['Deal ID', 'Campaign', 'Brand', 'Creator', 'Status', 'Budget', 'Created'].join(','),
+      ...filteredDeals.map(deal => [
+        deal._id?.slice(-8) || '',
+        `"${deal.campaignId?.title || ''}"`,
+        `"${deal.brandId?.brandName || ''}"`,
+        `"${deal.creatorId?.displayName || deal.creatorId?.fullName || ''}"`,
+        deal.status,
+        deal.budget || 0,
+        deal.createdAt ? new Date(deal.createdAt).toISOString().split('T')[0] : ''
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `deals-export-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   const completedDeals = Number(stats.completedDeals || deals.filter((deal) => deal.status === 'completed').length || 0);
   const pendingDeals = Number(
@@ -17,22 +48,39 @@ const AdminDeals = () => {
   );
   const totalValue = Number(stats.totalDealValue || deals.reduce((sum, deal) => sum + Number(deal.budget || 0), 0) || 0);
 
+  // ==================== HANDLE VIEW DETAILS ====================
+  const handleViewDetails = (deal) => {
+    setSelectedDeal(deal);
+    setShowDetailsModal(true);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
+      {/* Header */}
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Deal Management</h1>
-          <p className="text-gray-600">Review active and completed deals across the platform</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Deal Management</h1>
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Review active and completed deals across the platform</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          icon={RefreshCw}
-          onClick={refreshData}
-          loading={refreshing}
-        >
-          Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            icon={RefreshCw}
+            onClick={refreshData}
+            loading={refreshing}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            onClick={handleExport}
+          >
+            Export
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -85,14 +133,27 @@ const AdminDeals = () => {
               ) : (
                 deals.map((deal) => {
                   const status = String(deal.status || 'unknown').toLowerCase();
-                  const statusClass = status === 'completed'
-                    ? 'bg-green-100 text-green-800'
-                    : status === 'cancelled' || status === 'canceled'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-yellow-100 text-yellow-800';
+                  const statusClass = getStatusColor(status, 'deal');
+                  
+                  const getStatusIcon = (status) => {
+                    switch(status) {
+                      case 'completed': return CheckCircle;
+                      case 'cancelled':
+                      case 'canceled': return XCircle;
+                      case 'in-progress': return Clock;
+                      default: return AlertTriangle;
+                    }
+                  };
+                  
+                  const StatusIcon = getStatusIcon(status);
+                  const iconColor = getStatusIconColor(status);
 
                   return (
-                    <tr key={deal._id || `${deal.campaignId?._id || 'campaign'}-${deal.creatorId?._id || 'creator'}`} className="hover:bg-gray-50">
+                    <tr 
+                      key={deal._id || `${deal.campaignId?._id || 'campaign'}-${deal.creatorId?._id || 'creator'}`} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleViewDetails(deal)}
+                    >
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {deal.campaignId?.title || 'Untitled Campaign'}
                       </td>
@@ -106,7 +167,8 @@ const AdminDeals = () => {
                         {formatCurrency(deal.budget || 0)}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className={`px-2 py-1 text-xs rounded-full ${statusClass}`}>
+                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusClass}`}>
+                          <StatusIcon className={`w-3 h-3 ${iconColor}`} />
                           {status}
                         </span>
                       </td>
@@ -122,14 +184,63 @@ const AdminDeals = () => {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-blue-600 mt-0.5" />
-        <p className="text-sm text-blue-800">
-          This view is currently powered by the latest dashboard dataset. Open
-          <Link to="/admin/dashboard" className="font-medium underline ml-1">Dashboard</Link>
-          and click refresh to pull the newest deal activity.
-        </p>
-      </div>
+      {/* Deal Details Modal */}
+      <Modal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title="Deal Details"
+        size="lg"
+      >
+        {selectedDeal && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">{selectedDeal.campaignId?.title || 'Untitled Campaign'}</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Deal ID: {selectedDeal._id?.slice(-8)} • Status: {selectedDeal.status}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500 mb-1">Budget</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(selectedDeal.budget || 0)}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500 mb-1">Status</p>
+                <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(String(selectedDeal.status || 'unknown').toLowerCase(), 'deal')}`}>
+                  {(() => {
+                    const status = String(selectedDeal.status || 'unknown').toLowerCase();
+                    const StatusIcon = status === 'completed' ? CheckCircle : status === 'cancelled' || status === 'canceled' ? XCircle : status === 'in-progress' || status === 'in_progress' ? Clock : AlertTriangle;
+                    const iconColor = getStatusIconColor(status);
+                    return <StatusIcon className={`w-3 h-3 ${iconColor}`} />;
+                  })()}
+                  {selectedDeal.status}
+                </span>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500 mb-1">Brand</p>
+                <p className="font-medium">{selectedDeal.brandId?.brandName || selectedDeal.brandId?.fullName || 'Unknown brand'}</p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500 mb-1">Creator</p>
+                <p className="font-medium">{selectedDeal.creatorId?.fullName || selectedDeal.creatorId?.displayName || 'Unknown creator'}</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-500 mb-2">Created Date</p>
+              <p className="text-gray-700">{formatDate(selectedDeal.createdAt)}</p>
+            </div>
+
+            {selectedDeal.updatedAt && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500 mb-2">Last Updated</p>
+                <p className="text-gray-700">{formatDate(selectedDeal.updatedAt)}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

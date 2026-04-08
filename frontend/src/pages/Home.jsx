@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 import { useSubscription } from '../context/SubscriptionContext';
 import { 
-  MagnifyingGlassIcon, 
+  CpuChipIcon,
   ChartBarIcon, 
   CurrencyDollarIcon, 
   ShieldCheckIcon,
@@ -20,7 +21,10 @@ import {
   ChevronRightIcon,
   EnvelopeIcon,
   PhoneIcon,
-  MapPinIcon
+  MapPinIcon,
+  BanknotesIcon,
+  DocumentTextIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import { 
   FaInstagram, 
@@ -82,7 +86,7 @@ const BRAND_PRICING_TIERS = [
     ],
     cta: 'Get Started',
     popular: true,
-    gradient: 'from-indigo-600 to-purple-600'
+    gradient: 'from-[#667eea] to-[#764ba2]'
   },
   {
     id: 'enterprise',
@@ -151,7 +155,7 @@ const CREATOR_PRICING_TIERS = [
     ],
     cta: 'Go Pro',
     popular: true,
-    gradient: 'from-indigo-600 to-purple-600'
+    gradient: 'from-[#667eea] to-[#764ba2]'
   },
   {
     id: 'enterprise',
@@ -173,6 +177,8 @@ const CREATOR_PRICING_TIERS = [
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { currentSubscription } = useSubscription();
   const [scrolled, setScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -262,10 +268,10 @@ export default function Home() {
 
   const features = [
     {
-      icon: MagnifyingGlassIcon,
+      icon: CpuChipIcon,
       title: 'Smart Matching Algorithm',
       description: 'AI-powered matching finds the perfect micro-creators based on audience demographics, engagement patterns, and content style.',
-      gradient: 'from-blue-600 to-indigo-600',
+      gradient: 'from-blue-600 to-[#667eea]',
       benefits: ['95% match accuracy', 'Real-time updates', 'Audience insights']
     },
     {
@@ -297,7 +303,7 @@ export default function Home() {
       title: 'Create Account',
       description: 'Sign up as a brand or creator in under 2 minutes with email or social login',
       icon: UserGroupIcon,
-      color: 'from-blue-600 to-indigo-600'
+      color: 'from-blue-600 to-[#667eea]'
     },
     {
       number: '02',
@@ -325,7 +331,7 @@ export default function Home() {
       title: 'Get Paid',
       description: 'Secure escrow payments released automatically upon approval',
       icon: CurrencyDollarIcon,
-      color: 'from-indigo-600 to-purple-600'
+      color: 'from-[#667eea] to-[#764ba2]'
     }
   ];
 
@@ -357,12 +363,12 @@ export default function Home() {
   ];
 
   const platforms = [
-    { icon: FaInstagram, name: 'Instagram', color: 'text-pink-600', bg: 'bg-pink-100' },
-    { icon: FaYoutube, name: 'YouTube', color: 'text-red-600', bg: 'bg-red-100' },
-    { icon: FaTiktok, name: 'TikTok', color: 'text-black', bg: 'bg-gray-100' },
-    { icon: FaTwitter, name: 'Twitter', color: 'text-blue-400', bg: 'bg-blue-100' },
-    { icon: FaFacebook, name: 'Facebook', color: 'text-blue-600', bg: 'bg-blue-100' },
-    { icon: FaLinkedin, name: 'LinkedIn', color: 'text-blue-700', bg: 'bg-blue-100' }
+    { icon: FaInstagram, name: 'Instagram', color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
+    { icon: FaYoutube, name: 'YouTube', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { icon: FaTiktok, name: 'TikTok', color: 'text-black dark:text-white', bg: 'bg-gray-100 dark:bg-gray-800' },
+    { icon: FaTwitter, name: 'Twitter', color: 'text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { icon: FaFacebook, name: 'Facebook', color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { icon: FaLinkedin, name: 'LinkedIn', color: 'text-blue-700', bg: 'bg-blue-100 dark:bg-blue-900/30' }
   ];
 
   const getPricingAction = (tier, index) => {
@@ -426,29 +432,82 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{
+      background: isDark 
+        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    }}>
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg py-3' : 'bg-transparent py-5'
-      }`}>
+        scrolled 
+          ? 'backdrop-blur-xl shadow-lg py-3' 
+          : 'backdrop-blur-md py-5'
+      }`}
+      style={{
+        background: scrolled 
+          ? isDark 
+            ? 'rgba(55, 65, 81, 0.95)'  // Light gray for dark mode
+            : 'rgba(243, 244, 246, 0.95)' // Light gray for light mode
+          : 'transparent',
+        borderBottom: scrolled ? '1px solid rgba(0, 0, 0, 0.1)' : 'none'
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2 group">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center transform group-hover:rotate-6 transition-all duration-300">
-                <span className="text-white font-bold text-xl">IX</span>
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center transform group-hover:rotate-6 transition-all duration-300 backdrop-blur-md"
+                style={{
+                  background: scrolled 
+                    ? isDark 
+                      ? 'rgba(255, 255, 255, 0.15)'
+                      : 'rgba(102, 126, 234, 0.1)'
+                    : isDark 
+                      ? 'rgba(255, 255, 255, 0.15)'
+                      : 'rgba(255, 255, 255, 0.2)',
+                  border: scrolled 
+                    ? isDark 
+                      ? '1px solid rgba(255, 255, 255, 0.2)'
+                      : '1px solid rgba(102, 126, 234, 0.2)'
+                    : '1px solid rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                <span className={`font-bold text-xl ${
+                  scrolled 
+                    ? isDark ? 'text-white' : 'text-[#667eea]'
+                    : 'text-white'
+                }`} style={{ textShadow: scrolled ? 'none' : '0 2px 4px rgba(0,0,0,0.3)' }}>IX</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <span className={`text-2xl font-bold ${
+                scrolled 
+                  ? isDark ? 'text-white' : 'text-gray-900'
+                  : 'text-white'
+              }`} style={{ textShadow: scrolled ? 'none' : '0 2px 4px rgba(0,0,0,0.3)' }}>
                 InfluenceX
               </span>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Features</a>
-              <a href="#how-it-works" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium">How it Works</a>
-              <a href="#pricing" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Pricing</a>
-              <a href="#testimonials" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Success Stories</a>
+              <a href="#features" className={`transition-colors font-medium ${
+                scrolled 
+                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                  : 'text-white/90 hover:text-white'
+              }`}>Features</a>
+              <a href="#how-it-works" className={`transition-colors font-medium ${
+                scrolled 
+                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                  : 'text-white/90 hover:text-white'
+              }`}>How it Works</a>
+              <a href="#pricing" className={`transition-colors font-medium ${
+                scrolled 
+                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                  : 'text-white/90 hover:text-white'
+              }`}>Pricing</a>
+              <a href="#testimonials" className={`transition-colors font-medium ${
+                scrolled 
+                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                  : 'text-white/90 hover:text-white'
+              }`}>Success Stories</a>
             </div>
 
             {/* Auth Buttons */}
@@ -456,22 +515,57 @@ export default function Home() {
               {isAuthenticated ? (
                 <Link
                   to={dashboardPath}
-                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  className="px-6 py-3 rounded-xl font-medium hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2 backdrop-blur-md"
+                  style={{
+                    background: scrolled 
+                      ? isDark 
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'rgba(102, 126, 234, 0.1)'
+                      : 'rgba(255, 255, 255, 0.2)',
+                    border: scrolled 
+                      ? isDark 
+                        ? '1px solid rgba(255, 255, 255, 0.3)'
+                        : '1px solid rgba(102, 126, 234, 0.3)'
+                      : '1px solid rgba(255, 255, 255, 0.3)',
+                    color: scrolled 
+                      ? isDark ? '#fff' : '#667eea'
+                      : '#fff'
+                  }}
                 >
-                  Go to Dashboard
+                  <ShieldCheckIcon className="w-4 h-4" />
+                  Dashboard
                 </Link>
               ) : (
                 <>
                   <Link
                     to="/login"
-                    className="hidden sm:inline-block text-gray-700 hover:text-indigo-600 font-medium transition-colors"
+                    className="hidden sm:inline-block font-medium transition-colors px-4 py-2 rounded-lg hover:bg-white/10"
+                    style={{
+                      color: scrolled 
+                        ? isDark ? '#fff' : '#667eea'
+                        : '#fff'
+                    }}
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/signup"
-                    className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
+                    className="px-6 py-3 rounded-xl font-medium hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                    style={{
+                      background: scrolled 
+                        ? isDark 
+                          ? 'rgba(255, 255, 255, 0.95)'
+                          : 'rgba(102, 126, 234, 0.95)'
+                        : 'rgba(255, 255, 255, 0.95)',
+                      color: scrolled 
+                        ? isDark ? '#667eea' : '#fff'
+                        : '#667eea',
+                      boxShadow: scrolled 
+                        ? '0 8px 32px rgba(0, 0, 0, 0.1)'
+                        : '0 8px 32px rgba(0, 0, 0, 0.1)'
+                    }}
                   >
+                    <RocketLaunchIcon className="w-4 h-4" />
                     Get Started
                   </Link>
                 </>
@@ -482,15 +576,32 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50"></div>
-        
-        {/* Animated blobs */}
+      <section className="relative pt-24 pb-16 overflow-hidden" style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      }}>
+        {/* Floating decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+          <div
+            style={{
+              position: 'absolute', width: 400, height: 400, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.08)', top: -100, left: -100,
+              filter: 'blur(60px)'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute', width: 300, height: 300, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.06)', bottom: 100, right: -50,
+              filter: 'blur(50px)'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute', width: 200, height: 200, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)', top: '40%', left: '60%',
+              filter: 'blur(40px)'
+            }}
+          />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -501,59 +612,76 @@ export default function Home() {
             className="text-center"
           >
             {/* Trust badge */}
-            <div className="inline-flex items-center px-4 py-2 bg-indigo-100 rounded-full mb-8">
-              <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse mr-2"></span>
-              <span className="text-indigo-800 font-semibold text-sm">Trusted by 2,500+ brands & creators worldwide</span>
+            <div className="inline-flex items-center px-6 py-3 rounded-full mb-10 backdrop-blur-md"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-3"></div>
+              <span className="font-semibold text-sm text-white">
+                Trusted by 2,500+ brands & creators worldwide
+              </span>
             </div>
 
             {/* Main headline */}
-            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+              <span className="block text-white mb-2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                 Connect Brands with
               </span>
-              <br />
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                 Authentic Micro-Creators
               </span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+            <p className="text-base sm:text-lg max-w-3xl mx-auto mb-8 leading-relaxed text-white/90" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
               The first trusted marketplace for micro-influencers (1k-100k followers) and brands. 
               Data-driven matching, secure payments, and real performance analytics in one powerful platform.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-12">
               {isAuthenticated ? (
                 <Link
                   to={dashboardPath}
-                  className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
+                  className="group relative px-6 py-3 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden flex items-center justify-center gap-2"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    color: '#667eea',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
+                  }}
                 >
-                  <span className="relative z-10 flex items-center justify-center">
-                    Open Dashboard
-                    <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <ShieldCheckIcon className="w-5 h-5" />
+                  Open Dashboard
+                  <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               ) : (
                 <>
                   <Link
                     to="/signup?type=brand"
-                    className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden"
+                    className="group relative px-6 py-3 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden flex items-center justify-center gap-2"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      color: '#667eea',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
+                    }}
                   >
-                    <span className="relative z-10 flex items-center justify-center">
-                      Find Creators 
-                      <ChevronRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <MagnifyingGlassIcon className="w-5 h-5" />
+                    Find Creators 
+                    <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
                     to="/signup?type=creator"
-                    className="px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg border-2 border-gray-200 hover:border-indigo-600 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
+                    className="px-6 py-3 rounded-xl font-semibold text-lg border-2 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-md"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#fff',
+                      borderColor: 'rgba(255, 255, 255, 0.3)'
+                    }}
                   >
+                    <ArrowTrendingUpIcon className="w-6 h-6" />
                     Start Earning Today
-                    <ArrowTrendingUpIcon className="w-5 h-5 ml-2" />
                   </Link>
                 </>
               )}
@@ -569,18 +697,22 @@ export default function Home() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="group relative"
                 >
-                  <div className={`w-12 h-12 ${platform.bg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                    <platform.icon className={`w-6 h-6 ${platform.color}`} />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 backdrop-blur-md"
+                    style={{
+                      background: 'rgba(150, 150, 250, 0.2)',
+                      border: '1px solid rgba(150, 150, 250, 0.3)',
+                      boxShadow: '0 2px 8px rgba(150, 150, 250, 0.1)'
+                    }}
+                  >
+                    <platform.icon className="w-5 h-5 text-white" />
                   </div>
-                  <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    {platform.name}
-                  </span>
+                  
                 </motion.div>
               ))}
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-4xl mx-auto">
               {stats.map((stat, index) => (
                 <motion.div
                   key={index}
@@ -589,15 +721,22 @@ export default function Home() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="text-center group"
                 >
-                  <div className="relative inline-block">
-                    <stat.icon className="w-8 h-8 mx-auto text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <div className="relative inline-block mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform"
+                      style={{
+                        background: 'rgba(150, 150, 250, 0.2)',
+                        border: '1px solid rgba(150, 150, 250, 0.3)'
+                      }}
+                    >
+                      <stat.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   </div>
-                  <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                     {stat.value}
                   </div>
-                  <div className="text-gray-600 font-medium mt-2">{stat.label}</div>
-                  <div className="text-xs text-gray-400 mt-1">{stat.suffix}</div>
+                  <div className="text-sm font-medium text-white/90 mb-1">{stat.label}</div>
+                  <div className="text-xs text-white/70">{stat.suffix}</div>
                 </motion.div>
               ))}
             </div>
@@ -606,27 +745,47 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 bg-white">
+      <section id="features" className="py-16" style={{
+        background: isDark 
+          ? 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
+          : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,250,251,0.95) 100%)'
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-indigo-600 font-semibold text-sm uppercase tracking-wider">Features</span>
-              <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(102, 126, 234, 0.1)',
+                  color: isDark ? '#fff' : '#667eea',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
+                    : '1px solid rgba(102, 126, 234, 0.2)'
+                }}
+              >
+                Features
+              </span>
+              <h2 className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-6 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
                 Everything you need to succeed
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className={`text-base max-w-2xl mx-auto ${
+                isDark ? 'text-white/80' : 'text-gray-600'
+              }`}>
                 Powerful tools designed for both brands and creators to collaborate seamlessly
               </p>
             </motion.div>
           </div>
 
           {/* Features grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -634,25 +793,51 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group relative bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-transparent"
+                className="group relative rounded-2xl p-6 hover:shadow-xl transition-all duration-500 backdrop-blur-md"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(0, 0, 0, 0.05)',
+                  transform: 'translateY(0)',
+                  boxShadow: isDark 
+                    ? '0 10px 30px rgba(0, 0, 0, 0.2)'
+                    : '0 10px 30px rgba(0, 0, 0, 0.1)'
+                }}
+                whileHover={{ 
+                  y: -10,
+                  boxShadow: isDark 
+                    ? '0 20px 40px rgba(0, 0, 0, 0.3)'
+                    : '0 20px 40px rgba(0, 0, 0, 0.15)'
+                }}
               >
-                {/* Background gradient on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`}></div>
-                
                 {/* Icon */}
-                <div className={`w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                  <feature.icon className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500"
+                  style={{
+                    background: 'rgba(150, 150, 250, 0.2)',
+                    boxShadow: '0 2px 8px rgba(150, 150, 250, 0.1)'
+                  }}
+                >
+                  <feature.icon className="w-6 h-6 text-white" />
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
+                <h3 className={`text-lg font-bold mb-3 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>{feature.title}</h3>
+                <p className={`text-sm leading-relaxed mb-4 ${
+                  isDark ? 'text-white/70' : 'text-gray-600'
+                }`}>{feature.description}</p>
                 
                 {/* Benefits */}
                 <ul className="space-y-2">
                   {feature.benefits.map((benefit, i) => (
-                    <li key={i} className="flex items-center text-sm text-gray-500">
-                      <CheckBadgeIcon className="w-4 h-4 text-indigo-600 mr-2" />
+                    <li key={i} className={`flex items-center text-sm ${
+                      isDark ? 'text-white/60' : 'text-gray-500'
+                    }`}>
+                      <CheckBadgeIcon className="w-5 h-5 mr-2 flex-shrink-0" style={{ color: '#3b82f6' }} />
                       {benefit}
                     </li>
                   ))}
@@ -664,20 +849,40 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-24 bg-gradient-to-b from-gray-50 to-white">
+      <section id="how-it-works" className="py-16" style={{
+        background: isDark 
+          ? 'linear-gradient(135deg, #0f3460 0%, #16213e 100%)'
+          : 'linear-gradient(135deg, rgba(249,250,251,0.95) 0%, rgba(255,255,255,0.95) 100%)'
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-indigo-600 font-semibold text-sm uppercase tracking-wider">Process</span>
-              <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(102, 126, 234, 0.1)',
+                  color: isDark ? '#fff' : '#667eea',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
+                    : '1px solid rgba(102, 126, 234, 0.2)'
+                }}
+              >
+                Process
+              </span>
+              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
                 How InfluenceX Works
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className={`text-base max-w-2xl mx-auto ${
+                isDark ? 'text-white/80' : 'text-gray-600'
+              }`}>
                 From signup to successful collaboration in 5 simple steps
               </p>
             </motion.div>
@@ -685,11 +890,8 @@ export default function Home() {
 
           {/* Steps */}
           <div className="relative">
-            {/* Connecting line (hidden on mobile) */}
-            <div className="hidden lg:block absolute top-24 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200"></div>
-
             {/* Steps grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {steps.map((step, index) => (
                 <motion.div
                   key={index}
@@ -699,17 +901,18 @@ export default function Home() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="relative text-center group"
                 >
-                  {/* Step number with icon */}
-                  <div className={`relative w-20 h-20 mx-auto mb-6 bg-gradient-to-r ${step.color} rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                    <step.icon className="w-8 h-8 text-white" />
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-sm font-bold text-indigo-600 shadow-lg">
-                      {step.number}
-                    </div>
+                  {/* Step icon */}
+                  <div className={`relative w-16 h-16 mx-auto mb-4 bg-gradient-to-r ${step.color} rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                    <step.icon className="w-6 h-6 text-white" />
                   </div>
                   
                   {/* Content */}
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
-                  <p className="text-gray-600 text-sm">{step.description}</p>
+                  <h3 className={`text-base font-bold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>{step.title}</h3>
+                  <p className={`text-xs leading-relaxed ${
+                    isDark ? 'text-white/70' : 'text-gray-600'
+                  }`}>{step.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -722,10 +925,12 @@ export default function Home() {
             viewport={{ once: true }}
             className="mt-16 relative rounded-2xl overflow-hidden shadow-2xl"
           >
-            <div className="aspect-w-16 aspect-h-9 bg-gradient-to-r from-indigo-600 to-purple-600">
+            <div className="aspect-w-16 aspect-h-9 bg-gradient-to-r from-[#667eea] to-[#764ba2]">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center text-white">
-                  <div className="w-20 h-20 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-white/30 transition-colors">
+                  <div className={`w-20 h-20 mx-auto rounded-full flex items-center mb-4 cursor-pointer transition-colors ${
+                    isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-white/20 hover:bg-white/30'
+                  }`}>
                     <div className="w-0 h-0 border-t-8 border-t-transparent border-l-16 border-l-white border-b-8 border-b-transparent ml-2"></div>
                   </div>
                   <p className="text-lg font-semibold">Watch how InfluenceX works (2 min)</p>
@@ -737,90 +942,147 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-24 bg-white">
+      <section id="testimonials" className="py-16" style={{
+        background: isDark 
+          ? 'linear-gradient(135deg, #0f3460 0%, #16213e 100%)'
+          : 'linear-gradient(135deg, rgba(249,250,251,0.95) 0%, rgba(255,255,255,0.95) 100%)'
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-indigo-600 font-semibold text-sm uppercase tracking-wider">Success Stories</span>
-              <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(102, 126, 234, 0.1)',
+                  color: isDark ? '#fff' : '#667eea',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
+                    : '1px solid rgba(102, 126, 234, 0.2)'
+                }}
+              >
+                Success Stories
+              </span>
+              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
                 Trusted by brands & creators
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className={`text-base max-w-2xl mx-auto ${
+                isDark ? 'text-white/80' : 'text-gray-600'
+              }`}>
                 Join thousands of successful collaborations on InfluenceX
               </p>
             </motion.div>
           </div>
 
           {/* Testimonials carousel */}
-          <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-5xl mx-auto">
             <motion.div
               key={activeTestimonial}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.5 }}
-              className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 md:p-12"
+              className="rounded-2xl p-6 md:p-8 backdrop-blur-md"
+              style={{
+                background: isDark 
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'rgba(255, 255, 255, 0.8)',
+                border: isDark 
+                  ? '1px solid rgba(255, 255, 255, 0.1)'
+                  : '1px solid rgba(0, 0, 0, 0.05)',
+                boxShadow: isDark 
+                  ? '0 20px 40px rgba(0, 0, 0, 0.2)'
+                  : '0 20px 40px rgba(0, 0, 0, 0.1)'
+              }}
             >
-              <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex flex-col md:flex-row items-center gap-10">
                 {/* Avatar */}
                 <div className="relative">
-                  <img
-                    src={testimonials[activeTestimonial].image}
-                    alt={testimonials[activeTestimonial].name}
-                    className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover shadow-xl"
-                  />
-                  <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white"></div>
+                  <div className="relative">
+                    <img
+                      src={testimonials[activeTestimonial].image}
+                      alt={testimonials[activeTestimonial].name}
+                      className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover shadow-xl"
+                    />
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-t from-black/20 to-transparent"></div>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-3 border-white shadow-lg animate-pulse"></div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 text-center md:text-left">
                   {/* Rating */}
-                  <div className="flex items-center justify-center md:justify-start mb-4">
+                  <div className="flex items-center justify-center md:justify-start mb-6">
                     {[...Array(5)].map((_, i) => (
-                      <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                      <StarIcon key={i} className="w-6 h-6 text-yellow-400 fill-current" />
                     ))}
                   </div>
 
                   {/* Quote */}
-                  <p className="text-lg md:text-xl text-gray-700 italic mb-6">
+                  <p className={`text-base md:text-lg italic mb-6 font-medium ${
+                    isDark ? 'text-white/90' : 'text-gray-700'
+                  }`} style={{ lineHeight: '1.6' }}>
                     "{testimonials[activeTestimonial].content}"
                   </p>
 
                   {/* Author */}
                   <div>
-                    <h4 className="font-bold text-gray-900">{testimonials[activeTestimonial].name}</h4>
-                    <p className="text-indigo-600">{testimonials[activeTestimonial].role}</p>
-                    <p className="text-gray-500 text-sm">{testimonials[activeTestimonial].company}</p>
+                    <h4 className={`text-lg font-bold mb-2 ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>{testimonials[activeTestimonial].name}</h4>
+                    <p className="text-sm font-semibold" style={{ color: '#667eea' }}>{testimonials[activeTestimonial].role}</p>
+                    <p className={`text-sm mt-1 ${
+                      isDark ? 'text-white/60' : 'text-gray-500'
+                    }`}>{testimonials[activeTestimonial].company}</p>
                   </div>
                 </div>
               </div>
             </motion.div>
 
             {/* Dots */}
-            <div className="flex items-center justify-center mt-8 space-x-2">
+            <div className="flex items-center justify-center mt-12 space-x-3">
               {testimonials.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setActiveTestimonial(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === activeTestimonial
-                      ? 'w-8 bg-indigo-600'
-                      : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
+                  className="transition-all duration-300 rounded-full"
+                  style={{
+                    width: index === activeTestimonial ? '32px' : '12px',
+                    height: '12px',
+                    background: index === activeTestimonial 
+                      ? '#667eea' 
+                      : isDark 
+                        ? 'rgba(255, 255, 255, 0.3)'
+                        : 'rgba(0, 0, 0, 0.2)',
+                    transform: index === activeTestimonial ? 'scale(1.1)' : 'scale(1)'
+                  }}
                 />
               ))}
             </div>
           </div>
 
           {/* Trust badges */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8">
+          <div className="mt-20 flex flex-wrap items-center justify-center gap-12">
             {['TechCrunch', 'Forbes', 'Business Insider', 'Inc 5000'].map((badge, index) => (
-              <div key={index} className="text-gray-400 font-semibold text-lg">
+              <div key={index} className={`font-semibold text-xl backdrop-blur-md px-6 py-3 rounded-2xl ${
+                isDark ? 'text-white/60' : 'text-gray-500'
+              }`}
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(0, 0, 0, 0.03)',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(0, 0, 0, 0.05)'
+                }}
+              >
                 {badge}
               </div>
             ))}
@@ -829,27 +1091,47 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24 bg-gradient-to-b from-gray-50 to-white">
+      <section id="pricing" className="py-16" style={{
+        background: isDark 
+          ? 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
+          : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,250,251,0.95) 100%)'
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-indigo-600 font-semibold text-sm uppercase tracking-wider">Pricing</span>
-              <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(102, 126, 234, 0.1)',
+                  color: isDark ? '#fff' : '#667eea',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
+                    : '1px solid rgba(102, 126, 234, 0.2)'
+                }}
+              >
+                Pricing
+              </span>
+              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
                 Simple, transparent pricing
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className={`text-base max-w-2xl mx-auto ${
+                isDark ? 'text-white/80' : 'text-gray-600'
+              }`}>
                 Choose the perfect plan for your business. All plans include a 14-day free trial.
               </p>
             </motion.div>
           </div>
 
           {/* Pricing cards */}
-            <div className={`grid grid-cols-1 ${isCreatorUser ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'} gap-8`}>
+          <div className={`grid grid-cols-1 ${isCreatorUser ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'} gap-8`}>
             {pricingTiers.map((tier, index) => (
               (() => {
                 const action = getPricingAction(tier, index);
@@ -860,36 +1142,74 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative bg-white rounded-2xl p-8 shadow-xl transition-all duration-300 ${
-                  action.disabled ? 'opacity-60' : 'hover:shadow-2xl'
-                } ${
-                  tier.popular ? 'ring-2 ring-indigo-600 scale-105' : ''
-                }`}
+                className="relative rounded-2xl p-6 transition-all duration-500 backdrop-blur-md"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(0, 0, 0, 0.05)',
+                  transform: tier.popular ? 'translateY(-8px)' : 'translateY(0)',
+                  boxShadow: tier.popular
+                    ? isDark 
+                      ? '0 30px 60px rgba(102, 126, 234, 0.2)'
+                      : '0 30px 60px rgba(102, 126, 234, 0.15)'
+                    : isDark 
+                      ? '0 10px 30px rgba(0, 0, 0, 0.2)'
+                      : '0 10px 30px rgba(0, 0, 0, 0.1)'
+                }}
+                whileHover={{ 
+                  y: tier.popular ? -12 : -8,
+                  boxShadow: tier.popular
+                    ? isDark 
+                      ? '0 40px 80px rgba(102, 126, 234, 0.3)'
+                      : '0 40px 80px rgba(102, 126, 234, 0.2)'
+                    : isDark 
+                      ? '0 20px 40px rgba(0, 0, 0, 0.3)'
+                      : '0 20px 40px rgba(0, 0, 0, 0.15)'
+                }}
               >
                 {tier.popular && (
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                    <span className="inline-block px-6 py-2 rounded-full text-sm font-bold backdrop-blur-md"
+                      style={{
+                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                        color: '#fff',
+                        boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)'
+                      }}
+                    >
                       Most Popular
                     </span>
                   </div>
                 )}
 
                 {/* Header */}
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
-                  <div className="flex items-center justify-center">
-                    <span className="text-4xl font-bold text-gray-900">{tier.price}</span>
-                    <span className="text-gray-500 ml-2">{tier.period}</span>
+                <div className="text-center mb-6">
+                  <h3 className={`text-lg font-bold mb-3 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>{tier.name}</h3>
+                  <div className="flex items-center justify-center mb-3">
+                    <span className={`text-3xl font-bold ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>{tier.price}</span>
+                    <span className={`ml-1 text-sm ${
+                      isDark ? 'text-white/60' : 'text-gray-500'
+                    }`}>{tier.period}</span>
                   </div>
-                  <p className="text-gray-500 mt-2">{tier.description}</p>
+                  <p className={`text-xs ${
+                    isDark ? 'text-white/70' : 'text-gray-600'
+                  }`}>{tier.description}</p>
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-3 mb-6">
                   {tier.features.map((feature, i) => (
-                    <li key={i} className="flex items-center text-gray-600">
-                      <CheckBadgeIcon className="w-5 h-5 text-indigo-600 mr-3 flex-shrink-0" />
-                      {feature}
+                    <li key={i} className={`flex items-start ${
+                      isDark ? 'text-white/80' : 'text-gray-700'
+                    }`}>
+                      <CheckBadgeIcon className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" style={{ color: '#3b82f6' }} />
+                      <span className="text-xs leading-relaxed">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -897,18 +1217,47 @@ export default function Home() {
                 {/* CTA */}
                 {action.disabled ? (
                   <span
-                    className="block w-full py-3 px-6 text-center rounded-xl font-semibold bg-gray-200 text-gray-500 cursor-not-allowed"
+                    className="block w-full py-3 px-4 text-center rounded-xl font-semibold backdrop-blur-md cursor-not-allowed"
+                    style={{
+                      background: isDark 
+                        ? 'rgba(255, 255, 255, 0.05)'
+                        : 'rgba(0, 0, 0, 0.05)',
+                      color: isDark ? 'text-white/40' : 'text-gray-400',
+                      border: isDark 
+                        ? '1px solid rgba(255, 255, 255, 0.1)'
+                        : '1px solid rgba(0, 0, 0, 0.05)'
+                    }}
                   >
                     {action.label}
                   </span>
                 ) : (
                   <Link
                     to={action.to}
-                    className={`block w-full py-3 px-6 text-center rounded-xl font-semibold transition-all duration-300 ${
+                    className={`block w-full py-3 px-4 text-center rounded-xl font-semibold transition-all duration-300 hover:scale-105 ${
                       tier.popular
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        ? ''
+                        : ''
                     }`}
+                    style={{
+                      background: tier.popular
+                        ? 'linear-gradient(135deg, #667eea, #764ba2)'
+                        : isDark 
+                          ? 'rgba(255, 255, 255, 0.1)'
+                          : 'rgba(255, 255, 255, 0.9)',
+                      color: tier.popular
+                        ? '#fff'
+                        : isDark 
+                          ? '#fff'
+                          : '#667eea',
+                      border: tier.popular
+                        ? 'none'
+                        : isDark 
+                          ? '1px solid rgba(255, 255, 255, 0.2)'
+                          : '1px solid rgba(102, 126, 234, 0.2)',
+                      boxShadow: tier.popular
+                        ? '0 8px 24px rgba(102, 126, 234, 0.3)'
+                        : 'none'
+                    }}
                   >
                     {action.label}
                   </Link>
@@ -922,27 +1271,47 @@ export default function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-white">
+      <section className="py-16" style={{
+        background: isDark 
+          ? 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
+          : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,250,251,0.95) 100%)'
+      }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-indigo-600 font-semibold text-sm uppercase tracking-wider">FAQ</span>
-              <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(102, 126, 234, 0.1)',
+                  color: isDark ? '#fff' : '#667eea',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
+                    : '1px solid rgba(102, 126, 234, 0.2)'
+                }}
+              >
+                FAQ
+              </span>
+              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
                 Frequently asked questions
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className={`text-base max-w-2xl mx-auto ${
+                isDark ? 'text-white/80' : 'text-gray-600'
+              }`}>
                 Got questions? We've got answers.
               </p>
             </motion.div>
           </div>
 
           {/* FAQ items */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             {faqs.map((faq, index) => (
               <motion.div
                 key={index}
@@ -950,10 +1319,31 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow"
+                className="rounded-xl p-6 transition-all duration-300 backdrop-blur-md"
+                style={{
+                  background: isDark 
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(0, 0, 0, 0.05)',
+                  boxShadow: isDark 
+                    ? '0 10px 30px rgba(0, 0, 0, 0.2)'
+                    : '0 10px 30px rgba(0, 0, 0, 0.1)'
+                }}
+                whileHover={{ 
+                  y: -4,
+                  boxShadow: isDark 
+                    ? '0 20px 40px rgba(0, 0, 0, 0.3)'
+                    : '0 20px 40px rgba(0, 0, 0, 0.15)'
+                }}
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
-                <p className="text-gray-600">{faq.answer}</p>
+                <h3 className={`text-lg font-bold mb-3 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>{faq.question}</h3>
+                <p className={`text-sm leading-relaxed ${
+                  isDark ? 'text-white/70' : 'text-gray-600'
+                }`}>{faq.answer}</p>
               </motion.div>
             ))}
           </div>
@@ -961,11 +1351,21 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 relative overflow-hidden">
+      <section className="py-16 relative overflow-hidden" style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
+      }}>
         {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-64 h-64 bg-white rounded-full filter blur-3xl"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-64 h-64 rounded-full filter blur-3xl"
+            style={{
+              background: 'rgba(255,255,255,0.1)'
+            }}
+          ></div>
+          <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full filter blur-3xl"
+            style={{
+              background: 'rgba(255,255,255,0.1)'
+            }}
+          ></div>
         </div>
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -974,10 +1374,10 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
               Ready to grow your influence?
             </h2>
-            <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+            <p className="text-base text-white/90 mb-8 max-w-2xl mx-auto" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
               Join the fastest growing influencer marketing platform. Sign up today and start your first campaign.
             </p>
             
@@ -985,129 +1385,41 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to={isBrandUser ? '/brand/search' : isCreatorUser ? '/creator/available-deals' : '/signup?type=brand'}
-                className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
+                className="px-6 py-3 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  color: '#667eea',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
+                }}
               >
                 {isCreatorUser ? 'Find Deals' : 'Find Creators'}
-                <ChevronRightIcon className="w-5 h-5 ml-2" />
+                <ChevronRightIcon className="w-6 h-6" />
               </Link>
               {!isBrandUser && !isCreatorUser && (
                 <Link
                   to="/signup?type=creator"
-                  className="px-8 py-4 bg-transparent text-white rounded-xl font-semibold text-lg border-2 border-white hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center justify-center"
+                  className="px-6 py-3 rounded-xl font-semibold text-lg border-2 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-md"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.3)'
+                  }}
                 >
                   Start Earning
-                  <ArrowTrendingUpIcon className="w-5 h-5 ml-2" />
+                  <ArrowTrendingUpIcon className="w-6 h-6" />
                 </Link>
               )}
             </div>
 
             {/* Trust indicator */}
-            <p className="text-white/80 uppercase text-sm mt-8">
-           for influencers No credit card required . cancel anytime
+            <p className="text-white/90 uppercase text-xs mt-8 font-medium">
+              For influencers: No credit card required • Cancel anytime
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Main footer */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-            {/* Company info */}
-            <div className="lg:col-span-2">
-              <div className="flex items-center space-x-2 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                  <span className="font-bold text-xl">IX</span>
-                </div>
-                <span className="text-xl font-bold">InfluenceX</span>
-              </div>
-              <p className="text-gray-400 mb-6 max-w-md">
-                The trusted marketplace connecting brands with authentic micro-creators. 
-                Empowering authentic collaborations since 2024.
-              </p>
-              
-              {/* Social links */}
-              <div className="flex space-x-4">
-                {[FaInstagram, FaTwitter, FaLinkedin, FaFacebook].map((Icon, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition-colors"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="text-gray-400 hover:text-white transition-colors">How it Works</a></li>
-                <li><a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#testimonials" className="text-gray-400 hover:text-white transition-colors">Success Stories</a></li>
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Creator Guide</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Brand Guide</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">API Documentation</a></li>
-              </ul>
-            </div>
-
-            {/* Legal & Contact */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 mb-6">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">GDPR Compliance</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Cookie Policy</a></li>
-              </ul>
-              
-              <h3 className="text-lg font-semibold mb-4">Contact</h3>
-              <ul className="space-y-2">
-                <li className="flex items-center text-gray-400">
-                  <EnvelopeIcon className="w-5 h-5 mr-2" />
-                  hello@influencex.com
-                </li>
-                <li className="flex items-center text-gray-400">
-                  <PhoneIcon className="w-5 h-5 mr-2" />
-                  +1 (555) 123-4567
-                </li>
-                <li className="flex items-center text-gray-400">
-                  <MapPinIcon className="w-5 h-5 mr-2" />
-                  San Francisco, CA
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div className="border-t border-gray-800 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm mb-4 md:mb-0">
-                © 2024 InfluenceX. All rights reserved.
-              </p>
-              <div className="flex space-x-6">
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Terms</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Cookies</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Sitemap</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+   
 
       {/* Custom animations */}
       <style>{`

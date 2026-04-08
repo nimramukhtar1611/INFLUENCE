@@ -4,10 +4,13 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import Loader from '../Common/Loader';
 
 const Layout = ({ userType: propUserType }) => {
   const { user, loading } = useAuth();
+  const { theme, sidebarCollapsed } = useTheme();
+  const isDark = theme === 'dark';
   const location = useLocation();
   const [currentUserType, setCurrentUserType] = useState(null);
 
@@ -54,11 +57,13 @@ useEffect(() => {
   console.log('Layout - User from auth:', user);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+<div className={`flex h-screen ${isDark ? 'bg-gray-900': 'bg-gray-50'
+}`}>
+
       <Sidebar userType={currentUserType} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} ml-0`} id="main-content">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className={`flex-1 overflow-y-auto p-4 sm:p-6 ${isDark ? 'bg-gray-900' :  'bg-slate-100'}`}>
           <Outlet />
         </main>
       </div>
