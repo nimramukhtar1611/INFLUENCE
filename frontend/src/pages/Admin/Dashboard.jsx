@@ -299,7 +299,7 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {metricItems.map((metric, index) => (
           <Link key={index} to={metric.link} className="block h-full">
-            <StatsCard {...metric} className="h-full min-h-[180px]" />
+            <StatsCard {...metric} className="h-full min-h-[140px]" />
           </Link>
         ))}
       </div>
@@ -307,71 +307,71 @@ const AdminDashboard = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link to="/admin/users?filter=pending" className="block h-full">
-          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 bg-blue-100/50 rounded-lg group-hover:bg-blue-200/50 transition-all duration-200 border border-blue-100/50 flex-shrink-0`}>
-                <UserPlus className="w-6 h-6 text-blue-600" />
+          <div className={`p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[140px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div className={`p-2 sm:p-3 bg-blue-100/50 rounded-lg group-hover:bg-blue-200/50 transition-all duration-200 border border-blue-100/50 flex-shrink-0`}>
+                <UserPlus className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <span className="text-2xl font-bold text-blue-600 break-words">
+              <span className="text-lg sm:text-2xl font-bold text-blue-600 break-words">
                 {stats.pendingVerifications || 0}
               </span>
             </div>
-            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Pending Verifications</h3>
-            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Review new users</p>
+            <h3 className={`text-sm sm:text-base font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Pending Verifications</h3>
+            <p className={`text-xs sm:text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Review new users</p>
           </div>
         </Link>
 
         <Link to="/admin/fraud-review" className="block h-full">
-          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 bg-yellow-100/50 rounded-lg group-hover:bg-yellow-200/50 transition-all duration-200 border border-yellow-100/50 flex-shrink-0`}>
-                <Shield className="w-6 h-6 text-yellow-600" />
+          <div className={`p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[140px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div className={`p-2 sm:p-3 bg-yellow-100/50 rounded-lg group-hover:bg-yellow-200/50 transition-all duration-200 border border-yellow-100/50 flex-shrink-0`}>
+                <Shield className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
-              <span className="text-2xl font-bold text-yellow-600 break-words">
+              <span className="text-lg sm:text-2xl font-bold text-yellow-600 break-words">
                 {dashboard?.campaigns?.pending || 0}
               </span>
             </div>
-            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Pending Campaigns</h3>
-            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Review & approve</p>
+            <h3 className={`text-sm sm:text-base font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Pending Campaigns</h3>
+            <p className={`text-xs sm:text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Review & approve</p>
           </div>
         </Link>
 
         <Link to="/admin/disputes" className="block h-full">
-          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 bg-red-100/50 rounded-lg group-hover:bg-red-200/50 transition-all duration-200 border border-red-100/50 flex-shrink-0`}>
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+          <div className={`p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[140px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div className={`p-2 sm:p-3 bg-red-100/50 rounded-lg group-hover:bg-red-200/50 transition-all duration-200 border border-red-100/50 flex-shrink-0`}>
+                <AlertTriangle className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
               </div>
-              <span className="text-2xl font-bold text-red-600 break-words">
+              <span className="text-lg sm:text-2xl font-bold text-red-600 break-words">
                 {stats.pendingDisputes || 0}
               </span>
             </div>
-            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Open Disputes</h3>
-            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Resolve issues</p>
+            <h3 className={`text-sm sm:text-base font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Open Disputes</h3>
+            <p className={`text-xs sm:text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Resolve issues</p>
           </div>
         </Link>
 
         <Link to="/admin/payments" className="block h-full">
-          <div className={`p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[160px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 bg-green-100/50 rounded-lg group-hover:bg-green-200/50 transition-all duration-200 border border-green-100/50 flex-shrink-0`}>
-                <CreditCard className="w-6 h-6 text-green-600" />
+          <div className={`p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border h-full min-h-[140px] flex flex-col justify-between ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div className={`p-2 sm:p-3 bg-green-100/50 rounded-lg group-hover:bg-green-200/50 transition-all duration-200 border border-green-100/50 flex-shrink-0`}>
+                <CreditCard className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <span className="text-2xl font-bold text-green-600 break-words">
+              <span className="text-lg sm:text-2xl font-bold text-green-600 break-words">
                 {payments?.length || 0}
               </span>
             </div>
-            <h3 className={`font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Transactions</h3>
-            <p className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>View payments</p>
+            <h3 className={`text-sm sm:text-base font-semibold text-center break-words px-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Transactions</h3>
+            <p className={`text-xs sm:text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>View payments</p>
           </div>
         </Link>
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Revenue Chart */}
         <ChartCard title="Revenue Overview" onDownload={() => {}}>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             {revenueData.length > 0 ? (
               <AreaChart data={revenueData}>
                 <defs>
@@ -381,8 +381,8 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value) => formatCurrency(value)} />
                 <Area
                   type="monotone"
@@ -395,7 +395,7 @@ const AdminDashboard = () => {
               </AreaChart>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-gray-400">No revenue data available</p>
+                <p className="text-gray-400 text-sm">No revenue data available</p>
               </div>
             )}
           </ResponsiveContainer>
@@ -403,20 +403,20 @@ const AdminDashboard = () => {
 
         {/* User Growth Chart */}
         <ChartCard title="User Growth" onDownload={() => {}}>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             {userGrowthData.length > 0 ? (
               <ComposedChart data={userGrowthData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="brands" fill="#4F46E5" />
                 <Bar dataKey="creators" fill="#10B981" />
               </ComposedChart>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-gray-400">No user growth data available</p>
+                <p className="text-gray-400 text-sm">No user growth data available</p>
               </div>
             )}
           </ResponsiveContainer>
@@ -424,7 +424,7 @@ const AdminDashboard = () => {
 
         {/* Deals Distribution */}
         <ChartCard title="Deals by Status">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               {deals && deals.length > 0 ? (
                 <Pie
@@ -438,7 +438,7 @@ const AdminDashboard = () => {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
+                  outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -449,7 +449,7 @@ const AdminDashboard = () => {
                 </Pie>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-400">No deals data available</p>
+                  <p className="text-gray-400 text-sm">No deals data available</p>
                 </div>
               )}
               <Tooltip />
@@ -459,7 +459,7 @@ const AdminDashboard = () => {
 
         {/* Platform Distribution */}
         <ChartCard title="Platform Distribution">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               {platformData.length > 0 ? (
                 <Pie
@@ -468,7 +468,7 @@ const AdminDashboard = () => {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
+                  outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -478,7 +478,7 @@ const AdminDashboard = () => {
                 </Pie>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-400">No platform data available</p>
+                  <p className="text-gray-400 text-sm">No platform data available</p>
                 </div>
               )}
               <Tooltip />
@@ -488,51 +488,51 @@ const AdminDashboard = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Users */}
         <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
-              <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
-            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Users</h2>
-            <Link to="/admin/users" className={`text-sm hover:underline flex items-center ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
-              View All <ChevronRight className="w-4 h-4 ml-1" />
+              <div className={`px-4 py-3 sm:px-6 sm:py-4 border-b flex justify-between items-center ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+            <h2 className={`text-base sm:text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Users</h2>
+            <Link to="/admin/users" className={`text-xs sm:text-sm hover:underline flex items-center ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
+              View All <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
             </Link>
           </div>
-          <div className={`max-h-80 overflow-y-auto divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
+          <div className={`max-h-60 sm:max-h-80 overflow-y-auto divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
             {users?.map((user, index) => (
-              <div key={user._id || index} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
+              <div key={user._id || index} className={`p-3 sm:p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {user.profilePicture ? (
-                      <img src={user.profilePicture} alt={user.fullName} className="w-10 h-10 rounded-full" />
+                      <img src={user.profilePicture} alt={user.fullName} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full" />
                     ) : (
-                      <div className={`border rounded-lg p-4 flex items-start gap-3 transition-all duration-200 ${isDark ? 'bg-yellow-900/30 border-yellow-700/30' : 'bg-yellow-50/50 border-yellow-200/50'}`}>
-                        <Users className="w-5 h-5 text-indigo-600" />
+                      <div className={`border rounded-lg p-2 sm:p-4 flex items-start gap-3 transition-all duration-200 ${isDark ? 'bg-yellow-900/30 border-yellow-700/30' : 'bg-yellow-50/50 border-yellow-200/50'}`}>
+                        <Users className="w-3 h-3 sm:w-5 sm:h-5 text-indigo-600" />
                       </div>
                     )}
-                    <div>
-                      <h3 className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{user.fullName || user.name}</h3>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{user.fullName || user.name}</h3>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>{user.email}</p>
+                      <div className="flex items-center gap-1 sm:gap-2 mt-1">
+                        <span className={`text-xs px-1 sm:px-2 py-0.5 rounded-full ${
                           user.userType === 'brand' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                         }`}>
                           {user.userType}
                         </span>
                         {user.isVerified ? (
                           <span className="text-xs text-green-600 flex items-center">
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                            <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
                             Verified
                           </span>
                         ) : (
                           <span className="text-xs text-yellow-600 flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
+                            <Clock className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
                             Pending
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap ml-2`}>
                     {timeAgo(user.createdAt)}
                   </span>
                 </div>
@@ -543,21 +543,21 @@ const AdminDashboard = () => {
 
         {/* Recent Activity Feed */}
         <div className={`bg-white rounded-xl shadow-sm overflow-hidden border ${isDark ? 'bg-gray-900/90 border-gray-700/50' : 'bg-white/90 border-gray-200/50'}`}>
-          <div className={`px-6 py-4 border-b ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
-            <h2 className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Activity</h2>
+          <div className={`px-4 py-3 sm:px-6 sm:py-4 border-b ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+            <h2 className={`text-base sm:text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent Activity</h2>
           </div>
-          <div className={`max-h-80 overflow-y-auto divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
+          <div className={`max-h-60 sm:max-h-80 overflow-y-auto divide-y ${isDark ? 'divide-gray-700/30' : 'divide-gray-200/30'}`}>
             {recentActivity.length > 0 ? (
               recentActivity.map((activity, index) => {
                 const Icon = activity.icon;
                 return (
-                  <div key={index} className={`p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 ${activity.color} rounded-lg bg-opacity-10`}>
-                        <Icon className={`w-4 h-4 ${activity.color.replace('bg-', 'text-')}`} />
+                  <div key={index} className={`p-3 sm:p-4 transition-all duration-200 ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'} border-b ${isDark ? 'border-gray-700/30' : 'border-gray-200/30'}`}>
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <div className={`p-1.5 sm:p-2 ${activity.color} rounded-lg bg-opacity-10 flex-shrink-0`}>
+                        <Icon className={`w-3 h-3 sm:w-4 sm:h-4 ${activity.color.replace('bg-', 'text-')}`} />
                       </div>
-                      <div className="flex-1">
-                        <p className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{activity.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'} break-words`}>{activity.description}</p>
                         <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>{timeAgo(activity.createdAt)}</p>
                       </div>
                     </div>
@@ -565,9 +565,9 @@ const AdminDashboard = () => {
                 );
               })
             ) : (
-              <div className="p-8 text-center">
-                <Activity className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-gray-400' : 'text-gray-300'}`} />
-                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No recent activity</p>
+              <div className="p-6 sm:p-8 text-center">
+                <Activity className={`w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 ${isDark ? 'text-gray-400' : 'text-gray-300'}`} />
+                <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No recent activity</p>
               </div>
             )}
           </div>
@@ -575,78 +575,78 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Platform Health</h3>
-            <Activity className="w-6 h-6 opacity-80" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-4 sm:p-6 rounded-xl shadow-lg text-white">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold">Platform Health</h3>
+            <Activity className="w-4 h-4 sm:w-6 sm:h-6 opacity-80" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex justify-between">
-              <span className="opacity-90">Uptime</span>
-              <span className="font-semibold">{systemHealth?.uptime || '99.9%'}</span>
+              <span className="text-xs sm:text-sm opacity-90">Uptime</span>
+              <span className="text-xs sm:text-sm font-semibold">{systemHealth?.uptime || '99.9%'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-90">Response Time</span>
-              <span className="font-semibold">{systemHealth?.responseTime || '245ms'}</span>
+              <span className="text-xs sm:text-sm opacity-90">Response Time</span>
+              <span className="text-xs sm:text-sm font-semibold">{systemHealth?.responseTime || '245ms'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-90">Active Users</span>
-              <span className="font-semibold">{stats.totalUsers}</span>
+              <span className="text-xs sm:text-sm opacity-90">Active Users</span>
+              <span className="text-xs sm:text-sm font-semibold">{stats.totalUsers}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-90">Server Load</span>
-              <span className="font-semibold">{systemHealth?.cpuLoad || '32%'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-600 to-teal-600 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Engagement</h3>
-            <Heart className="w-6 h-6 opacity-80" />
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="opacity-90">Avg. Engagement Rate</span>
-              <span className="font-semibold">{dashboard?.engagement?.average || '4.8%'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="opacity-90">Total Impressions</span>
-              <span className="font-semibold">{formatNumber(dashboard?.engagement?.impressions || 2400000)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="opacity-90">Total Clicks</span>
-              <span className="font-semibold">{formatNumber(dashboard?.engagement?.clicks || 124000)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="opacity-90">Conversion Rate</span>
-              <span className="font-semibold">{dashboard?.engagement?.conversion || '3.2%'}</span>
+              <span className="text-xs sm:text-sm opacity-90">Server Load</span>
+              <span className="text-xs sm:text-sm font-semibold">{systemHealth?.cpuLoad || '32%'}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-600 to-red-600 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Support</h3>
-            <MessageSquare className="w-6 h-6 opacity-80" />
+        <div className="bg-gradient-to-br from-green-600 to-teal-600 p-4 sm:p-6 rounded-xl shadow-lg text-white">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold">Engagement</h3>
+            <Heart className="w-4 h-4 sm:w-6 sm:h-6 opacity-80" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex justify-between">
-              <span className="opacity-90">Open Tickets</span>
-              <span className="font-semibold">{dashboard?.support?.openTickets || 12}</span>
+              <span className="text-xs sm:text-sm opacity-90">Avg. Engagement Rate</span>
+              <span className="text-xs sm:text-sm font-semibold">{dashboard?.engagement?.average || '4.8%'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-90">Avg. Response Time</span>
-              <span className="font-semibold">{dashboard?.support?.avgResponse || '2.5 hrs'}</span>
+              <span className="text-xs sm:text-sm opacity-90">Total Impressions</span>
+              <span className="text-xs sm:text-sm font-semibold">{formatNumber(dashboard?.engagement?.impressions || 2400000)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-90">Resolution Rate</span>
-              <span className="font-semibold">{dashboard?.support?.resolutionRate || '94%'}</span>
+              <span className="text-xs sm:text-sm opacity-90">Total Clicks</span>
+              <span className="text-xs sm:text-sm font-semibold">{formatNumber(dashboard?.engagement?.clicks || 124000)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-90">Satisfaction</span>
-              <span className="font-semibold">{dashboard?.support?.satisfaction || '96%'}</span>
+              <span className="text-xs sm:text-sm opacity-90">Conversion Rate</span>
+              <span className="text-xs sm:text-sm font-semibold">{dashboard?.engagement?.conversion || '3.2%'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-600 to-red-600 p-4 sm:p-6 rounded-xl shadow-lg text-white">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold">Support</h3>
+            <MessageSquare className="w-4 h-4 sm:w-6 sm:h-6 opacity-80" />
+          </div>
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex justify-between">
+              <span className="text-xs sm:text-sm opacity-90">Open Tickets</span>
+              <span className="text-xs sm:text-sm font-semibold">{dashboard?.support?.openTickets || 12}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs sm:text-sm opacity-90">Avg. Response Time</span>
+              <span className="text-xs sm:text-sm font-semibold">{dashboard?.support?.avgResponse || '2.5 hrs'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs sm:text-sm opacity-90">Resolution Rate</span>
+              <span className="text-xs sm:text-sm font-semibold">{dashboard?.support?.resolutionRate || '94%'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs sm:text-sm opacity-90">Satisfaction</span>
+              <span className="text-xs sm:text-sm font-semibold">{dashboard?.support?.satisfaction || '96%'}</span>
             </div>
           </div>
         </div>
@@ -665,27 +665,27 @@ const AdminDashboard = () => {
             <table className="w-full divide-y divide-gray-200">
             <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50/50'}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[120px]">Campaign</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[100px]">Brand</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[80px]">Budget</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[70px]">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[80px]">Creators</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[100px]">Performance</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[80px] sm:min-w-[120px]">Campaign</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[70px] sm:min-w-[100px]">Brand</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[60px] sm:min-w-[80px]">Budget</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[50px] sm:min-w-[70px]">Status</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[50px] sm:min-w-[80px]">Creators</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-gray-500 whitespace-nowrap min-w-[70px] sm:min-w-[100px]">Performance</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {campaigns?.slice(0, 5).map((campaign) => (
                 <tr key={campaign._id} className="hover:bg-gray-50/50 transition-colors duration-200">
-                  <td className="px-4 py-4">
-                    <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{campaign.title}</div>
+                  <td className="px-2 sm:px-4 py-2 sm:py-4">
+                    <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-[200px]">{campaign.title}</div>
                     <div className="text-xs text-gray-500">ID: {campaign._id?.slice(-6)}</div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 truncate max-w-[150px]">{campaign.brandId?.brandName}</td>
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                  <td className="px-2 sm:px-4 py-2 sm:py-4 text-xs sm:text-sm text-gray-900 truncate max-w-[80px] sm:max-w-[150px]">{campaign.brandId?.brandName}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-4 text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
                     {formatCurrency(campaign.budget || 0)}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
+                  <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap">
+                    <span className={`px-1 sm:px-2 py-1 text-xs rounded-full ${
                       campaign.status === 'active' ? 'bg-green-100 text-green-800' :
                       campaign.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                       campaign.status === 'completed' ? 'bg-blue-100 text-blue-800' :
@@ -694,11 +694,11 @@ const AdminDashboard = () => {
                       {campaign.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+                  <td className="px-2 sm:px-4 py-2 sm:py-4 text-xs sm:text-sm text-gray-900 whitespace-nowrap">
                     {campaign.selectedCreators?.length || 0}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm text-green-600">{campaign.metrics?.engagement || '0'}%</div>
+                  <td className="px-2 sm:px-4 py-2 sm:py-4 whitespace-nowrap">
+                    <div className="text-xs sm:text-sm text-green-600">{campaign.metrics?.engagement || '0'}%</div>
                     <div className="text-xs text-gray-500">{formatNumber(campaign.metrics?.impressions || 0)} impressions</div>
                   </td>
                 </tr>

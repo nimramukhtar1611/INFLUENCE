@@ -83,7 +83,7 @@ const AdminDeals = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
           title="Total Deals"
           value={String(stats.totalDeals || deals.length || 0)}
@@ -110,23 +110,23 @@ const AdminDeals = () => {
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className={`rounded-xl shadow-sm overflow-hidden ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[80px] sm:min-w-[120px]`}>Campaign</th>
+                <th className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px] sm:min-w-[80px]`}>Brand</th>
+                <th className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px] sm:min-w-[80px]`}>Creator</th>
+                <th className={`hidden md:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px]`}>Budget</th>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[50px]`}>Status</th>
+                <th className={`hidden lg:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px]`}>Created</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {deals.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="6" className={`px-2 sm:px-4 py-8 sm:py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     No deals available yet.
                   </td>
                 </tr>
@@ -151,28 +151,34 @@ const AdminDeals = () => {
                   return (
                     <tr 
                       key={deal._id || `${deal.campaignId?._id || 'campaign'}-${deal.creatorId?._id || 'creator'}`} 
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className={`${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`}
                       onClick={() => handleViewDetails(deal)}
                     >
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {deal.campaignId?.title || 'Untitled Campaign'}
+                      <td className="px-1 sm:px-3 py-2">
+                        <div className={`text-xs sm:text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[80px] sm:max-w-[120px]`}>
+                          {deal.campaignId?.title || 'Untitled Campaign'}
+                        </div>
+                        <div className={`hidden sm:block text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                          {deal.brandId?.brandName || deal.brandId?.fullName || 'Unknown brand'}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} truncate max-w-[60px] sm:max-w-[80px]`}>
                         {deal.brandId?.brandName || deal.brandId?.fullName || 'Unknown brand'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} truncate max-w-[60px] sm:max-w-[80px]`}>
                         {deal.creatorId?.fullName || deal.creatorId?.displayName || 'Unknown creator'}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      <td className={`hidden md:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                         {formatCurrency(deal.budget || 0)}
                       </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusClass}`}>
-                          <StatusIcon className={`w-3 h-3 ${iconColor}`} />
-                          {status}
+                      <td className="px-1 sm:px-3 py-2 text-xs">
+                        <span className={`px-1 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusClass}`}>
+                          <StatusIcon className={`w-2 h-2 sm:w-2 sm:h-2 ${iconColor}`} />
+                          <span className="hidden sm:inline">{status}</span>
+                          <span className="sm:hidden">{status === 'completed' ? '✓' : status === 'cancelled' || status === 'canceled' ? '✗' : status === 'in-progress' || status === 'in_progress' ? '⏳' : '?'}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className={`hidden lg:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {formatDate(deal.createdAt)}
                       </td>
                     </tr>
@@ -194,19 +200,19 @@ const AdminDeals = () => {
         {selectedDeal && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900">{selectedDeal.campaignId?.title || 'Untitled Campaign'}</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className={`text-xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedDeal.campaignId?.title || 'Untitled Campaign'}</h3>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
                 Deal ID: {selectedDeal._id?.slice(-8)} • Status: {selectedDeal.status}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Budget</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(selectedDeal.budget || 0)}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Budget</p>
+                <p className={`text-lg sm:text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(selectedDeal.budget || 0)}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Status</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Status</p>
                 <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(String(selectedDeal.status || 'unknown').toLowerCase(), 'deal')}`}>
                   {(() => {
                     const status = String(selectedDeal.status || 'unknown').toLowerCase();
@@ -217,25 +223,25 @@ const AdminDeals = () => {
                   {selectedDeal.status}
                 </span>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Brand</p>
-                <p className="font-medium">{selectedDeal.brandId?.brandName || selectedDeal.brandId?.fullName || 'Unknown brand'}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Brand</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedDeal.brandId?.brandName || selectedDeal.brandId?.fullName || 'Unknown brand'}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Creator</p>
-                <p className="font-medium">{selectedDeal.creatorId?.fullName || selectedDeal.creatorId?.displayName || 'Unknown creator'}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Creator</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedDeal.creatorId?.fullName || selectedDeal.creatorId?.displayName || 'Unknown creator'}</p>
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500 mb-2">Created Date</p>
-              <p className="text-gray-700">{formatDate(selectedDeal.createdAt)}</p>
+            <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Created Date</p>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{formatDate(selectedDeal.createdAt)}</p>
             </div>
 
             {selectedDeal.updatedAt && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-2">Last Updated</p>
-                <p className="text-gray-700">{formatDate(selectedDeal.updatedAt)}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Last Updated</p>
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{formatDate(selectedDeal.updatedAt)}</p>
               </div>
             )}
           </div>

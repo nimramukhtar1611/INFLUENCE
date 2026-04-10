@@ -200,7 +200,7 @@ const AdminUsers = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
           title="Total Users"
           value={stats.totalUsers?.toLocaleString() || '0'}
@@ -232,14 +232,14 @@ const AdminUsers = () => {
       </div>
 
       {/* Filters */}
-      <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+      <div className={`p-3 sm:p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <form onSubmit={handleSearch} className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             <input
               type="text"
               placeholder="Search users by name or email..."
-              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+              className={`w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
                 isDark 
                   ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
                   : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
@@ -253,7 +253,7 @@ const AdminUsers = () => {
             <select
               value={filters.user_type}
               onChange={(e) => handleFilterChange('user_type', e.target.value)}
-              className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
                 isDark 
                   ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
                   : 'bg-white border-gray-300 text-gray-900'
@@ -267,7 +267,7 @@ const AdminUsers = () => {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
                 isDark 
                   ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
                   : 'bg-white border-gray-300 text-gray-900'
@@ -283,7 +283,7 @@ const AdminUsers = () => {
             <select
               value={filters.verified}
               onChange={(e) => handleFilterChange('verified', e.target.value)}
-              className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] ${
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
                 isDark 
                   ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
                   : 'bg-white border-gray-300 text-gray-900'
@@ -303,25 +303,25 @@ const AdminUsers = () => {
           <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
             <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[80px] sm:min-w-[120px]`}>
                   User
                 </th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[50px]`}>
                   Type
                 </th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[50px]`}>
                   Status
                 </th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Verification
                 </th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`hidden lg:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Joined
                 </th>
-                <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`hidden lg:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Last Active
                 </th>
-                <th className={`px-4 py-3 text-right text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
+                <th className={`px-1 sm:px-3 py-2 text-right text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Actions
                 </th>
               </tr>
@@ -331,58 +331,62 @@ const AdminUsers = () => {
                 const TypeIcon = getUserTypeIcon(user.userType);
                 return (
                   <tr key={user._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-1 sm:px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {user.profilePicture ? (
-                          <img src={user.profilePicture} alt={user.fullName} className="w-10 h-10 rounded-full" />
+                          <img src={user.profilePicture} alt={user.fullName} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full" />
                         ) : (
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-gradient-to-r from-[#667eea]/20 to-[#764ba2]/20' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10'}`}>
-                            <User className="w-5 h-5 text-[#667eea]" />
+                          <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-gradient-to-r from-[#667eea]/20 to-[#764ba2]/20' : 'bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10'}`}>
+                            <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#667eea]" />
                           </div>
                         )}
-                        <div className="ml-3">
-                          <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[150px]`}>{user.fullName}</div>
-                          <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[150px]`}>{user.email}</div>
+                        <div className="ml-1 sm:ml-2 min-w-0 flex-1">
+                          <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[80px] sm:max-w-[120px]`}>{user.fullName}</div>
+                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[80px] sm:max-w-[120px]`}>{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full flex items-center w-fit gap-1 ${
+                    <td className="px-1 sm:px-3 py-2 whitespace-nowrap">
+                      <span className={`px-1 py-1 text-xs rounded-full flex items-center w-fit gap-1 ${
                         user.userType === 'brand' 
                           ? getStatusColor('brand', 'userType', isDark)
                           : getStatusColor('creator', 'userType', isDark)
                       }`}>
-                        <TypeIcon className="w-3 h-3" />
-                        {user.userType}
+                        <TypeIcon className="w-2 h-2 sm:w-2 sm:h-2" />
+                        <span className="hidden sm:inline">{user.userType}</span>
+                        <span className="sm:hidden">{user.userType === 'brand' ? 'B' : 'C'}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColorClass(user.status)}`}>
-                        {React.createElement(getStatusIcon(user.status), { className: `w-3 h-3 ${getStatusIconColor(user.status)}` })}
-                        {user.status}
+                    <td className="px-1 sm:px-3 py-2 whitespace-nowrap">
+                      <span className={`px-1 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColorClass(user.status)}`}>
+                        {React.createElement(getStatusIcon(user.status), { className: `w-2 h-2 sm:w-2 sm:h-2 ${getStatusIconColor(user.status)}` })}
+                        <span className="hidden sm:inline">{user.status}</span>
+                        <span className="sm:hidden">{user.status === 'active' ? 'A' : user.status === 'suspended' ? 'S' : user.status === 'pending' ? 'P' : 'I'}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className={`hidden sm:table-cell px-1 sm:px-3 py-2 whitespace-nowrap`}>
                       {user.isVerified ? (
-                        <span className={`flex items-center ${getStatusColor('verified', 'status', isDark).split(' ')[1]}`}>
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Verified
+                        <span className={`flex items-center text-xs ${getStatusColor('verified', 'status', isDark).split(' ')[1]}`}>
+                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          <span className="hidden sm:inline">Verified</span>
+                          <span className="sm:hidden">✓</span>
                         </span>
                       ) : (
-                        <span className={`flex items-center ${getStatusColor('unverified', 'status', isDark).split(' ')[1]}`}>
-                          <Clock className="w-4 h-4 mr-1" />
-                          Pending
+                        <span className={`flex items-center text-xs ${getStatusColor('unverified', 'status', isDark).split(' ')[1]}`}>
+                          <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          <span className="hidden sm:inline">Pending</span>
+                          <span className="sm:hidden">⏰</span>
                         </span>
                       )}
                     </td>
-                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <td className={`hidden lg:table-cell px-1 sm:px-3 py-2 whitespace-nowrap text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatDate(user.createdAt)}
                     </td>
-                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <td className={`hidden lg:table-cell px-1 sm:px-3 py-2 whitespace-nowrap text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {user.lastLogin ? timeAgo(user.lastLogin) : 'Never'}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-1 sm:px-3 py-2 whitespace-nowrap text-right text-xs font-medium">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => {
                             setSelectedUser(user);
@@ -391,7 +395,7 @@ const AdminUsers = () => {
                           className={`hover:${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`}
                           title="View Details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3 h-3" />
                         </button>
                         
                         {!user.isVerified && (
@@ -400,7 +404,7 @@ const AdminUsers = () => {
                             className={`hover:${isDark ? 'text-green-400' : 'text-green-900'}`}
                             title="Verify User"
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className="w-3 h-3" />
                           </button>
                         )}
                         
@@ -413,7 +417,7 @@ const AdminUsers = () => {
                             className={`hover:${isDark ? 'text-yellow-400' : 'text-yellow-900'}`}
                             title="Suspend User"
                           >
-                            <Ban className="w-4 h-4" />
+                            <Ban className="w-3 h-3" />
                           </button>
                         ) : user.status === 'suspended' ? (
                           <button
@@ -421,7 +425,7 @@ const AdminUsers = () => {
                             className={`hover:${isDark ? 'text-green-400' : 'text-green-900'}`}
                             title="Activate User"
                           >
-                            <ThumbsUp className="w-4 h-4" />
+                            <ThumbsUp className="w-3 h-3" />
                           </button>
                         ) : null}
                         
@@ -433,7 +437,7 @@ const AdminUsers = () => {
                           className={`hover:${isDark ? 'text-red-400' : 'text-red-900'}`}
                           title="Delete User"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </td>
@@ -441,7 +445,7 @@ const AdminUsers = () => {
                 );
               }) : (
                 <tr>
-                  <td colSpan="7" className={`px-4 py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan="7" className={`px-2 sm:px-4 py-8 sm:py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     No users found
                   </td>
                 </tr>
@@ -450,44 +454,7 @@ const AdminUsers = () => {
           </table>
         </div>
 
-        {/* Pagination */}
-        {pagination.users.pages > 1 && (
-          <div className={`px-4 py-4 border-t flex items-center justify-between ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-            <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              Showing {((pagination.users.page - 1) * pagination.users.limit) + 1} to{' '}
-              {Math.min(pagination.users.page * pagination.users.limit, pagination.users.total)} of{' '}
-              {pagination.users.total} results
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`px-3 py-1 border rounded-lg hover:disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isDark
-                    ? 'border-gray-600 hover:bg-gray-700/50'
-                    : 'border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Previous
-              </button>
-              <span className={`px-4 py-1 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                Page {currentPage} of {pagination.users.pages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(pagination.users.pages, prev + 1))}
-                disabled={currentPage === pagination.users.pages}
-                className={`px-3 py-1 border rounded-lg hover:disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isDark
-                    ? 'border-gray-600 hover:bg-gray-700/50'
-                    : 'border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+              </div>
 
       {/* User Details Modal */}
       <Modal
@@ -566,34 +533,34 @@ const AdminUsers = () => {
             {/* Stats */}
             <div>
               <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Activity</h4>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {selectedUser.userType === 'brand' ? (
                   <>
-                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <p className="text-xl font-bold text-[#667eea]">{selectedUser.stats?.campaigns || 0}</p>
+                    <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-lg sm:text-xl font-bold text-[#667eea]">{selectedUser.stats?.campaigns || 0}</p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Campaigns</p>
                     </div>
-                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <p className="text-xl font-bold text-green-600">{formatCurrency(selectedUser.stats?.spent || 0)}</p>
+                    <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-lg sm:text-xl font-bold text-green-600">{formatCurrency(selectedUser.stats?.spent || 0)}</p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Spent</p>
                     </div>
-                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <p className="text-xl font-bold text-purple-600">{selectedUser.stats?.creators || 0}</p>
+                    <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-lg sm:text-xl font-bold text-purple-600">{selectedUser.stats?.creators || 0}</p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Creators</p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <p className="text-xl font-bold text-[#667eea]">{formatNumber(selectedUser.stats?.followers || 0)}</p>
+                    <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-lg sm:text-xl font-bold text-[#667eea]">{formatNumber(selectedUser.stats?.followers || 0)}</p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Followers</p>
                     </div>
-                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <p className="text-xl font-bold text-green-600">{selectedUser.stats?.engagement || 0}%</p>
+                    <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-lg sm:text-xl font-bold text-green-600">{selectedUser.stats?.engagement || 0}%</p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Engagement</p>
                     </div>
-                    <div className={`text-center p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <p className="text-xl font-bold text-purple-600">{formatCurrency(selectedUser.stats?.earnings || 0)}</p>
+                    <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <p className="text-lg sm:text-xl font-bold text-purple-600">{formatCurrency(selectedUser.stats?.earnings || 0)}</p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Earnings</p>
                     </div>
                   </>

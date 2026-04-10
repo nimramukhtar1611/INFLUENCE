@@ -238,7 +238,7 @@ const Modal = ({
             isDark 
               ? 'bg-slate-800' 
               : 'bg-white'
-          }`}>{children}</div>
+          }`}>{children || <div className="text-center py-8">Loading...</div>}</div>
 
           {/* Footer */}
           {footer && (
@@ -261,7 +261,7 @@ Modal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   title: PropTypes.node,
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
   size: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', 'full']),
   showCloseButton: PropTypes.bool,
   closeOnClickOutside: PropTypes.bool,

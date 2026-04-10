@@ -150,7 +150,7 @@ const Brands = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
           title="Total Brands"
           value={stats.totalBrands?.toLocaleString() || '0'}
@@ -178,24 +178,32 @@ const Brands = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className={`p-3 sm:p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             <input
               type="text"
               placeholder="Search brands by name, email, or industry..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+              }`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -206,7 +214,11 @@ const Brands = () => {
             <select
               value={industryFilter}
               onChange={(e) => setIndustryFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="all">All Industries</option>
               {industries.map(industry => (
@@ -216,51 +228,66 @@ const Brands = () => {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${
-                showFilters ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'border-gray-300'
+              className={`px-3 py-2 border rounded-lg flex items-center gap-2 text-sm ${
+                showFilters 
+                  ? isDark ? 'bg-indigo-900/30 border-indigo-600 text-indigo-400' : 'bg-indigo-50 border-indigo-600 text-indigo-600'
+                  : isDark ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'
               }`}
             >
-              <Filter className="w-4 h-4" />
-              More Filters
+              <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">More Filters</span>
+              <span className="sm:hidden">Filters</span>
             </button>
           </div>
         </div>
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-xs sm:text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Min. Campaigns
                 </label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="e.g., 5"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-xs sm:text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Min. Spent ($)
                 </label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="e.g., 1000"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-xs sm:text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Joined After
                 </label>
                 <input
                   type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 mt-3 sm:mt-4">
               <Button variant="secondary" size="sm">Clear</Button>
               <Button variant="primary" size="sm">Apply</Button>
             </div>
@@ -269,89 +296,89 @@ const Brands = () => {
       </div>
 
       {/* Brands Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className={`rounded-xl shadow-sm overflow-hidden ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[80px] sm:min-w-[120px]`}>
                   Brand
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[50px]`}>
                   Industry
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[50px]`}>
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Joined
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`hidden md:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Campaigns
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`hidden md:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Spent
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`hidden lg:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Creators
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className={`px-1 sm:px-3 py-2 text-right text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap min-w-[60px]`}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredBrands.length > 0 ? (
                 filteredBrands.map((brand) => (
-                  <tr key={brand._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap">
+                  <tr key={brand._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
+                    <td className="px-1 sm:px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {brand.logo ? (
-                          <img src={brand.logo} alt={brand.brandName} className="w-10 h-10 rounded-full object-cover" />
+                          <img src={brand.logo} alt={brand.brandName} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover" />
                         ) : (
-                          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-indigo-600" />
+                          <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
+                            <Building2 className={`w-3 h-3 sm:w-4 sm:h-4 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
                           </div>
                         )}
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{brand.brandName}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-[150px]">{brand.email}</div>
+                        <div className="ml-1 sm:ml-2 min-w-0 flex-1">
+                          <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[80px] sm:max-w-[120px]`}>{brand.brandName}</div>
+                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[80px] sm:max-w-[120px]`}>{brand.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-500 truncate max-w-[100px]">{brand.industry || '—'}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColorClass(brand.status)}`}>
+                    <td className={`px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[60px] sm:max-w-[80px]`}>{brand.industry || '—'}</td>
+                    <td className="px-1 sm:px-3 py-2 whitespace-nowrap">
+                      <span className={`px-1 py-1 text-xs rounded-full ${getStatusColorClass(brand.status)}`}>
                         {brand.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    <td className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap`}>
                       {formatDate(brand.createdAt)}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+                    <td className={`hidden md:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'} whitespace-nowrap`}>
                       {brand.stats?.totalCampaigns || 0}
                     </td>
-                    <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                    <td className={`hidden md:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} whitespace-nowrap`}>
                       {formatCurrency(brand.stats?.totalSpent || 0)}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+                    <td className={`hidden lg:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'} whitespace-nowrap`}>
                       {brand.stats?.totalCreators || 0}
                     </td>
-                    <td className="px-4 py-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-1 sm:px-3 py-2 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleViewDetails(brand)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className={`hover:${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}
                           title="View Details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => handleEdit(brand)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className={`hover:${isDark ? 'text-gray-300' : 'text-gray-600'}`}
                           title="Edit"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3 h-3" />
                         </button>
                       </div>
                     </td>
@@ -359,7 +386,7 @@ const Brands = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan="8" className={`px-2 sm:px-4 py-8 sm:py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     No brands found
                   </td>
                 </tr>
@@ -403,35 +430,35 @@ const Brands = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Industry</p>
-                <p className="font-medium">{selectedBrand.industry || '—'}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Industry</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{selectedBrand.industry || '—'}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Website</p>
-                <p className="font-medium">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Website</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>
                   {selectedBrand.website ? (
-                    <a href={selectedBrand.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700">
+                    <a href={selectedBrand.website} target="_blank" rel="noopener noreferrer" className={isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}>
                       {selectedBrand.website}
                     </a>
                   ) : '—'}
                 </p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Phone</p>
-                <p className="font-medium">{selectedBrand.phone || '—'}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{selectedBrand.phone || '—'}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Joined</p>
-                <p className="font-medium">{formatDate(selectedBrand.createdAt)}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Joined</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{formatDate(selectedBrand.createdAt)}</p>
               </div>
             </div>
 
             {selectedBrand.address && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-2">Address</p>
-                <p className="text-gray-700">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   {selectedBrand.address.street && `${selectedBrand.address.street}, `}
                   {selectedBrand.address.city && `${selectedBrand.address.city}, `}
                   {selectedBrand.address.state && `${selectedBrand.address.state} `}
@@ -443,19 +470,19 @@ const Brands = () => {
 
             {/* Stats */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">Activity</h4>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-indigo-600">{selectedBrand.stats?.totalCampaigns || 0}</p>
-                  <p className="text-xs text-gray-600">Campaigns</p>
+              <h4 className={`font-medium mb-3 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Activity</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                  <p className="text-lg sm:text-2xl font-bold text-indigo-600">{selectedBrand.stats?.totalCampaigns || 0}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Campaigns</p>
                 </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(selectedBrand.stats?.totalSpent || 0)}</p>
-                  <p className="text-xs text-gray-600">Spent</p>
+                <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                  <p className="text-lg sm:text-2xl font-bold text-green-600">{formatCurrency(selectedBrand.stats?.totalSpent || 0)}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Spent</p>
                 </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-purple-600">{selectedBrand.stats?.totalCreators || 0}</p>
-                  <p className="text-xs text-gray-600">Creators</p>
+                <div className={`text-center p-2 sm:p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                  <p className="text-lg sm:text-2xl font-bold text-purple-600">{selectedBrand.stats?.totalCreators || 0}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Creators</p>
                 </div>
               </div>
             </div>
@@ -463,26 +490,26 @@ const Brands = () => {
             {/* Team Members */}
             {selectedBrand.teamMembers?.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Team Members</h4>
+                <h4 className={`font-medium mb-3 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Team Members</h4>
                 <div className="space-y-2">
                   {selectedBrand.teamMembers.slice(0, 5).map(member => (
-                    <div key={member._id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
+                    <div key={member._id} className={`flex items-center justify-between p-2 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <Users className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>
                             {member.userId?.fullName || 'Pending User'}
                           </p>
-                          <p className="text-xs text-gray-500">{member.userId?.email || member.email}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>{member.userId?.email || member.email}</p>
                         </div>
                       </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700 capitalize">
+                      <span className={`text-xs px-2 py-1 rounded-full capitalize whitespace-nowrap flex-shrink-0 ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'}`}>
                         {member.role}
                       </span>
                     </div>
                   ))}
                   {selectedBrand.teamMembers.length > 5 && (
-                    <p className="text-xs text-gray-500 text-center">+{selectedBrand.teamMembers.length - 5} more</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} text-center`}>+{selectedBrand.teamMembers.length - 5} more</p>
                   )}
                 </div>
               </div>
@@ -500,13 +527,17 @@ const Brands = () => {
         {selectedBrand && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Status
               </label>
               <select
                 value={editForm.status}
                 onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
@@ -515,20 +546,24 @@ const Brands = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Admin Notes
               </label>
               <textarea
                 rows="4"
                 value={editForm.notes}
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
                 placeholder="Add notes about this brand..."
               />
             </div>
 
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm text-yellow-800">
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/30 border border-yellow-700/30' : 'bg-yellow-50'}`}>
+              <p className={`text-sm ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>
                 <strong>Warning:</strong> Changing status may affect the brand's ability to access the platform.
               </p>
             </div>

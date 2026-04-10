@@ -146,34 +146,42 @@ const AdminDisputes = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-sm text-gray-500">Open</p>
-          <p className="text-2xl font-bold text-red-600">{openCount}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className={`rounded-xl shadow-sm p-3 sm:p-4 ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Open</p>
+          <p className="text-xl sm:text-2xl font-bold text-red-600">{openCount}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-sm text-gray-500">Investigating</p>
-          <p className="text-2xl font-bold text-yellow-600">{investigatingCount}</p>
+        <div className={`rounded-xl shadow-sm p-3 sm:p-4 ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Investigating</p>
+          <p className="text-xl sm:text-2xl font-bold text-yellow-600">{investigatingCount}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-sm text-gray-500">Resolved</p>
-          <p className="text-2xl font-bold text-green-600">{resolvedCount}</p>
+        <div className={`rounded-xl shadow-sm p-3 sm:p-4 ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+          <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Resolved</p>
+          <p className="text-xl sm:text-2xl font-bold text-green-600">{resolvedCount}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-3">
+      <div className={`p-3 sm:p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+            className={`flex-1 px-3 py-2 border rounded-lg text-sm ${
+              isDark 
+                ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+            }`}
             placeholder="Search disputes by ID, title, party, or type..."
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className={`px-3 py-2 border rounded-lg text-sm ${
+              isDark 
+                ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
           >
             <option value="all">All Status</option>
             <option value="open">Open</option>
@@ -184,18 +192,18 @@ const AdminDisputes = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto overflow-y-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className={`rounded-xl shadow-sm overflow-hidden ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <div className="overflow-x-auto">
+          <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispute</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Raised By</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[80px] sm:min-w-[120px]`}>Dispute</th>
+                <th className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px]`}>Type</th>
+                <th className={`hidden md:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px]`}>Raised By</th>
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[50px]`}>Status</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredDisputes.length > 0 ? (
                 filteredDisputes.map((dispute) => {
                   const raisedBy = dispute?.raised_by?.user_id?.fullName || dispute?.raised_by?.user_id?.email || 'Unknown';
@@ -216,19 +224,20 @@ const AdminDisputes = () => {
                   return (
                     <tr 
                       key={dispute._id} 
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className={`${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`}
                       onClick={() => openDetails(dispute)}
                     >
-                      <td className="px-4 py-2">
-                        <p className="text-sm font-medium text-gray-900">{dispute.title || dispute.dispute_id || 'Untitled dispute'}</p>
-                        <p className="text-xs text-gray-500">ID: {dispute.dispute_id || dispute._id}</p>
+                      <td className="px-1 sm:px-3 py-2">
+                        <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[80px] sm:max-w-[120px]`}>{dispute.title || dispute.dispute_id || 'Untitled dispute'}</p>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[80px] sm:max-w-[120px]`}>ID: {dispute.dispute_id || dispute._id}</p>
                       </td>
-                      <td className="px-4 py-2 text-sm capitalize text-gray-700">{(dispute.dispute_type || 'unknown').replace(/_/g, ' ')}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{raisedBy}</td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusClass}`}>
-                          <StatusIcon className={`w-3 h-3 ${iconColor}`} />
-                          {status}
+                      <td className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm capitalize ${isDark ? 'text-gray-300' : 'text-gray-700'} truncate`}>{(dispute.dispute_type || 'unknown').replace(/_/g, ' ')}</td>
+                      <td className={`hidden md:table-cell px-1 sm:px-3 py-2 text-xs sm:text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} truncate`}>{raisedBy}</td>
+                      <td className="px-1 sm:px-3 py-2">
+                        <span className={`px-1 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusClass}`}>
+                          <StatusIcon className={`w-2 h-2 sm:w-2 sm:h-2 ${iconColor}`} />
+                          <span className="hidden sm:inline">{status}</span>
+                          <span className="sm:hidden">{status === 'resolved' ? '✓' : status === 'open' ? '!' : '?'}</span>
                         </span>
                       </td>
                     </tr>
@@ -236,7 +245,7 @@ const AdminDisputes = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">No disputes found</td>
+                  <td colSpan="4" className={`px-2 sm:px-4 py-8 sm:py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No disputes found</td>
                 </tr>
               )}
             </tbody>
@@ -257,35 +266,35 @@ const AdminDisputes = () => {
         {selectedDispute && (
           <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
             <div>
-              <p className="text-sm text-gray-500">Title</p>
-              <p className="font-semibold text-gray-900">{selectedDispute.title || 'Untitled'}</p>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Title</p>
+              <p className={`font-semibold text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedDispute.title || 'Untitled'}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">Type</p>
-                <p className="font-medium capitalize">{(selectedDispute.dispute_type || 'unknown').replace(/_/g, ' ')}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`rounded-lg p-3 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Type</p>
+                <p className={`font-medium text-sm capitalize ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{(selectedDispute.dispute_type || 'unknown').replace(/_/g, ' ')}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">Priority</p>
-                <p className="font-medium capitalize">{selectedDispute.priority || 'normal'}</p>
+              <div className={`rounded-lg p-3 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Priority</p>
+                <p className={`font-medium text-sm capitalize ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedDispute.priority || 'normal'}</p>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-500">Description</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedDispute.description || 'No description provided.'}</p>
+            <div className={`rounded-lg p-3 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Description</p>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap`}>{selectedDispute.description || 'No description provided.'}</p>
             </div>
 
             {selectedDispute.resolution && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-sm font-semibold text-green-700 mb-1">Resolution</p>
-                <p className="text-sm text-green-700 capitalize">Type: {(selectedDispute.resolution.type || 'n/a').replace(/_/g, ' ')}</p>
+              <div className={`rounded-lg p-3 ${isDark ? 'bg-green-900/30 border border-green-700/30' : 'bg-green-50 border border-green-200'}`}>
+                <p className={`text-sm font-semibold mb-1 ${isDark ? 'text-green-300' : 'text-green-700'}`}>Resolution</p>
+                <p className={`text-sm ${isDark ? 'text-green-400' : 'text-green-700'} capitalize`}>Type: {(selectedDispute.resolution.type || 'n/a').replace(/_/g, ' ')}</p>
                 {selectedDispute.resolution.amount > 0 && (
-                  <p className="text-sm text-green-700">Amount: ${selectedDispute.resolution.amount}</p>
+                  <p className={`text-sm ${isDark ? 'text-green-400' : 'text-green-700'}`}>Amount: ${selectedDispute.resolution.amount}</p>
                 )}
                 {selectedDispute.resolution.details && (
-                  <p className="text-sm text-green-700">Details: {selectedDispute.resolution.details}</p>
+                  <p className={`text-sm ${isDark ? 'text-green-400' : 'text-green-700'}`}>Details: {selectedDispute.resolution.details}</p>
                 )}
               </div>
             )}
@@ -303,19 +312,23 @@ const AdminDisputes = () => {
       >
         {selectedDispute && (
           <div className="space-y-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex gap-2">
-              <AlertCircle className="w-4 h-4 text-yellow-700 mt-0.5" />
-              <p className="text-sm text-yellow-800">
+            <div className={`rounded-lg p-3 flex gap-2 ${isDark ? 'bg-yellow-900/30 border border-yellow-700/30' : 'bg-yellow-50 border border-yellow-200'}`}>
+              <AlertCircle className={`w-3 h-3 sm:w-4 sm:h-4 text-yellow-700 mt-0.5`} />
+              <p className={`text-sm ${isDark ? 'text-yellow-400' : 'text-yellow-800'}`}>
                 This action resolves the dispute and updates related payment/deal state where applicable.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Resolution Type</label>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Resolution Type</label>
               <select
                 value={resolution.type}
                 onChange={(e) => setResolution((prev) => ({ ...prev, type: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 {RESOLUTION_TYPES.map((item) => (
                   <option key={item.value} value={item.value}>{item.label}</option>
@@ -324,24 +337,32 @@ const AdminDisputes = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Amount (Optional)</label>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Amount (Optional)</label>
               <input
                 type="number"
                 value={resolution.amount}
                 onChange={(e) => setResolution((prev) => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
                 placeholder="0.00"
                 step="0.01"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Details</label>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Details</label>
               <textarea
                 rows="3"
                 value={resolution.details}
                 onChange={(e) => setResolution((prev) => ({ ...prev, details: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                  isDark 
+                    ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
                 placeholder="Add notes for this resolution..."
               />
             </div>

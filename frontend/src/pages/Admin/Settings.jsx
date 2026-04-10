@@ -33,7 +33,7 @@ import Input from '../../components/UI/Input';
 import Modal from '../../components/Common/Modal';
 import toast from 'react-hot-toast';
 
-const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
+const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email, isDark }) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(currentImage || '');
   const fileInputRef = useRef(null);
@@ -80,14 +80,14 @@ const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
   };
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
+    <div className={`border rounded-lg p-3 sm:p-4 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="relative">
             <img
               src={preview || 'https://via.placeholder.com/96?text=Admin'}
               alt={fullName || 'Admin'}
-              className="w-20 h-20 rounded-full object-cover border-2 border-white shadow"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-white shadow"
             />
             {uploading && (
               <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
@@ -95,13 +95,13 @@ const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
               </div>
             )}
           </div>
-          <div>
-            <p className="font-medium text-gray-900">{fullName || 'Admin User'}</p>
-            <p className="text-sm text-gray-500">{email || 'No email available'}</p>
+          <div className="min-w-0 flex-1">
+            <p className={`font-medium text-sm sm:text-base ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{fullName || 'Admin User'}</p>
+            <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>{email || 'No email available'}</p>
           </div>
         </div>
 
-        <div>
+        <div className="flex flex-col items-start sm:items-end">
           <input
             ref={fileInputRef}
             type="file"
@@ -115,10 +115,12 @@ const ProfilePictureUpload = ({ currentImage, onUpload, fullName, email }) => {
             icon={Camera}
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
+            className="text-xs sm:text-sm"
           >
-            {uploading ? 'Uploading...' : 'Change Photo'}
+            <span className="hidden sm:inline">{uploading ? 'Uploading...' : 'Change Photo'}</span>
+            <span className="sm:hidden">{uploading ? '...' : 'Photo'}</span>
           </Button>
-          <p className="text-xs text-gray-500 mt-2">JPG, PNG, WEBP up to 5MB.</p>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1 sm:mt-2`}>JPG, PNG, WEBP up to 5MB.</p>
         </div>
       </div>
     </div>
@@ -378,7 +380,7 @@ const AdminSettings = () => {
 
           {/* Content */}
           <div className="flex-1 p-3 lg:p-6 overflow-x-hidden">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 capitalize">
+            <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 capitalize ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {tabs.find(t => t.id === activeTab)?.label} Settings
             </h2>
 
@@ -388,6 +390,7 @@ const AdminSettings = () => {
                   currentImage={profileImage}
                   fullName={user?.fullName}
                   email={user?.email}
+                  isDark={isDark}
                   onUpload={(imageUrl) => {
                     setProfileImage(imageUrl);
                     if (updateUser) {
@@ -419,15 +422,19 @@ const AdminSettings = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       Timezone
                     </label>
                     <select
                       value={formData.timezone}
                       onChange={(e) => setFormData({...formData, timezone: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
+                        isDark 
+                          ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="America/New_York">Eastern Time</option>
                       <option value="America/Chicago">Central Time</option>
@@ -441,13 +448,17 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       Date Format
                     </label>
                     <select
                       value={formData.dateFormat}
                       onChange={(e) => setFormData({...formData, dateFormat: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
+                        isDark 
+                          ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -456,13 +467,17 @@ const AdminSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       Default Currency
                     </label>
                     <select
                       value={formData.currency}
                       onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea]"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] text-sm ${
+                        isDark 
+                          ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -510,35 +525,35 @@ const AdminSettings = () => {
                   />
                 </div>
 
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-yellow-800">Fee changes take effect immediately</p>
-                      <p className="text-sm text-yellow-700 mt-1">
+                <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-yellow-900/30 border border-yellow-700/30' : 'bg-yellow-50 border border-yellow-200'}`}>
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <AlertTriangle className={`w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mt-0.5`} />
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-medium text-sm ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>Fee changes take effect immediately</p>
+                      <p className={`text-xs sm:text-sm ${isDark ? 'text-yellow-400' : 'text-yellow-700'} mt-1`}>
                         Changes to commission rates will apply to all new deals created after the update. Existing deals will maintain their original terms.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-blue-800 mb-2">Current Fee Structure</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-blue-900/30 border border-blue-700/30' : 'bg-blue-50 border border-blue-200'}`}>
+                  <h3 className={`font-medium mb-2 ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>Current Fee Structure</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                     <div>
-                      <span className="text-blue-700">Platform Commission:</span>
+                      <span className={isDark ? 'text-blue-400' : 'text-blue-700'}>Platform Commission:</span>
                       <span className="ml-2 font-semibold">{fees?.commissionRate || 10}%</span>
                     </div>
                     <div>
-                      <span className="text-blue-700">Stripe Fee:</span>
+                      <span className={isDark ? 'text-blue-400' : 'text-blue-700'}>Stripe Fee:</span>
                       <span className="ml-2 font-semibold">2.9% + $0.30</span>
                     </div>
                     <div>
-                      <span className="text-blue-700">Creator Payout Min:</span>
+                      <span className={isDark ? 'text-blue-400' : 'text-blue-700'}>Creator Payout Min:</span>
                       <span className="ml-2 font-semibold">${fees?.creatorPayoutMin || 50}</span>
                     </div>
                     <div>
-                      <span className="text-blue-700">Withdrawal Fee:</span>
+                      <span className={isDark ? 'text-blue-400' : 'text-blue-700'}>Withdrawal Fee:</span>
                       <span className="ml-2 font-semibold">${fees?.withdrawalFee || 0}</span>
                     </div>
                   </div>

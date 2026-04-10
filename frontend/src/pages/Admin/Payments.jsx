@@ -230,7 +230,7 @@ const AdminPayments = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatsCard
           title="Total Revenue"
           value={formatCurrency(cardRevenue)}
@@ -258,24 +258,32 @@ const AdminPayments = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className={`p-3 sm:p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             <input
               type="text"
               placeholder="Search by transaction ID, brand, or creator..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100 placeholder:text-gray-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+              }`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
@@ -289,7 +297,11 @@ const AdminPayments = () => {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="all">All Types</option>
               <option value="payment">Payment</option>
@@ -302,7 +314,11 @@ const AdminPayments = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm ${
+                isDark 
+                  ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="all">All Time</option>
               <option value="today">Today</option>
@@ -312,51 +328,70 @@ const AdminPayments = () => {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${
-                showFilters ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'border-gray-300'
+              className={`px-3 py-2 border rounded-lg flex items-center gap-2 text-sm ${
+                showFilters 
+                  ? isDark ? 'bg-indigo-900/30 border-indigo-600 text-indigo-400' : 'bg-indigo-50 border-indigo-600 text-indigo-600'
+                  : isDark ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'
               }`}
             >
-              <Filter className="w-4 h-4" />
-              More Filters
+              <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">More Filters</span>
+              <span className="sm:hidden">Filters</span>
             </button>
           </div>
         </div>
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-xs sm:text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Min. Amount ($)
                 </label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="e.g., 100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-xs sm:text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Max. Amount ($)
                 </label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="e.g., 1000"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-xs sm:text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Date Range
                 </label>
                 <div className="flex gap-2">
-                  <input type="date" className="flex-1 px-4 py-2 border border-gray-300 rounded-lg" placeholder="Start" />
-                  <input type="date" className="flex-1 px-4 py-2 border border-gray-300 rounded-lg" placeholder="End" />
+                  <input type="date" className={`flex-1 px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`} placeholder="Start" />
+                  <input type="date" className={`flex-1 px-3 py-2 border rounded-lg text-sm ${
+                    isDark 
+                      ? 'bg-gray-800/50 border-gray-700/50 text-gray-100'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`} placeholder="End" />
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 mt-3 sm:mt-4">
               <Button variant="secondary" size="sm">Clear</Button>
               <Button variant="primary" size="sm">Apply</Button>
             </div>
@@ -365,65 +400,66 @@ const AdminPayments = () => {
       </div>
 
       {/* Payments Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className={`rounded-xl shadow-sm overflow-hidden ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <div className="overflow-x-auto">
+          <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={isDark ? 'bg-gray-800' : 'bg-gray-50'}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[80px] sm:min-w-[120px]`}>
                   Transaction ID
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`hidden sm:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px]`}>
                   Amount
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[50px]`}>
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`hidden md:table-cell px-1 sm:px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'} min-w-[60px]`}>
                   Type
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredPayments.length > 0 ? (
                 filteredPayments.map((payment) => (
                   <tr 
                     key={payment._id} 
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className={`${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`}
                     onClick={() => handleViewDetails(payment)}
                   >
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-mono font-medium text-gray-900">{payment.transactionId}</div>
+                    <td className="px-1 sm:px-3 py-2">
+                      <div className={`text-xs sm:text-sm font-mono font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate max-w-[80px] sm:max-w-[120px]`}>{payment.transactionId}</div>
                       {payment.invoiceNumber && (
-                        <div className="text-xs text-gray-500">Invoice: {payment.invoiceNumber}</div>
+                        <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate max-w-[80px] sm:max-w-[120px]`}>Invoice: {payment.invoiceNumber}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-bold text-gray-900">{formatCurrency(payment.amount || 0)}</div>
+                    <td className={`hidden sm:table-cell px-1 sm:px-3 py-2`}>
+                      <div className={`text-xs sm:text-sm font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(payment.amount || 0)}</div>
                       {payment.fee > 0 && (
-                        <div className="text-xs text-gray-500">Fee: {formatCurrency(payment.fee)}</div>
+                        <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Fee: {formatCurrency(payment.fee)}</div>
                       )}
                       {payment.netAmount > 0 && (
                         <div className="text-xs text-green-600">Net: {formatCurrency(payment.netAmount)}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(payment.status, 'payment')}`}>
-                        {React.createElement(getStatusIcon(payment.status), { className: `w-3 h-3 ${getStatusIconColor(payment.status)}` })}
-                        {payment.status}
+                    <td className="px-1 sm:px-3 py-2">
+                      <span className={`px-1 py-1 text-xs rounded-full inline-flex items-center gap-1 ${getStatusColor(payment.status, 'payment')}`}>
+                        {React.createElement(getStatusIcon(payment.status), { className: `w-2 h-2 sm:w-2 sm:h-2 ${getStatusIconColor(payment.status)}` })}
+                        <span className="hidden sm:inline">{payment.status}</span>
+                        <span className="sm:hidden">{payment.status === 'completed' ? '✓' : payment.status === 'pending' || payment.status === 'processing' ? '⏳' : payment.status === 'failed' ? '✗' : payment.status === 'refunded' ? '↩' : payment.status === 'in-escrow' ? '🔒' : '?'}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={`hidden md:table-cell px-1 sm:px-3 py-2`}>
                       <div className="flex items-center gap-1">
                         {getTypeIcon(payment.type)}
-                        <span className="text-sm capitalize">{payment.type}</span>
+                        <span className={`text-xs sm:text-sm capitalize ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{payment.type}</span>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="4" className={`px-2 sm:px-4 py-8 sm:py-12 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     No payments found
                   </td>
                 </tr>
@@ -443,77 +479,78 @@ const AdminPayments = () => {
       >
         {selectedPayment && (
           <div className="space-y-6 pr-2">
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
               <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm text-gray-500">Transaction ID</p>
-                  <p className="font-mono text-lg font-semibold">{selectedPayment.transactionId}</p>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Transaction ID</p>
+                  <p className={`font-mono text-lg sm:text-xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{selectedPayment.transactionId}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center gap-1 ${getStatusColor(selectedPayment.status, 'payment')}`}>
+                <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium inline-flex items-center gap-1 flex-shrink-0 ${getStatusColor(selectedPayment.status, 'payment')}`}>
                   {React.createElement(getStatusIcon(selectedPayment.status), { className: `w-3 h-3 ${getStatusIconColor(selectedPayment.status)}` })}
-                  {selectedPayment.status}
+                  <span className="hidden sm:inline">{selectedPayment.status}</span>
+                  <span className="sm:hidden">{selectedPayment.status === 'completed' ? '✓' : selectedPayment.status === 'pending' || selectedPayment.status === 'processing' ? '⏳' : selectedPayment.status === 'failed' ? '✗' : selectedPayment.status === 'refunded' ? '↩' : selectedPayment.status === 'in-escrow' ? '🔒' : '?'}</span>
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">From</p>
-                <p className="font-medium">{selectedPayment.from?.brandName || selectedPayment.from?.fullName || '—'}</p>
-                <p className="text-xs text-gray-500">{selectedPayment.from?.accountType || ''}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>From</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{selectedPayment.from?.brandName || selectedPayment.from?.fullName || '—'}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{selectedPayment.from?.accountType || ''}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">To</p>
-                <p className="font-medium">{selectedPayment.to?.displayName || selectedPayment.to?.fullName || '—'}</p>
-                <p className="text-xs text-gray-500">{selectedPayment.to?.accountType || ''}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Amount</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(selectedPayment.amount || 0)}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Fee</p>
-                <p className="text-xl font-semibold text-gray-700">{formatCurrency(selectedPayment.fee || 0)}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Net Amount</p>
-                <p className="text-xl font-bold text-green-600">{formatCurrency(selectedPayment.netAmount || selectedPayment.amount)}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Currency</p>
-                <p className="font-medium">{selectedPayment.currency || 'USD'}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>To</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} truncate`}>{selectedPayment.to?.displayName || selectedPayment.to?.fullName || '—'}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{selectedPayment.to?.accountType || ''}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Date</p>
-                <p className="font-medium">{formatDate(selectedPayment.createdAt)}</p>
-                <p className="text-xs text-gray-500">{timeAgo(selectedPayment.createdAt)}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Amount</p>
+                <p className={`text-lg sm:text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(selectedPayment.amount || 0)}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Type</p>
-                <p className="font-medium capitalize">{selectedPayment.type}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Fee</p>
+                <p className={`text-sm sm:text-xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-700'}`}>{formatCurrency(selectedPayment.fee || 0)}</p>
+              </div>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Net Amount</p>
+                <p className={`text-lg sm:text-xl font-bold text-green-600`}>{formatCurrency(selectedPayment.netAmount || selectedPayment.amount)}</p>
+              </div>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Currency</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedPayment.currency || 'USD'}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Date</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(selectedPayment.createdAt)}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{timeAgo(selectedPayment.createdAt)}</p>
+              </div>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Type</p>
+                <p className={`text-sm font-medium capitalize ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedPayment.type}</p>
               </div>
             </div>
 
             {selectedPayment.description && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500 mb-1">Description</p>
-                <p className="text-gray-700">{selectedPayment.description}</p>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Description</p>
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{selectedPayment.description}</p>
               </div>
             )}
 
             {selectedPayment.dealId && (
-              <div className="border-t border-gray-200 pt-4">
-                <h4 className="font-medium text-gray-900 mb-2">Related Deal</h4>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">Deal ID: {selectedPayment.dealId._id}</p>
+              <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} pt-4`}>
+                <h4 className={`font-medium mb-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Related Deal</h4>
+                <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                  <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Deal ID: {selectedPayment.dealId._id}</p>
                   {selectedPayment.dealId.campaignId?.title && (
-                    <p className="text-sm text-gray-600">Campaign: {selectedPayment.dealId.campaignId.title}</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Campaign: {selectedPayment.dealId.campaignId.title}</p>
                   )}
                 </div>
               </div>
@@ -521,15 +558,15 @@ const AdminPayments = () => {
 
             {selectedPayment.refunds?.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Refunds</h4>
+                <h4 className={`font-medium mb-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Refunds</h4>
                 <div className="space-y-2">
                   {selectedPayment.refunds.map((refund, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                    <div key={index} className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium">Amount: {formatCurrency(refund.amount)}</span>
-                        <span className="text-xs text-gray-500">{formatDate(refund.processedAt)}</span>
+                        <span className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Amount: {formatCurrency(refund.amount)}</span>
+                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(refund.processedAt)}</span>
                       </div>
-                      {refund.reason && <p className="text-xs text-gray-600 mt-1">Reason: {refund.reason}</p>}
+                      {refund.reason && <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Reason: {refund.reason}</p>}
                     </div>
                   ))}
                 </div>

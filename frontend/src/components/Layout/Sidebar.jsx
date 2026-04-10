@@ -142,11 +142,7 @@ const normalizePlanId = (value) => {
         : 'text-gray-700 hover:bg-gray-100';
   };
 
-  // ==================== HANDLE LOGOUT ====================
-  const handleLogout = async () => {
-    // Logout function is now handled in Header component
-  };
-
+  
   // ==================== MOBILE SIDEBAR ====================
   if (isMobileOpen) {
     return (
@@ -232,26 +228,7 @@ const normalizePlanId = (value) => {
               </NavLink>
             ))}
 
-            <div className={`pt-4 mt-4 border-t`} 
-              style={{
-                borderTop: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
-              }}
-            >
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200`}
-                style={{
-                  background: isDark ? '#374151' : '#fef2f2',
-                  borderColor: isDark ? '#4b5563' : '#fecaca',
-                  border: '1px solid ' + (isDark ? '#4b5563' : '#fecaca'),
-                  color: isDark ? '#f87171' : '#dc2626',
-                }}
-              >
-                <LogOut className="w-5 h-5 mr-3" />
-                <span style={{ fontWeight: 600 }}>Logout</span>
-              </button>
-            </div>
-          </nav>
+                      </nav>
         </div>
       </>
     );
