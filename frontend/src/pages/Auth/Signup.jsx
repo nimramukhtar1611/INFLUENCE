@@ -47,6 +47,19 @@ const Signup = () => {
     niche: '',
   });
 
+  // Helper function to format phone numbers
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return '';
+    let cleaned = phone.replace(/[^\d+]/g, '');
+    if (!cleaned.startsWith('+')) {
+      if (cleaned.startsWith('1')) {
+        cleaned = cleaned.substring(1);
+      }
+      cleaned = '+1' + cleaned;
+    }
+    return cleaned;
+  };
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -119,9 +132,18 @@ const Signup = () => {
 
   const handlePhoneOTP = async () => {
     if (!formData.phone) { toast.error('Please enter phone number'); return; }
-    const result = await sendPhoneOTP(formData.phone);
+    
+    const formattedPhone = formatPhoneNumber(formData.phone);
+    
+    // Basic validation for international format
+    if (!/^\+?[1-9]\d{1,14}$/.test(formattedPhone.replace(/[\s-]/g, ''))) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+    
+    const result = await sendPhoneOTP(formattedPhone);
     if (result.success) {
-      setOtpDestination(formData.phone);
+      setOtpDestination(formattedPhone);
       setOtpType('phone');
       setShowOTP(true);
     }
@@ -152,12 +174,14 @@ const Signup = () => {
       if (validateStep2()) handleEmailOTP();
     } else {
       setLoading(true);
+      
+      
       const signupData = {
         email: formData.email,
         password: formData.password,
         fullName: formData.fullName,
         userType,
-        phone: formData.phone || '',
+        phone: formatPhoneNumber(formData.phone),
         captchaToken,
       };
       if (userType === 'brand') {
@@ -608,7 +632,7 @@ const Signup = () => {
                 />
                 <input
                   type="tel"
-                  placeholder="Enter your phone number"
+                  placeholder="+1 (555) 123-4567"
                   value={formData.phone}
                   name="phone"
                   onChange={handleChange}

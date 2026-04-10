@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mail, Phone, Smartphone, ArrowRight, RefreshCw, Shield } from 'lucide-react';
+import { Mail, Phone, Smartphone, ArrowLeft, ArrowRight, RefreshCw, Shield } from 'lucide-react';
 
 const OTPVerification = ({ 
   type = 'email',
