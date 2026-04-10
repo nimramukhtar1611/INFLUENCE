@@ -387,12 +387,10 @@ const AISettings = ({ settings, setSettings }) => {
     </div>
   );
 };
-
-// ==================== MAIN COMPONENT ====================
 const BrandSettings = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const { user, refreshUser, updateUser } = useAuth();
+  const { user, updateUser, refreshUser, changePassword } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -657,19 +655,13 @@ const BrandSettings = () => {
     }
 
     try {
-      const res = await api.post('/auth/change-password', {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
-      });
-      if (res.data?.success) {
-        toast.success('Password changed successfully');
+      const res = await changePassword(passwordData.currentPassword, passwordData.newPassword);
+      if (res?.success) {
         setShowPasswordModal(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      } else {
-        toast.error(res.data?.error || 'Failed to change password');
       }
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to change password');
+      toast.error(error.message || 'Failed to change password');
     }
   };
 

@@ -125,13 +125,13 @@ const Analytics = () => {
 
   return (
     <div className={`space-y-6 ${isDark ? 'bg-gray-900' : 'bg-slate-100'}`}>
-      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
+      <div className={`flex flex-col gap-4 p-6 rounded-xl ${isDark ? 'bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 shadow-sm' : 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm'}`}>
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Analytics Dashboard</h1>
-          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Track your performance and growth metrics</p>
+          <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Analytics Dashboard</h1>
+          <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Track your performance and growth metrics</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className={`flex items-center rounded-lg border overflow-hidden shadow-sm ${
                 isDark ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-300/50'
               }`}>
@@ -143,7 +143,7 @@ const Analytics = () => {
                   <button
                     key={type}
                     onClick={() => setChartType(type)}
-                    className={`px-3 py-2 text-sm font-medium ${i > 0 ? 'border-l' : ''} ${
+                    className={`px-2 py-2 text-xs sm:text-sm sm:px-3 font-medium ${i > 0 ? 'border-l' : ''} ${
                       chartType === type 
                         ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' 
                         : isDark 
@@ -171,7 +171,7 @@ const Analytics = () => {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm ${
+                className={`px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm ${
                   isDark ? 'bg-gray-800/50 border-gray-700/50 text-gray-100' : 'bg-white/50 border-gray-300/50 text-gray-900'
                 }`}
               >

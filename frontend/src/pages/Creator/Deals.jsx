@@ -98,7 +98,6 @@ const CreatorDeals = () => {
                   <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Budget</th>
                   <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Status</th>
                   <th className={`px-6 py-3 text-left text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Deadline</th>
-                  <th className={`px-6 py-3 text-right text-xs font-medium uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Actions</th>
                 </tr>
               </thead>
               <tbody className={`${isDark ? 'bg-gray-900' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -106,24 +105,21 @@ const CreatorDeals = () => {
                   const StatusIcon = statusConfig[deal.status]?.icon || AlertCircle;
                   const statusColor = statusConfig[deal.status]?.color || 'bg-gray-100 text-gray-800';
                   return (
-                    <tr key={deal._id} className={isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
-                      <td className={`px-6 py-4 text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{deal.campaignId?.title || 'Campaign'}</td>
-                      <td className={`px-6 py-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{deal.brandId?.brandName || 'Brand'}</td>
-                      <td className={`px-6 py-4 font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(deal.budget)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusColor}`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {statusConfig[deal.status]?.label || deal.status}
-                        </span>
-                      </td>
-                      <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        {deal.deadline ? formatDate(deal.deadline) : 'No deadline'}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link to={`/creator/deals/${deal._id}`} className={`hover:${isDark ? 'text-indigo-400' : 'text-indigo-900'}`}>
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </td>
+                    <tr key={deal._id} className={`${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`}>
+                      <Link to={`/creator/deals/${deal._id}`} className="contents">
+                        <td className={`px-6 py-4 text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{deal.campaignId?.title || 'Campaign'}</td>
+                        <td className={`px-6 py-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{deal.brandId?.brandName || 'Brand'}</td>
+                        <td className={`px-6 py-4 font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(deal.budget)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs rounded-full inline-flex items-center gap-1 ${statusColor}`}>
+                            <StatusIcon className="w-3 h-3" />
+                            {statusConfig[deal.status]?.label || deal.status}
+                          </span>
+                        </td>
+                        <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
+                          {deal.deadline ? formatDate(deal.deadline) : 'No deadline'}
+                        </td>
+                      </Link>
                     </tr>
                   );
                 })}

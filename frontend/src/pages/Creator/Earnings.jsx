@@ -345,12 +345,12 @@ const CreatorEarnings = () => {
 
       {/* Time Period Selector */}
       <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
             <Calendar className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`} />
             <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Time Period:</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {['7d', '30d', '90d', '12m'].map((p) => (
               <button
                 key={p}

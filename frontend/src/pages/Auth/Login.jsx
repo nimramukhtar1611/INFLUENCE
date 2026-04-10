@@ -96,7 +96,6 @@ const Login = () => {
         navigate('/2fa-verify', { state: { userId: result.userId } });
       } else if (result?.success) {
         console.log('✅ Login successful');
-        toast.success('Login successful!');
         setLoginAttempts(0);
         setShowCaptcha(false);
         setCaptchaToken(null);

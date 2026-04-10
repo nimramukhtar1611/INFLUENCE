@@ -48,7 +48,6 @@ const AdminLogin = () => {
     } else if (result?.success) {
       // Navigation will be handled by the useEffect above
       console.log('Login successful, waiting for redirect...');
-      toast.success('Admin login successful!');
     }
     setLoading(false);
   };

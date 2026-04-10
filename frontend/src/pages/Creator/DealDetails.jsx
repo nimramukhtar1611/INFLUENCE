@@ -445,36 +445,40 @@ const DealDetails = () => {
   const canCreatorCounter = (deal.status === 'pending') || (deal.status === 'negotiating' && canCreatorAcceptCounter);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/creator/deals" className="p-2 hover:bg-gray-100 rounded-lg">
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {deal.campaignId?.title || 'Deal Details'}
-          </h1>
-          <p className="text-gray-600">Deal ID: {deal._id?.slice(-8)}</p>
+    <div className="space-y-6 px-2 sm:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Link to="/creator/deals" className="p-2 hover:bg-gray-100 rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {deal.campaignId?.title || 'Deal Details'}
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base">Deal ID: {deal._id?.slice(-8)}</p>
+          </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(deal.status)}`}>
-          {deal.status}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          icon={RefreshCw}
-          onClick={() => fetchDeal(true)}
-          loading={refreshing}
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(deal.status)}`}>
+            {deal.status}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={RefreshCw}
+            onClick={() => fetchDeal(true)}
+            loading={refreshing}
+          />
+        </div>
       </div>
 
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="flex space-x-4 sm:space-x-8 min-w-max px-2 sm:px-0">
           {['overview', 'deliverables', 'messages', 'timeline'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+              className={`py-4 px-1 sm:px-2 border-b-2 font-medium text-sm capitalize whitespace-nowrap ${
                 activeTab === tab
                   ? 'border-indigo-600 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -492,13 +496,13 @@ const DealDetails = () => {
       </div>
 
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Deal Details</h2>
-              <p className="text-gray-600 mb-4">{deal.campaignId?.description || 'No description provided'}</p>
+              <p className="text-gray-600 mb-4 text-sm sm:text-base">{deal.campaignId?.description || 'No description provided'}</p>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Campaign</p>
                   <p className="font-medium">{deal.campaignId?.title || '—'}</p>
@@ -545,7 +549,7 @@ const DealDetails = () => {
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* CPE Model */}
                   {deal.paymentType === 'cpe' && deal.performanceMetrics.cpe && (
                     <>
@@ -666,17 +670,17 @@ const DealDetails = () => {
             )}
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Brand</h2>
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-3 sm:gap-4 mb-4">
                 <img
                   src={deal.brandId?.logo || deal.brandId?.profilePicture || 'https://via.placeholder.com/60'}
                   alt={deal.brandId?.brandName}
-                  className="w-16 h-16 rounded-full object-cover"
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
                 />
-                <div>
-                  <h3 className="font-semibold text-gray-900">{deal.brandId?.brandName || 'Brand'}</h3>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-gray-900 truncate">{deal.brandId?.brandName || 'Brand'}</h3>
                   <div className="flex items-center mt-1">
                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
                     <span className="text-sm ml-1">
@@ -687,7 +691,7 @@ const DealDetails = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Progress</h2>
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
@@ -696,7 +700,7 @@ const DealDetails = () => {
                     style={{ width: `${deal.progress || 0}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-gray-700">{deal.progress || 0}%</span>
+                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">{deal.progress || 0}%</span>
               </div>
               <p className="text-xs text-gray-500">
                 {deal.deliverables?.filter(d => d.status === 'approved').length || 0} of{' '}
@@ -704,7 +708,7 @@ const DealDetails = () => {
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
               {deal.status === 'negotiating' && latestCounter && (
@@ -822,30 +826,30 @@ const DealDetails = () => {
       )}
 
       {activeTab === 'deliverables' && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {deal.deliverables && deal.deliverables.length > 0 ? (
             deal.deliverables.map((del) => (
-              <div key={del._id} className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+              <div key={del._id} className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
                     {del.status === 'approved' ? (
-                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                     ) : del.status === 'submitted' ? (
-                      <Clock className="w-6 h-6 text-blue-600" />
+                      <Clock className="w-6 h-6 text-blue-600 flex-shrink-0" />
                     ) : del.status === 'revision' ? (
-                      <AlertCircle className="w-6 h-6 text-orange-600" />
+                      <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
                     ) : (
-                      <Clock className="w-6 h-6 text-yellow-600" />
+                      <Clock className="w-6 h-6 text-yellow-600 flex-shrink-0" />
                     )}
-                    <div>
-                      <h3 className="font-semibold text-gray-900 capitalize">{del.type}</h3>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-gray-900 capitalize truncate">{del.type}</h3>
                       <p className="text-sm text-gray-500 capitalize">{del.platform}</p>
                       {del.submittedAt && (
                         <p className="text-xs text-gray-400">Submitted: {formatDate(del.submittedAt)}</p>
                       )}
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(del.status)}`}>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(del.status)} whitespace-nowrap`}>
                     {del.status}
                   </span>
                 </div>
@@ -871,7 +875,7 @@ const DealDetails = () => {
                 {del.files && del.files.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-700 mb-2">Submitted Files:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                       {del.files.map((file, index) => (
                         <a
                           key={index}
@@ -943,21 +947,21 @@ const DealDetails = () => {
       )}
 
       {activeTab === 'messages' && (
-        <div className="bg-white rounded-xl shadow-sm h-[600px] flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="font-semibold text-gray-900">
+        <div className="bg-white rounded-xl shadow-sm h-[500px] sm:h-[600px] flex flex-col">
+          <div className="p-3 sm:p-4 border-b border-gray-200">
+            <h2 className="font-semibold text-gray-900 truncate">
               Messages with {deal.brandId?.brandName || 'Brand'}
             </h2>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
             {messages.length > 0 ? (
               messages.map((msg) => {
                 const senderId = msg.senderId?._id || msg.senderId;
                 const isOwn = String(senderId) === String(user?._id);
                 return (
                   <div key={msg._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] rounded-lg p-3 ${
+                    <div className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${
                       isOwn ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-900'
                     }`}>
                       <div className="flex items-center gap-2 mb-1">
@@ -997,7 +1001,7 @@ const DealDetails = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-3 sm:p-4 border-t border-gray-200">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -1005,12 +1009,12 @@ const DealDetails = () => {
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!messageInput.trim() || sendingMessage}
-                className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex-shrink-0"
               >
                 {sendingMessage ? (
                   <Loader className="w-5 h-5 animate-spin" />
@@ -1024,22 +1028,22 @@ const DealDetails = () => {
       )}
 
       {activeTab === 'timeline' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Timeline</h2>
           {deal.timeline && deal.timeline.length > 0 ? (
             <div className="relative">
               {deal.timeline.map((item, index) => (
-                <div key={index} className="flex gap-4 mb-4 last:mb-0">
-                  <div className="relative">
+                <div key={index} className="flex gap-3 sm:gap-4 mb-4 last:mb-0">
+                  <div className="relative flex-shrink-0">
                     <div className="w-3 h-3 bg-indigo-600 rounded-full mt-1.5" />
                     {index < deal.timeline.length - 1 && (
                       <div className="absolute top-4 left-1.5 w-0.5 h-12 bg-gray-200" />
                     )}
                   </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900">{item.event}</p>
-                      <span className="text-xs text-gray-500">{timeAgo(item.createdAt)}</span>
+                  <div className="flex-1 pb-4 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <p className="font-medium text-gray-900 truncate">{item.event}</p>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo(item.createdAt)}</span>
                     </div>
                     {item.description && (
                       <p className="text-sm text-gray-600 mt-1">{item.description}</p>

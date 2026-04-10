@@ -173,7 +173,6 @@ const Signup = () => {
       try {
         const result = await signup(signupData);
         if (result.success) {
-          toast.success('Account created successfully!');
           navigate(userType === 'brand' ? '/brand/dashboard' : '/creator/dashboard');
         }
       } catch (error) {

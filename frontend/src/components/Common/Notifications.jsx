@@ -347,32 +347,32 @@ const Notifications = () => {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="flex items-center gap-4 overflow-x-auto pb-2">
+      <div className={`p-4 rounded-xl shadow-sm ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium ${
               filter === 'all'
                 ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             All
-            <span className="ml-2 px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-xs">
+            <span className="ml-1 sm:ml-2 px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-xs">
               {notifications.length}
             </span>
           </button>
           
           <button
             onClick={() => setFilter('unread')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium ${
               filter === 'unread'
                 ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Unread
-            <span className="ml-2 px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-xs">
+            <span className="ml-1 sm:ml-2 px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-xs">
               {unreadCount}
             </span>
           </button>
@@ -381,10 +381,10 @@ const Notifications = () => {
             <button
               key={type}
               onClick={() => setFilter(type)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium capitalize ${
                 filter === type
                   ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               {type}
@@ -393,16 +393,16 @@ const Notifications = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className={`rounded-xl shadow-sm overflow-hidden ${isDark ? 'bg-gray-900/90 border border-gray-700/50' : 'bg-white border-gray-200/50'}`}>
         {filteredNotifications.length === 0 ? (
           <div className="text-center py-12">
-            <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-500">You're all caught up!</p>
+            <Bell className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className={`text-base sm:text-lg font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-2`}>No notifications</h3>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>You're all caught up!</p>
           </div>
         ) : (
           <>
-            <div className="divide-y divide-gray-200">
+            <div className={`divide-y ${isDark ? 'divide-gray-700/50' : 'divide-gray-200/50'}`}>
               {filteredNotifications.map((notification) => {
                 const Icon = getIconComponent(notification.type);
                 const colorClass = getIconColor(notification.type);
@@ -410,37 +410,37 @@ const Notifications = () => {
                 return (
                   <div
                     key={notification._id}
-                    className={`p-6 hover:bg-gray-50 transition-colors ${
-                      !notification.read ? 'bg-indigo-50' : ''
-                    }`}
+                    className={`p-4 sm:p-6 transition-colors ${
+                      !notification.read ? (isDark ? 'bg-indigo-900/20' : 'bg-indigo-50') : ''
+                    } ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50/50'}`}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-full ${colorClass} flex-shrink-0`}>
-                        <Icon className="w-6 h-6" />
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className={`p-2 sm:p-3 rounded-full ${colorClass} flex-shrink-0`}>
+                        <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-1">
-                          <div>
-                            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-0 mb-1">
+                          <div className="flex-1">
+                            <h3 className={`font-semibold text-sm sm:text-base ${isDark ? 'text-gray-100' : 'text-gray-900'} flex items-center gap-2`}>
                               {notification.title}
                               {!notification.read && (
-                                <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
+                                <span className="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0"></span>
                               )}
                             </h3>
-                            <p className="text-gray-600 mt-1">{notification.message}</p>
+                            <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'} line-clamp-2`}>{notification.message}</p>
                           </div>
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
+                          <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} whitespace-nowrap sm:ml-4`}>
                             {timeAgo(notification.createdAt)}
                           </span>
                         </div>
                         
                         {notification.data && (
-                          <div className="mt-3">
+                          <div className="mt-3 space-y-2">
                             {notification.data.dealId && (
                               <Link
                                 to={`/dashboard/deals/${notification.data.dealId}`}
-                                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium inline-flex items-center gap-1"
+                                className={`text-xs sm:text-sm ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'} font-medium inline-flex items-center gap-1`}
                                 onClick={() => markAsRead(notification._id)}
                               >
                                 View Deal
@@ -451,7 +451,7 @@ const Notifications = () => {
                             {notification.data.messageId && (
                               <Link
                                 to={`/inbox?message=${notification.data.messageId}`}
-                                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium inline-flex items-center gap-1"
+                                className={`text-xs sm:text-sm ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'} font-medium inline-flex items-center gap-1`}
                                 onClick={() => markAsRead(notification._id)}
                               >
                                 View Message
@@ -460,12 +460,13 @@ const Notifications = () => {
                             )}
 
                             {notification.type === 'team' && notification.data?.token && !['accepted', 'rejected', 'cancelled', 'expired'].includes(notification.data?.invitationStatus) && (
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
                                 <Button
                                   variant="primary"
                                   size="sm"
                                   onClick={() => handleInvitationResponse(notification, 'accept')}
                                   loading={invitationActionId === notification._id}
+                                  className="w-full sm:w-auto"
                                 >
                                   Accept
                                 </Button>
@@ -474,6 +475,7 @@ const Notifications = () => {
                                   size="sm"
                                   onClick={() => handleInvitationResponse(notification, 'reject')}
                                   disabled={invitationActionId === notification._id}
+                                  className="w-full sm:w-auto"
                                 >
                                   Reject
                                 </Button>
@@ -481,29 +483,29 @@ const Notifications = () => {
                             )}
 
                             {notification.type === 'team' && notification.data?.invitationStatus ? (
-                              <p className="text-xs text-gray-500 mt-2 capitalize">
+                              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-2 capitalize`}>
                                 Invitation {notification.data.invitationStatus}
                               </p>
                             ) : null}
                           </div>
                         )}
                         
-                        <div className="flex items-center gap-4 mt-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-4">
                           {!notification.read && (
                             <button
                               onClick={() => markAsRead(notification._id)}
-                              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                              className={`text-xs sm:text-sm ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} flex items-center gap-1`}
                             >
-                              <CheckCheck className="w-4 h-4" />
-                              Mark as read
+                              <CheckCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span>Mark as read</span>
                             </button>
                           )}
                           <button
                             onClick={() => deleteNotification(notification._id)}
-                            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                            className={`text-xs sm:text-sm ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} flex items-center gap-1`}
                           >
-                            <X className="w-4 h-4" />
-                            Delete
+                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>Delete</span>
                           </button>
                         </div>
                       </div>
@@ -514,19 +516,19 @@ const Notifications = () => {
             </div>
 
             {hasMore && (
-              <div className="px-6 py-4 border-t border-gray-200">
+              <div className={`px-4 sm:px-6 py-4 border-t ${isDark ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                  className={`w-full py-2 text-xs sm:text-sm ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'} font-medium flex items-center justify-center gap-2 disabled:opacity-50`}
                 >
                   {loadingMore ? (
                     <>
                       <Loader className="w-4 h-4 animate-spin" />
-                      Loading...
+                      <span>Loading...</span>
                     </>
                   ) : (
-                    'Load More'
+                    <span>Load More</span>
                   )}
                 </button>
               </div>
@@ -539,7 +541,7 @@ const Notifications = () => {
         <div className="text-center">
           <button
             onClick={clearAll}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className={`text-xs sm:text-sm ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
           >
             Clear All Notifications
           </button>

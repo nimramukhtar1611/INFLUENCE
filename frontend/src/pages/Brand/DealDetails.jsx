@@ -558,21 +558,21 @@ const DealDetails = () => {
   const canBrandCounter = deal.status === 'negotiating' && canBrandAcceptCounter;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 sm:px-0">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link to="/brand/deals" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
               {deal.campaignId?.title || 'Deal Details'}
             </h1>
-            <p className="text-gray-600">Deal ID: {deal._id?.slice(-8)}</p>
+            <p className="text-gray-600 text-sm sm:text-base">Deal ID: {deal._id?.slice(-8)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(deal.status)}`}>
             {deal.status}
           </span>
@@ -583,53 +583,53 @@ const DealDetails = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Budget</p>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(deal.budget)}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm">
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">Budget</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{formatCurrency(deal.budget)}</p>
           {deal.netAmount && (
             <p className="text-xs text-green-600 mt-1">Net: {formatCurrency(deal.netAmount)}</p>
           )}
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Platform Fee</p>
-          <p className="text-2xl font-bold text-red-600">{formatCurrency(deal.platformFee || 0)}</p>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm">
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">Platform Fee</p>
+          <p className="text-lg sm:text-2xl font-bold text-red-600 truncate">{formatCurrency(deal.platformFee || 0)}</p>
           {deal.platformFee && (
             <p className="text-xs text-gray-500 mt-1">(10% of budget)</p>
           )}
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Deadline</p>
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm">
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">Deadline</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
             {deal.deadline ? formatDate(deal.deadline) : 'No deadline'}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Progress</p>
-          <p className="text-2xl font-bold text-[#667eea]">{deal.progress || 0}%</p>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm">
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">Progress</p>
+          <p className="text-lg sm:text-2xl font-bold text-[#667eea]">{deal.progress || 0}%</p>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm">
-          <p className="text-sm text-gray-500 mb-1">Payment</p>
-          <p className="text-2xl font-bold text-gray-900 capitalize">{deal.paymentStatus || 'pending'}</p>
+        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm">
+          <p className="text-xs sm:text-sm text-gray-500 mb-1">Payment</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 capitalize truncate">{deal.paymentStatus || 'pending'}</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 overflow-x-auto">
-        <nav className="flex space-x-8 min-w-max">
+      <div className="border-b border-gray-200">
+        <nav className="grid grid-cols-2 sm:flex sm:flex-nowrap gap-2 sm:gap-8">
           {['overview', 'deliverables', 'messages', 'timeline'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+              className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm capitalize text-center w-full sm:w-auto ${
                 activeTab === tab
                   ? 'border-[#667eea] text-[#667eea]'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              {tab}
+              <span className="truncate">{tab}</span>
               {tab === 'messages' && messages.length > 0 && (
-                <span className="ml-2 bg-[#667eea]/10 text-[#667eea] text-xs px-2 py-0.5 rounded-full">
+                <span className="ml-1 sm:ml-2 bg-[#667eea]/10 text-[#667eea] text-xs px-1 sm:px-2 py-0.5 rounded-full whitespace-nowrap">
                   {messages.length}
                 </span>
               )}
@@ -640,14 +640,14 @@ const DealDetails = () => {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column - Deal Info */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Deal Details</h2>
-              <p className="text-gray-600 mb-4">{deal.campaignId?.description || 'No description provided'}</p>
+              <p className="text-gray-600 mb-4 text-sm sm:text-base">{deal.campaignId?.description || 'No description provided'}</p>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-xs text-gray-500 mb-1">Campaign</p>
                   <p className="font-medium">{deal.campaignId?.title || '—'}</p>
@@ -676,7 +676,7 @@ const DealDetails = () => {
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* CPE Model */}
                   {deal.paymentType === 'cpe' && deal.performanceMetrics.cpe && (
                     <>
@@ -798,21 +798,21 @@ const DealDetails = () => {
           </div>
 
           {/* Right Column - Partner Info & Actions */}
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 {isBrand ? 'Creator' : 'Brand'}
               </h2>
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-3 sm:gap-4 mb-4">
                 {otherParty?.profilePicture ? (
-                  <img src={otherParty.profilePicture} alt={otherParty.displayName} className="w-16 h-16 rounded-full object-cover" />
+                  <img src={otherParty.profilePicture} alt={otherParty.displayName} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-16 h-16 bg-[#667eea]/10 rounded-full flex items-center justify-center">
-                    <User className="w-8 h-8 text-[#667eea]" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#667eea]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="w-6 h-6 sm:w-8 sm:h-8 text-[#667eea]" />
                   </div>
                 )}
-                <div>
-                  <h3 className="font-semibold text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-gray-900 truncate">
                     {isBrand ? otherParty?.displayName : otherParty?.brandName}
                   </h3>
                   {isBrand && otherParty?.handle && (
@@ -835,7 +835,7 @@ const DealDetails = () => {
               </Link>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
               {deal.status === 'negotiating' && latestCounter && (
@@ -942,12 +942,12 @@ const DealDetails = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Contract</h2>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Contract ID</span>
-                  <span className="text-sm font-mono">{deal.contract?.id || '—'}</span>
+                  <span className="text-sm font-mono truncate ml-2">{deal.contract?.id || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Signed</span>
@@ -965,30 +965,30 @@ const DealDetails = () => {
       )}
 
       {activeTab === 'deliverables' && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {deal.deliverables?.length > 0 ? (
             deal.deliverables.map((del) => (
-              <div key={del._id} className="bg-white rounded-xl shadow-sm p-6">
-                <div className="flex items-start justify-between mb-4">
+              <div key={del._id} className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                   <div className="flex items-start gap-3">
                     {del.status === 'approved' ? (
-                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                     ) : del.status === 'submitted' ? (
-                      <Clock className="w-6 h-6 text-blue-600" />
+                      <Clock className="w-6 h-6 text-blue-600 flex-shrink-0" />
                     ) : del.status === 'revision' ? (
-                      <AlertCircle className="w-6 h-6 text-orange-600" />
+                      <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
                     ) : (
-                      <Clock className="w-6 h-6 text-yellow-600" />
+                      <Clock className="w-6 h-6 text-yellow-600 flex-shrink-0" />
                     )}
-                    <div>
-                      <h3 className="font-semibold text-gray-900 capitalize">{del.type}</h3>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-gray-900 capitalize truncate">{del.type}</h3>
                       <p className="text-sm text-gray-500 capitalize">{del.platform}</p>
                       {del.submittedAt && (
                         <p className="text-xs text-gray-400 mt-1">Submitted: {formatDate(del.submittedAt)}</p>
                       )}
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDeliverableStatusColor(del.status)}`}>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDeliverableStatusColor(del.status)} whitespace-nowrap`}>
                     {del.status}
                   </span>
                 </div>
@@ -1014,7 +1014,7 @@ const DealDetails = () => {
                 {del.files?.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-700 mb-2">Submitted Files:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                       {del.files.map((file, index) => (
                         <a
                           key={index}
@@ -1063,7 +1063,7 @@ const DealDetails = () => {
                 {del.metrics && Object.keys(del.metrics).length > 0 && (
                   <div className="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
                     <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Performance Reported</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {del.metrics.impressions > 0 && (
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400">Impressions</p>
@@ -1093,7 +1093,7 @@ const DealDetails = () => {
                 )}
 
                 {isBrand && del.status === 'submitted' && (
-                  <div className="flex flex-col gap-2 mt-4">
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
                     {/* Performance Progress logic for approval button */}
                     {(() => {
                       const isPerformance = deal.paymentType !== 'fixed';
@@ -1160,20 +1160,20 @@ const DealDetails = () => {
       )}
 
       {activeTab === 'messages' && (
-        <div className="bg-white rounded-xl shadow-sm h-[600px] flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="font-semibold text-gray-900">
+        <div className="bg-white rounded-xl shadow-sm h-[500px] sm:h-[600px] flex flex-col">
+          <div className="p-3 sm:p-4 border-b border-gray-200">
+            <h2 className="font-semibold text-gray-900 truncate">
               Messages with {isBrand ? deal.creatorId?.displayName : deal.brandId?.brandName}
             </h2>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 bg-gray-50">
             {messages.map((msg) => {
               const senderId = msg.senderId?._id || msg.senderId;
               const isOwn = String(senderId) === String(user?._id);
               return (
                 <div key={msg._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] rounded-lg p-3 ${
+                  <div className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${
                     isOwn ? 'bg-[#667eea] text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-100'
                   }`}>
                     {!isOwn && (
@@ -1226,11 +1226,11 @@ const DealDetails = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-3 sm:p-4 border-t border-gray-200">
             {replyingTo && (
               <div className="mb-2 flex items-center justify-between bg-[#667eea]/10 p-2 rounded-lg">
-                <span className="text-sm text-[#667eea]">Replying to: {replyingTo.content?.substring(0, 50)}</span>
-                <button onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600">
+                <span className="text-sm text-[#667eea] truncate flex-1 mr-2">Replying to: {replyingTo.content?.substring(0, 50)}</span>
+                <button onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -1240,8 +1240,8 @@ const DealDetails = () => {
                 {attachments.map((f, i) => (
                   <div key={i} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-xs">
                     <FileText className="w-3 h-3" />
-                    <span>{f.name}</span>
-                    <button onClick={() => removeAttachment(i)} className="text-gray-500 hover:text-gray-700">
+                    <span className="truncate max-w-[100px]">{f.name}</span>
+                    <button onClick={() => removeAttachment(i)} className="text-gray-500 hover:text-gray-700 flex-shrink-0">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -1262,28 +1262,28 @@ const DealDetails = () => {
                   }}
                   placeholder={uploading ? 'Uploading...' : 'Type your message...'}
                   disabled={uploading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-sm"
                   style={{ minHeight: '48px' }}
                 />
                 <div className="absolute right-2 bottom-2 flex items-center gap-1">
                   <label className="cursor-pointer p-1.5 hover:bg-gray-100 rounded-lg">
                     <input type="file" multiple onChange={handleFileUpload} className="hidden" />
-                    <Paperclip className="w-5 h-5 text-gray-500" />
+                    <Paperclip className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                   </label>
                   <button
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     className="p-1.5 hover:bg-gray-100 rounded-lg"
                   >
-                    <Smile className="w-5 h-5 text-gray-500" />
+                    <Smile className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                   </button>
                 </div>
               </div>
               <button
                 onClick={handleSendMessage}
                 disabled={(!messageInput.trim() && attachments.length === 0) || sendingMessage || uploading}
-                className="px-4 py-2 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] disabled:opacity-50 transition-colors"
+                className="px-3 sm:px-4 py-2 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] disabled:opacity-50 transition-colors flex-shrink-0"
               >
-                {sendingMessage ? <Loader className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                {sendingMessage ? <Loader className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Send className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
             </div>
             {showEmojiPicker && (
@@ -1296,13 +1296,13 @@ const DealDetails = () => {
       )}
 
       {activeTab === 'timeline' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Timeline</h2>
           {deal.timeline?.length > 0 ? (
             <div className="relative">
               {deal.timeline.map((item, index) => (
-                <div key={index} className="flex gap-4 mb-4 last:mb-0">
-                  <div className="relative">
+                <div key={index} className="flex gap-3 sm:gap-4 mb-4 last:mb-0">
+                  <div className="relative flex-shrink-0">
                     <div className={`w-3 h-3 rounded-full mt-1.5 ${
                       item.type === 'create' ? 'bg-blue-600' :
                       item.type === 'accept' ? 'bg-green-600' :
@@ -1314,10 +1314,10 @@ const DealDetails = () => {
                       <div className="absolute top-4 left-1.5 w-0.5 h-12 bg-gray-200" />
                     )}
                   </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900">{item.event}</p>
-                      <span className="text-xs text-gray-500">{formatDate(item.createdAt)}</span>
+                  <div className="flex-1 pb-4 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <p className="font-medium text-gray-900 truncate">{item.event}</p>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">{formatDate(item.createdAt)}</span>
                     </div>
                     {item.description && (
                       <p className="text-sm text-gray-600 mt-1">{item.description}</p>
@@ -1329,7 +1329,7 @@ const DealDetails = () => {
                 </div>
               ))}
               {deal.requirements?.length > 0 && (
-                <div className="bg-white p-6 rounded-xl shadow-sm">
+                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm mt-4 sm:mt-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h2>
                   <ul className="space-y-2">
                     {deal.requirements.map((req, index) => (
@@ -1343,16 +1343,16 @@ const DealDetails = () => {
               )}
 
               {deal.terms && (
-                <div className="bg-white p-6 rounded-xl shadow-sm">
+                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm mt-4 sm:mt-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Terms</h2>
                   <p className="text-sm text-gray-600 whitespace-pre-line">{deal.terms}</p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Activity className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No timeline events yet</p>
+            <div className="text-center py-6 sm:py-8">
+              <Activity className="w-8 h-8 sm:w-10 sm:h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm sm:text-base">No timeline events yet</p>
             </div>
           )}
         </div>

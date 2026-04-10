@@ -75,7 +75,7 @@ const MessageBubble = ({ message, isOwn, onReaction, onDelete, onReply }) => {
         </div>
       )}
 
-      <div className={`max-w-[70%] ${isOwn ? 'mr-2' : 'ml-2'}`}>
+      <div className={`max-w-[85%] md:max-w-[70%] ${isOwn ? 'mr-2' : 'ml-2'}`}>
         {!isOwn && (
           <p className="text-xs text-gray-500 mb-1 ml-1">
             {message.senderId?.fullName || message.senderId?.displayName || 'Creator'}
@@ -721,7 +721,7 @@ const BrandInbox = () => {
   const totalUnread = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
   return (
-    <div className={`h-[calc(100vh-100px)] rounded-xl shadow-sm flex overflow-hidden border ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div className={`h-[calc(100vh-100px)] rounded-xl shadow-sm flex flex-col md:flex-row overflow-hidden border ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
       {!onlineStatus && (
         <div className="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-sm z-50 flex items-center justify-center gap-2">
           <WifiOff className="w-4 h-4" /> You are offline.
@@ -729,7 +729,7 @@ const BrandInbox = () => {
       )}
 
       {/* Conversations List */}
-      <div className={`w-1/3 border-r flex flex-col ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+      <div className={`w-full md:w-1/3 border-r border-b md:border-b-0 flex flex-col ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'} ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
         <div className={`p-4 border-b ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Messages</h2>
@@ -861,23 +861,23 @@ const BrandInbox = () => {
       </div>
 
       {/* Chat Area */}
-      <div className={`flex-1 flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
+      <div className={`flex-1 flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'} ${!selectedConversation ? 'hidden md:flex' : 'flex'}`}>
         {selectedConversation ? (
           <>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-center gap-3">
+            <div className={`p-3 md:p-4 border-b flex items-center justify-between ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="relative">
                   <img
                     src={getConversationAvatar(selectedConversation)}
                     alt={getConversationName(selectedConversation)}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
                   />
                   {isUserOnline(selectedConversation) && (
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
                   )}
                 </div>
-                <div>
-                  <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                <div className="min-w-0 flex-1">
+                  <h3 className={`font-semibold text-sm md:text-base truncate ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     {getConversationName(selectedConversation)}
                   </h3>
                   <span
@@ -892,7 +892,7 @@ const BrandInbox = () => {
                     {typingUsersState[selectedConversation._id]
                       ? `${typingUsersState[selectedConversation._id].fullName} is typing...`
                       : isUserOnline(selectedConversation)
-                      ? '● Online'
+                      ? 'Online'
                       : formatLastSeen(selectedConversation)}
                   </span>
                 </div>
@@ -904,13 +904,13 @@ const BrandInbox = () => {
                       setDealDetails(selectedConversation.deal_id);
                       setShowDealModal(true);
                     }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 ${
+                  className={`px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-xs md:text-sm font-medium flex items-center gap-1 ${
                     isDark 
                       ? 'bg-[#667eea]/20 text-[#667eea] hover:bg-[#667eea]/30'
                       : 'bg-[#667eea]/10 text-[#667eea] hover:bg-[#667eea]/20'
                   }`}
                   >
-                    <Briefcase className="w-4 h-4" /> View Deal
+                    <Briefcase className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden md:inline">View Deal</span><span className="md:hidden">Deal</span>
                   </button>
                 )}
                 <button
@@ -918,26 +918,28 @@ const BrandInbox = () => {
                     setSelectedConvSettings(selectedConversation);
                     setShowSettingsModal(true);
                   }}
-                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                  className={`p-1.5 md:p-2 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                 >
-                  <MoreVertical className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                  <MoreVertical className={`w-4 h-4 md:w-5 md:h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
                 </button>
               </div>
             </div>
 
             {selectedConversation.deal_id && (
-              <div className={`px-4 py-2 border-b flex items-center justify-between ${
+              <div className={`px-3 md:px-4 py-2 border-b flex flex-col md:flex-row md:items-center justify-between gap-2 ${
                 isDark 
                   ? 'bg-gradient-to-r from-indigo-900 to-purple-900 border-indigo-800'
                   : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100'
               }`}>
-                <div className="flex items-center gap-4">
-                  <Briefcase className={`w-4 h-4 ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`} />
-                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    <span className="font-medium">Deal:</span>{' '}
-                    {selectedConversation.deal_id.campaignId?.title || 'Campaign'}
-                  </span>
-                  <span className={`text-sm font-medium ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`}>
+                <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                  <div className="flex items-center gap-1">
+                    <Briefcase className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`} />
+                    <span className={`text-xs md:text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <span className="font-medium">Deal:</span>{' '}
+                      {selectedConversation.deal_id.campaignId?.title || 'Campaign'}
+                    </span>
+                  </div>
+                  <span className={`text-xs md:text-sm font-medium ${isDark ? 'text-[#667eea]' : 'text-[#667eea]'}`}>
                     ${selectedConversation.deal_id.budget}
                   </span>
                   <span
@@ -961,7 +963,7 @@ const BrandInbox = () => {
             <div
               ref={messageContainerRef}
               onScroll={handleScroll}
-              className={`flex-1 overflow-y-auto p-4 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}
+              className={`flex-1 overflow-y-auto p-3 md:p-4 ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}
             >
               {loadingMore && (
                 <div className="flex justify-center py-2">
@@ -986,7 +988,7 @@ const BrandInbox = () => {
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`}>
                     <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>...</span>
                   </div>
-                  <div className={`rounded-2xl px-4 py-2 shadow-sm ${isDark ? 'bg-gray-700' : 'bg-white'}`}>
+                  <div className="rounded-2xl px-4 py-2 shadow-sm">
                     <div className="flex space-x-1">
                       {[0, 150, 300].map(d => (
                         <div
@@ -1027,7 +1029,7 @@ const BrandInbox = () => {
             {attachments.length > 0 && (
               <div className={`px-4 py-2 border-t flex flex-wrap gap-2 ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
                 {attachments.map((f, i) => (
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100'}`}>
+                  <div key={i} className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100'}`}>
                     <FileText className="w-3 h-3" />
                     <span>{f.name}</span>
                     <button
@@ -1041,8 +1043,8 @@ const BrandInbox = () => {
               </div>
             )}
 
-            <div className={`p-4 border-t ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-end gap-2">
+            <div className={`p-3 md:p-4 border-t ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+              <div className="flex items-end gap-1 md:gap-2">
                 <div className="flex-1 relative">
                   <textarea
                     rows="1"
@@ -1056,15 +1058,15 @@ const BrandInbox = () => {
                     }}
                     placeholder={uploading ? 'Uploading...' : 'Type your message...'}
                     disabled={uploading || !onlineStatus}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 disabled:opacity-50 ${
+                    className={`w-full px-3 py-2 md:px-4 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 disabled:opacity-50 text-sm ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 disabled:bg-gray-800'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 disabled:bg-gray-100'
                     }`}
                     style={{ minHeight: '48px' }}
                   />
-                  <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                    <label className={`cursor-pointer p-1.5 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                  <div className="absolute right-1.5 md:right-2 bottom-1.5 md:bottom-2 flex items-center gap-1">
+                    <label className={`cursor-pointer p-1 md:p-1.5 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -1073,13 +1075,13 @@ const BrandInbox = () => {
                         className="hidden"
                         accept="image/*"
                       />
-                      <Paperclip className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                      <Paperclip className={`w-4 h-4 md:w-5 md:h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                     </label>
                     <button
-                      className={`p-1.5 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                      className={`p-1 md:p-1.5 rounded-lg ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     >
-                      <Smile className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                      <Smile className={`w-4 h-4 md:w-5 md:h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                       {showEmojiPicker && (
                         <div className="absolute bottom-12 right-0 z-50">
                           <EmojiPicker
@@ -1098,9 +1100,9 @@ const BrandInbox = () => {
                   disabled={
                     (!messageInput.trim() && attachments.length === 0) || uploading || !onlineStatus
                   }
-                  className="px-4 py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] disabled:opacity-50 transition-colors"
+                  className="px-3 py-2 md:px-4 md:py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a67d8] disabled:opacity-50 transition-colors"
                 >
-                  {uploading ? <Loader className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                  {uploading ? <Loader className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Send className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
               </div>
               {!onlineStatus && (
@@ -1111,14 +1113,14 @@ const BrandInbox = () => {
             </div>
           </>
         ) : (
-          <div className="h-full flex items-center justify-center bg-gray-50">
-            <div className="text-center max-w-sm px-4">
-              <div className="w-20 h-20 bg-[#667eea]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-10 h-10 text-[#667eea]" />
+          <div className={`h-full flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            <div className="text-center max-w-xs px-4">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-[#667eea]/10 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <MessageSquare className="w-8 h-8 md:w-10 md:h-10 text-[#667eea]" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Messages</h3>
-              <p className="text-gray-600 mb-6">Select a conversation to start chatting</p>
-              <div className="bg-indigo-50 rounded-lg p-4 text-sm text-indigo-800">
+              <h3 className={`text-lg md:text-xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-2`}>Your Messages</h3>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4 md:mb-6`}>Select a conversation to start chatting</p>
+              <div className={`rounded-lg p-3 md:p-4 text-xs md:text-sm ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-indigo-50 text-indigo-800'}`}>
                 <p className="font-medium mb-1">💡 Pro Tips</p>
                 <ul className="text-left space-y-1">
                   <li>• Respond quickly to build strong relationships</li>

@@ -33,8 +33,6 @@ const Verify2FA = () => {
         // Complete the login flow via context helper
         completeLogin(res.user, res.token, res.refreshToken);
         
-        toast.success(res.message || 'Login successful');
-        
         // Wait for state to settle slightly (though navigate should work immediately)
         const userType = res.user.userType || res.user.role;
         
