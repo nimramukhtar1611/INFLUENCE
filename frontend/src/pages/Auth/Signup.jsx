@@ -227,634 +227,563 @@ const Signup = () => {
     );
   }
 
-  const stepLabels = ['Basic Info', 'Details', 'Verification'];
+  const stepLabels = ['Account Info', 'Profile Details', 'Verification'];
 
   return (
-    <div
-      className="min-h-screen flex"
-      style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      }}
-    >
-      {/* ── Left decorative panel ── */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
-        {/* floating blobs */}
-        <div
-          style={{
-            position: 'absolute', width: 340, height: 340, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.08)', top: -80, left: -80,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', width: 220, height: 220, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.06)', bottom: 80, right: -40,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', width: 140, height: 140, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)', top: '45%', left: '60%',
-          }}
-        />
-
-        {/* brand mark */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div
-              style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: 'rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <Shield className="text-white" size={22} />
-            </div>
-            <span style={{ color: '#fff', fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px' }}>
-              InfluenceX
-            </span>
-          </div>
-        </div>
-
-        {/* hero copy */}
-        <div className="relative z-10">
-          <h1
+    <>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background: '#000000',
+        }}
+      >
+        <div className="w-full p-4 sm:p-6 md:p-8" style={{ maxWidth: 520 }}>
+        {/* mobile logo */}
+        <div className="flex lg:hidden items-center gap-2 mb-8">
+          <div
             style={{
-              color: '#fff', fontSize: 42, fontWeight: 800,
-              lineHeight: 1.15, letterSpacing: '-1px', marginBottom: 20,
+              width: 36, height: 36, borderRadius: 10,
+              background: '#1a1a1a',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            Connect brands<br />with creators.
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 17, lineHeight: 1.7, maxWidth: 360 }}>
-           join thousand of brands and creators collaborating on impactful campaigns 
-          </p>
+            <Shield className="text-white" size={18} />
+          </div>
+          <span
+            style={{
+              fontSize: 18, fontWeight: 700,
+              color: '#111827',
+            }}
+          >
+            InfluenceX
+          </span>
+        </div>
 
-          {/* stats row */}
-          <div className="flex gap-10 mt-10">
-            {[
-              { n: '12K+', label: 'Creators' },
-              { n: '3K+', label: 'Brands' },
-              { n: '98%', label: 'Satisfaction' },
-            ].map(({ n, label }) => (
-              <div key={label}>
-                <p style={{ color: '#fff', fontSize: 26, fontWeight: 800 }}>{n}</p>
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{label}</p>
-              </div>
+        {/* heading */}
+        <div className="mb-8">
+          <h2
+            style={{
+              fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px',
+              color: '#ffffff', marginBottom: 8,
+            }}
+          >
+            Create Account
+          </h2>
+          <p style={{ color: '#cccccc', fontSize: 15, lineHeight: 1.5 }}>
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              style={{ fontWeight: 700, color: '#ffffff', textDecoration: 'none' }}
+              onMouseEnter={(e) => { e.target.style.color = '#cccccc'; }}
+              onMouseLeave={(e) => { e.target.style.color = '#ffffff'; }}
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
+
+        {/* Step progress bar */}
+        <div className="mb-8">
+          <div style={{ display: 'flex', gap: 0, marginBottom: 8 }}>
+            {[1, 2, 3].map(s => (
+              <div
+                key={s}
+                style={{
+                  flex: 1,
+                  height: 4,
+                  background: step >= s ? '#ffffff' : '#333333',
+                  borderRadius: s === 1 ? '10px 0 0 10px' : s === 3 ? '0 10px 10px 0' : '0',
+                }}
+              />
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {stepLabels.map((lbl, i) => (
+              <span
+                key={lbl}
+                style={{
+                  fontSize: 11,
+                  color: step >= i + 1 ? '#ffffff' : '#cccccc',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.4px',
+                }}
+              >
+                {lbl}
+              </span>
             ))}
           </div>
         </div>
 
-        {/* bottom tag */}
-        <div
-          className="relative z-10 flex items-center gap-2"
-          style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
-        >
-          <Shield size={13} />
-          <span>Your data is always secure and encrypted</span>
-        </div>
-      </div>
-
-      {/* ── Right form panel ── */}
-      <div
-        className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10"
-        style={{
-          background: '#fff',
-          borderRadius: '0',
-        }}
-      >
-        <div className="w-full" style={{ maxWidth: 420 }}>
-
-          {/* mobile logo */}
-          <div className="flex lg:hidden items-center gap-2 mb-8">
-            <div
-              style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'linear-gradient(135deg,#667eea,#764ba2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <Shield className="text-white" size={18} />
-            </div>
-            <span
-              style={{
-                fontSize: 18, fontWeight: 700,
-                color: '#111827',
-              }}
-            >
-              InfluenceX
-            </span>
-          </div>
-
-          {/* heading */}
-          <div className="mb-8">
-            <h2
-              style={{
-                fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px',
-                color: '#111827', marginBottom: 6,
-              }}
-            >
-              Create Account
-            </h2>
-            <p style={{ color: '#6b7280', fontSize: 15 }}>
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                style={{ fontWeight: 700, color: '#667eea', textDecoration: 'none' }}
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-
-          {/* Step progress bar */}
-          <div className="mb-6">
-            <div style={{ display: 'flex', gap: 0, marginBottom: 8 }}>
-              {[1, 2, 3].map(s => (
-                <div
-                  key={s}
-                  style={{
-                    flex: 1,
-                    height: 4,
-                    background: step >= s ? 'linear-gradient(90deg, #667eea, #764ba2)' : '#e5e7eb',
-                    borderRadius: s === 1 ? '10px 0 0 10px' : s === 3 ? '0 10px 10px 0' : '0',
-                  }}
-                />
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              {stepLabels.map((lbl, i) => (
-                <span
-                  key={lbl}
-                  style={{
-                    fontSize: 11,
-                    color: step >= i + 1 ? '#667eea' : '#9ca3af',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.4px',
-                  }}
-                >
-                  {lbl}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* ── Account type selector ── */}
-            <div>
-              <label
-                style={{
-                  display: 'block', fontSize: 11, fontWeight: 700,
-                  letterSpacing: '0.08em', textTransform: 'uppercase',
-                  color: '#9ca3af', marginBottom: 10,
-                }}
-              >
-                Sign up as
-              </label>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {/* Brand */}
-                <button
-                  type="button"
-                  onClick={() => setUserType('brand')}
-                  style={{
-                    padding: '14px 12px',
-                    borderRadius: 12,
-                    border: userType === 'brand'
-                      ? '2px solid #667eea'
-                      : '2px solid #e5e7eb',
-                    background: userType === 'brand'
-                      ? '#f5f3ff'
-                      : '#fff',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: 8,
-                  }}
-                >
-                  <div
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Step 1: Basic Account Information */}
+            {step === 1 && (
+              <>
+                {/* ── Full Name (Full width) ── */}
+                <div className="lg:col-span-2">
+                  <label
                     style={{
-                      width: 38, height: 38, borderRadius: 10,
-                      background: userType === 'brand'
-                        ? 'linear-gradient(135deg,#667eea,#764ba2)'
-                        : '#f3f4f6',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.18s ease',
+                      display: 'block', fontSize: 13, fontWeight: 600,
+                      color: '#ffffff', marginBottom: 8,
                     }}
                   >
-                    <Building2
-                      size={18}
-                      style={{ color: userType === 'brand' ? '#fff' : '#6b7280' }}
+                    Full Name
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <User
+                      size={16}
+                      style={{
+                        position: 'absolute', left: 14, top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: errors.fullName ? '#ef4444' : '#9ca3af',
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={formData.fullName}
+                      name="fullName"
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        padding: '14px 16px 14px 44px',
+                        borderRadius: 12,
+                        border: `1.5px solid ${errors.fullName ? '#ef4444' : '#333333'}`,
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontSize: 15,
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        boxSizing: 'border-box',
+                      }}
+                      onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                      onBlur={(e) => { e.target.style.borderColor = errors.fullName ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
                     />
                   </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <p
+                  {errors.fullName && (
+                    <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.fullName}</p>
+                  )}
+                </div>
+
+                {/* ── Email and Phone (Side by side on desktop) ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Email */}
+                  <div>
+                    <label
                       style={{
-                        fontSize: 14, fontWeight: 600,
-                        color: userType === 'brand'
-                          ? '#667eea'
-                          : '#374151',
+                        display: 'block', fontSize: 13, fontWeight: 600,
+                        color: '#ffffff', marginBottom: 8,
                       }}
                     >
-                      Brand
-                    </p>
-                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>
-                      Find creators
-                    </p>
+                      Email address
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <Mail
+                        size={16}
+                        style={{
+                          position: 'absolute', left: 14, top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: errors.email ? '#ef4444' : '#9ca3af',
+                        }}
+                      />
+                      <input
+                        type="email"
+                        placeholder="you@example.com"
+                        value={formData.email}
+                        name="email"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '14px 16px 14px 44px',
+                          borderRadius: 12,
+                          border: `1.5px solid ${errors.email ? '#ef4444' : '#333333'}`,
+                          background: '#1a1a1a',
+                          color: '#ffffff',
+                          fontSize: 15,
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.email ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.email}</p>
+                    )}
                   </div>
-                </button>
 
-                {/* Creator */}
-                <button
-                  type="button"
-                  onClick={() => setUserType('creator')}
-                  style={{
-                    padding: '14px 12px',
-                    borderRadius: 12,
-                    border: userType === 'creator'
-                      ? '2px solid #667eea'
-                      : '2px solid #e5e7eb',
-                    background: userType === 'creator'
-                      ? '#f5f3ff'
-                      : '#fff',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 38, height: 38, borderRadius: 10,
-                      background: userType === 'creator'
-                        ? 'linear-gradient(135deg,#667eea,#764ba2)'
-                        : '#f3f4f6',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.18s ease',
-                    }}
-                  >
-                    <Sparkles
-                      size={18}
-                      style={{ color: userType === 'creator' ? '#fff' : '#6b7280' }}
-                    />
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <p
+                  {/* Phone */}
+                  <div>
+                    <label
                       style={{
-                        fontSize: 14, fontWeight: 600,
-                        color: userType === 'creator'
-                          ? '#667eea'
-                          : '#374151',
+                        display: 'block', fontSize: 13, fontWeight: 600,
+                        color: '#ffffff', marginBottom: 8,
                       }}
                     >
-                      Creator
-                    </p>
-                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>
-                      Monetize audience
-                    </p>
+                      Phone Number
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <Phone
+                        size={16}
+                        style={{
+                          position: 'absolute', left: 14, top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: '#9ca3af',
+                        }}
+                      />
+                      <input
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        value={formData.phone}
+                        name="phone"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '14px 16px 14px 44px',
+                          borderRadius: 12,
+                          border: '1.5px solid #333333',
+                          background: '#1a1a1a',
+                          color: '#ffffff',
+                          fontSize: 15,
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                        onBlur={(e) => { e.target.style.borderColor = '#333333'; e.target.style.background = '#1a1a1a'; }}
+                      />
+                    </div>
                   </div>
-                </button>
-              </div>
-            </div>
+                </div>
 
-            {/* ── Full Name ── */}
-            <div>
-              <label
-                style={{
-                  display: 'block', fontSize: 13, fontWeight: 600,
-                  color: '#374151', marginBottom: 6,
-                }}
-              >
-                Full Name
-              </label>
-              <div style={{ position: 'relative' }}>
-                <User
-                  size={16}
-                  style={{
-                    position: 'absolute', left: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: errors.fullName ? '#ef4444' : '#9ca3af',
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  name="fullName"
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 40px',
-                    borderRadius: 10,
-                    border: `1.5px solid ${errors.fullName ? '#ef4444' : '#e5e7eb'}`,
-                    background: '#f9fafb',
-                    color: '#111827',
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'border-color 0.15s',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = errors.fullName ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-              </div>
-              {errors.fullName && (
-                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.fullName}</p>
-              )}
-            </div>
+                {/* ── Password and Confirm Password (Side by side on desktop) ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Password */}
+                  <div>
+                    <label
+                      style={{
+                        display: 'block', fontSize: 13, fontWeight: 600,
+                        color: '#ffffff', marginBottom: 8,
+                      }}
+                    >
+                      Password
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <Lock
+                        size={16}
+                        style={{
+                          position: 'absolute', left: 14, top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: errors.password ? '#ef4444' : '#9ca3af',
+                        }}
+                      />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a password"
+                        value={formData.password}
+                        name="password"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '14px 48px 14px 44px',
+                          borderRadius: 12,
+                          border: `1.5px solid ${errors.password ? '#ef4444' : '#333333'}`,
+                          background: '#1a1a1a',
+                          color: '#ffffff',
+                          fontSize: 15,
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.password ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute', right: 16, top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          color: '#9ca3af',
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.password}</p>
+                    )}
+                  </div>
 
-            {/* ── Email ── */}
-            <div>
-              <label
-                style={{
-                  display: 'block', fontSize: 13, fontWeight: 600,
-                  color: '#374151', marginBottom: 6,
-                }}
-              >
-                Email address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail
-                  size={16}
-                  style={{
-                    position: 'absolute', left: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: errors.email ? '#ef4444' : '#9ca3af',
-                  }}
-                />
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  name="email"
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 40px',
-                    borderRadius: 10,
-                    border: `1.5px solid ${errors.email ? '#ef4444' : '#e5e7eb'}`,
-                    background: '#f9fafb',
-                    color: '#111827',
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'border-color 0.15s',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = errors.email ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-              </div>
-              {errors.email && (
-                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.email}</p>
-              )}
-            </div>
+                  {/* Confirm Password */}
+                  <div>
+                    <label
+                      style={{
+                        display: 'block', fontSize: 13, fontWeight: 600,
+                        color: '#ffffff', marginBottom: 8,
+                      }}
+                    >
+                      Confirm Password
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <Lock
+                        size={16}
+                        style={{
+                          position: 'absolute', left: 14, top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: errors.confirmPassword ? '#ef4444' : '#9ca3af',
+                        }}
+                      />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm your password"
+                        value={formData.confirmPassword}
+                        name="confirmPassword"
+                        onChange={handleChange}
+                        style={{
+                          width: '100%',
+                          padding: '14px 48px 14px 44px',
+                          borderRadius: 12,
+                          border: `1.5px solid ${errors.confirmPassword ? '#ef4444' : '#333333'}`,
+                          background: '#1a1a1a',
+                          color: '#ffffff',
+                          fontSize: 15,
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{
+                          position: 'absolute', right: 16, top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          color: '#9ca3af',
+                        }}
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.confirmPassword}</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
-            {/* ── Phone ── */}
-            <div>
-              <label
-                style={{
-                  display: 'block', fontSize: 13, fontWeight: 600,
-                  color: '#374151', marginBottom: 6,
-                }}
-              >
-                Phone Number
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Phone
-                  size={16}
-                  style={{
-                    position: 'absolute', left: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#9ca3af',
-                  }}
-                />
-                <input
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  value={formData.phone}
-                  name="phone"
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 40px',
-                    borderRadius: 10,
-                    border: '1.5px solid #e5e7eb',
-                    background: '#f9fafb',
-                    color: '#111827',
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'border-color 0.15s',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-              </div>
-            </div>
-
-            {/* ── Password ── */}
-            <div>
-              <label
-                style={{
-                  display: 'block', fontSize: 13, fontWeight: 600,
-                  color: '#374151', marginBottom: 6,
-                }}
-              >
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  style={{
-                    position: 'absolute', left: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: errors.password ? '#ef4444' : '#9ca3af',
-                  }}
-                />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a password"
-                  value={formData.password}
-                  name="password"
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px 44px 12px 40px',
-                    borderRadius: 10,
-                    border: `1.5px solid ${errors.password ? '#ef4444' : '#e5e7eb'}`,
-                    background: '#f9fafb',
-                    color: '#111827',
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'border-color 0.15s',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = errors.password ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute', right: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                    color: '#9ca3af',
-                  }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.password}</p>
-              )}
-            </div>
-
-            {/* ── Confirm Password ── */}
-            <div>
-              <label
-                style={{
-                  display: 'block', fontSize: 13, fontWeight: 600,
-                  color: '#374151', marginBottom: 6,
-                }}
-              >
-                Confirm Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  style={{
-                    position: 'absolute', left: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: errors.confirmPassword ? '#ef4444' : '#9ca3af',
-                  }}
-                />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  name="confirmPassword"
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px 44px 12px 40px',
-                    borderRadius: 10,
-                    border: `1.5px solid ${errors.confirmPassword ? '#ef4444' : '#e5e7eb'}`,
-                    background: '#f9fafb',
-                    color: '#111827',
-                    fontSize: 14,
-                    outline: 'none',
-                    transition: 'border-color 0.15s',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{
-                    position: 'absolute', right: 14, top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                    color: '#9ca3af',
-                  }}
-                >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.confirmPassword}</p>
-              )}
-            </div>
-
+            {/* Step 2: Profile Details */}
             {step === 2 && (
               <>
-                {userType === 'brand' ? (
+                <div>
+                  <label
+                    style={{
+                      display: 'block', fontSize: 12, fontWeight: 700,
+                      letterSpacing: '0.08em', textTransform: 'uppercase',
+                      color: '#ffffff', marginBottom: 12,
+                    }}
+                  >
+                    Sign up as
+                  </label>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    {/* Brand */}
+                    <button
+                      type="button"
+                      onClick={() => setUserType('brand')}
+                      style={{
+                        padding: '20px 16px',
+                        borderRadius: 12,
+                        border: userType === 'brand'
+                          ? '2px solid #ffffff'
+                          : '2px solid #333333',
+                        background: userType === 'brand'
+                          ? '#1a1a1a'
+                          : '#000000',
+                        cursor: 'pointer',
+                        transition: 'all 0.18s ease',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', gap: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32, height: 32, borderRadius: 10,
+                          background: userType === 'brand'
+                            ? '#ffffff'
+                            : '#333333',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.18s ease',
+                        }}
+                      >
+                        <Building2
+                          size={16}
+                          style={{ color: userType === 'brand' ? '#000000' : '#ffffff' }}
+                        />
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p
+                          style={{
+                            fontSize: 14, fontWeight: 600,
+                            color: userType === 'brand'
+                              ? '#ffffff'
+                              : '#ffffff',
+                          }}
+                        >
+                          Brand
+                        </p>
+                        <p style={{ fontSize: 11, color: '#cccccc', marginTop: 2 }}>
+                          Find creators
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Creator */}
+                    <button
+                      type="button"
+                      onClick={() => setUserType('creator')}
+                      style={{
+                        padding: '20px 16px',
+                        borderRadius: 12,
+                        border: userType === 'creator'
+                          ? '2px solid #ffffff'
+                          : '2px solid #333333',
+                        background: userType === 'creator'
+                          ? '#1a1a1a'
+                          : '#000000',
+                        cursor: 'pointer',
+                        transition: 'all 0.18s ease',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', gap: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32, height: 32, borderRadius: 10,
+                          background: userType === 'creator'
+                            ? '#ffffff'
+                            : '#333333',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.18s ease',
+                        }}
+                      >
+                        <Sparkles
+                          size={18}
+                          style={{ color: userType === 'creator' ? '#000000' : '#ffffff' }}
+                        />
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p
+                          style={{
+                            fontSize: 14, fontWeight: 600,
+                            color: userType === 'creator'
+                              ? '#ffffff'
+                              : '#ffffff',
+                          }}
+                        >
+                          Creator
+                        </p>
+                        <p style={{ fontSize: 11, color: '#cccccc', marginTop: 2 }}>
+                          Monetize audience
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+            {/* Brand specific fields */}
+                {userType === 'brand' && (
                   <>
-                    {/* ── Brand Name ── */}
-                    <div>
-                      <label
-                        style={{
-                          display: 'block', fontSize: 13, fontWeight: 600,
-                          color: '#374151', marginBottom: 6,
-                        }}
-                      >
-                        Brand Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Enter your brand name"
-                        value={formData.brandName}
-                        name="brandName"
-                        onChange={handleChange}
-                        style={{
-                          width: '100%',
-                          padding: '12px 14px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${errors.brandName ? '#ef4444' : '#e5e7eb'}`,
-                          background: '#f9fafb',
-                          color: '#111827',
-                          fontSize: 14,
-                          outline: 'none',
-                          transition: 'border-color 0.15s',
-                          boxSizing: 'border-box',
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                        onBlur={(e) => { e.target.style.borderColor = errors.brandName ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                      />
-                      {errors.brandName && (
-                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.brandName}</p>
-                      )}
+                    {/* ── Brand Name and Industry (Side by side on desktop) ── */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Brand Name */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block', fontSize: 13, fontWeight: 600,
+                            color: '#ffffff', marginBottom: 8,
+                          }}
+                        >
+                          Brand Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter your brand name"
+                          value={formData.brandName}
+                          name="brandName"
+                          onChange={handleChange}
+                          style={{
+                            width: '100%',
+                            padding: '14px 16px',
+                            borderRadius: 12,
+                            border: `1.5px solid ${errors.brandName ? '#ef4444' : '#333333'}`,
+                            background: '#1a1a1a',
+                            color: '#ffffff',
+                            fontSize: 15,
+                            outline: 'none',
+                            transition: 'all 0.2s ease',
+                            boxSizing: 'border-box',
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                          onBlur={(e) => { e.target.style.borderColor = errors.brandName ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                        />
+                        {errors.brandName && (
+                          <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.brandName}</p>
+                        )}
+                      </div>
+
+                      {/* Industry */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block', fontSize: 13, fontWeight: 600,
+                            color: '#ffffff', marginBottom: 8,
+                          }}
+                        >
+                          Industry
+                        </label>
+                        <select
+                          value={formData.industry}
+                          name="industry"
+                          onChange={handleChange}
+                          style={{
+                            width: '100%',
+                            padding: '14px 16px',
+                            borderRadius: 12,
+                            border: `1.5px solid ${errors.industry ? '#ef4444' : '#333333'}`,
+                            background: '#1a1a1a',
+                            color: '#ffffff',
+                            fontSize: 15,
+                            outline: 'none',
+                            transition: 'all 0.2s ease',
+                            boxSizing: 'border-box',
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                          onBlur={(e) => { e.target.style.borderColor = errors.industry ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                        >
+                          <option value="">Select industry</option>
+                          {brandIndustries.map(i => (
+                            <option key={i.value} value={i.value}>{i.label}</option>
+                          ))}
+                        </select>
+                        {errors.industry && (
+                          <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.industry}</p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* ── Industry ── */}
+                    {/* ── Website (Full width) ── */}
                     <div>
                       <label
                         style={{
                           display: 'block', fontSize: 13, fontWeight: 600,
-                          color: '#374151', marginBottom: 6,
-                        }}
-                      >
-                        Industry
-                      </label>
-                      <select
-                        value={formData.industry}
-                        name="industry"
-                        onChange={handleChange}
-                        style={{
-                          width: '100%',
-                          padding: '12px 14px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${errors.industry ? '#ef4444' : '#e5e7eb'}`,
-                          background: '#f9fafb',
-                          color: '#111827',
-                          fontSize: 14,
-                          outline: 'none',
-                          transition: 'border-color 0.15s',
-                          boxSizing: 'border-box',
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                        onBlur={(e) => { e.target.style.borderColor = errors.industry ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                      >
-                        <option value="">Select industry</option>
-                        {brandIndustries.map(i => (
-                          <option key={i.value} value={i.value}>{i.label}</option>
-                        ))}
-                      </select>
-                      {errors.industry && (
-                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.industry}</p>
-                      )}
-                    </div>
-
-                    {/* ── Website ── */}
-                    <div>
-                      <label
-                        style={{
-                          display: 'block', fontSize: 13, fontWeight: 600,
-                          color: '#374151', marginBottom: 6,
+                          color: '#ffffff', marginBottom: 8,
                         }}
                       >
                         Website
@@ -876,102 +805,108 @@ const Signup = () => {
                           onChange={handleChange}
                           style={{
                             width: '100%',
-                            padding: '12px 14px 12px 40px',
-                            borderRadius: 10,
-                            border: '1.5px solid #e5e7eb',
-                            background: '#f9fafb',
-                            color: '#111827',
-                            fontSize: 14,
+                            padding: '14px 16px 14px 44px',
+                            borderRadius: 12,
+                            border: '1.5px solid #333333',
+                            background: '#1a1a1a',
+                            color: '#ffffff',
+                            fontSize: 15,
                             outline: 'none',
-                            transition: 'border-color 0.15s',
+                            transition: 'all 0.2s ease',
                             boxSizing: 'border-box',
                           }}
-                          onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                          onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                          onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                          onBlur={(e) => { e.target.style.borderColor = '#333333'; e.target.style.background = '#1a1a1a'; }}
                         />
                       </div>
                     </div>
                   </>
-                ) : (
+                )}
+
+                {/* Creator specific fields */}
+                {userType === 'creator' && (
                   <>
-                    {/* ── Display Name ── */}
-                    <div>
-                      <label
-                        style={{
-                          display: 'block', fontSize: 13, fontWeight: 600,
-                          color: '#374151', marginBottom: 6,
-                        }}
-                      >
-                        Display Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="How should brands address you?"
-                        value={formData.displayName}
-                        name="displayName"
-                        onChange={handleChange}
-                        style={{
-                          width: '100%',
-                          padding: '12px 14px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${errors.displayName ? '#ef4444' : '#e5e7eb'}`,
-                          background: '#f9fafb',
-                          color: '#111827',
-                          fontSize: 14,
-                          outline: 'none',
-                          transition: 'border-color 0.15s',
-                          boxSizing: 'border-box',
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                        onBlur={(e) => { e.target.style.borderColor = errors.displayName ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                      />
-                      {errors.displayName && (
-                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.displayName}</p>
-                      )}
+                    {/* ── Display Name and Handle (Side by side on desktop) ── */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Display Name */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block', fontSize: 13, fontWeight: 600,
+                            color: '#ffffff', marginBottom: 8,
+                          }}
+                        >
+                          Display Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="How should brands address you?"
+                          value={formData.displayName}
+                          name="displayName"
+                          onChange={handleChange}
+                          style={{
+                            width: '100%',
+                            padding: '14px 16px',
+                            borderRadius: 12,
+                            border: `1.5px solid ${errors.displayName ? '#ef4444' : '#333333'}`,
+                            background: '#1a1a1a',
+                            color: '#ffffff',
+                            fontSize: 15,
+                            outline: 'none',
+                            transition: 'all 0.2s ease',
+                            boxSizing: 'border-box',
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                          onBlur={(e) => { e.target.style.borderColor = errors.displayName ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                        />
+                        {errors.displayName && (
+                          <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.displayName}</p>
+                        )}
+                      </div>
+
+                      {/* Handle */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block', fontSize: 13, fontWeight: 600,
+                            color: '#ffffff', marginBottom: 8,
+                          }}
+                        >
+                          Handle
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="username (without @)"
+                          value={formData.handle}
+                          name="handle"
+                          onChange={handleChange}
+                          style={{
+                            width: '100%',
+                            padding: '14px 16px',
+                            borderRadius: 12,
+                            border: `1.5px solid ${errors.handle ? '#ef4444' : '#333333'}`,
+                            background: '#1a1a1a',
+                            color: '#ffffff',
+                            fontSize: 15,
+                            outline: 'none',
+                            transition: 'all 0.2s ease',
+                            boxSizing: 'border-box',
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                          onBlur={(e) => { e.target.style.borderColor = errors.handle ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
+                        />
+                        {errors.handle && (
+                          <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.handle}</p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* ── Handle ── */}
+                    {/* ── Primary Niche (Full width) ── */}
                     <div>
                       <label
                         style={{
                           display: 'block', fontSize: 13, fontWeight: 600,
-                          color: '#374151', marginBottom: 6,
-                        }}
-                      >
-                        Handle
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="username (without @)"
-                        value={formData.handle}
-                        name="handle"
-                        onChange={handleChange}
-                        style={{
-                          width: '100%',
-                          padding: '12px 14px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${errors.handle ? '#ef4444' : '#e5e7eb'}`,
-                          background: '#f9fafb',
-                          color: '#111827',
-                          fontSize: 14,
-                          outline: 'none',
-                          transition: 'border-color 0.15s',
-                          boxSizing: 'border-box',
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                        onBlur={(e) => { e.target.style.borderColor = errors.handle ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                      />
-                      {errors.handle && (
-                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.handle}</p>
-                      )}
-                    </div>
-
-                    {/* ── Primary Niche ── */}
-                    <div>
-                      <label
-                        style={{
-                          display: 'block', fontSize: 13, fontWeight: 600,
-                          color: '#374151', marginBottom: 6,
+                          color: '#ffffff', marginBottom: 8,
                         }}
                       >
                         Primary Niche
@@ -982,18 +917,18 @@ const Signup = () => {
                         onChange={handleChange}
                         style={{
                           width: '100%',
-                          padding: '12px 14px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${errors.niche ? '#ef4444' : '#e5e7eb'}`,
-                          background: '#f9fafb',
-                          color: '#111827',
-                          fontSize: 14,
+                          padding: '14px 16px',
+                          borderRadius: 12,
+                          border: `1.5px solid ${errors.niche ? '#ef4444' : '#333333'}`,
+                          background: '#1a1a1a',
+                          color: '#ffffff',
+                          fontSize: 15,
                           outline: 'none',
-                          transition: 'border-color 0.15s',
+                          transition: 'all 0.2s ease',
                           boxSizing: 'border-box',
                         }}
-                        onFocus={(e) => { e.target.style.borderColor = '#667eea'; e.target.style.background = '#fff'; }}
-                        onBlur={(e) => { e.target.style.borderColor = errors.niche ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                        onFocus={(e) => { e.target.style.borderColor = '#ffffff'; e.target.style.background = '#000000'; }}
+                        onBlur={(e) => { e.target.style.borderColor = errors.niche ? '#ef4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
                       >
                         <option value="">Select your niche</option>
                         {creatorNiches.map(n => (
@@ -1001,7 +936,7 @@ const Signup = () => {
                         ))}
                       </select>
                       {errors.niche && (
-                        <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.niche}</p>
+                        <p style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>{errors.niche}</p>
                       )}
                     </div>
                   </>
@@ -1011,10 +946,10 @@ const Signup = () => {
                 {RECAPTCHA_SITE_KEY ? (
                   <div
                     style={{
-                      padding: '14px 16px',
-                      borderRadius: 10,
-                      border: `1.5px solid ${errors.captcha ? '#ef4444' : '#e5e7eb'}`,
-                      background: '#f9fafb',
+                      padding: '16px 18px',
+                      borderRadius: 12,
+                      border: `1.5px solid ${errors.captcha ? '#ef4444' : '#333333'}`,
+                      background: '#1a1a1a',
                     }}
                   >
                     <ReCAPTCHA
@@ -1027,8 +962,8 @@ const Signup = () => {
                     )}
                   </div>
                 ) : (
-                  <div style={{ padding: '10px 14px', background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 10 }}>
-                    <p style={{ fontSize: 12, color: '#92400e' }}>⚠️ reCAPTCHA not configured. Set VITE_RECAPTCHA_SITE_KEY in .env</p>
+                  <div style={{ padding: '12px 16px', background: '#1a1a1a', border: '1.5px solid #333333', borderRadius: 12 }}>
+                    <p style={{ fontSize: 12, color: '#9ca3af' }}>⚠️ reCAPTCHA not configured. Set VITE_RECAPTCHA_SITE_KEY in .env</p>
                   </div>
                 )}
               </>
@@ -1039,24 +974,23 @@ const Signup = () => {
                 <div
                   style={{
                     width: 80, height: 80, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #d0f4ff, #e0fbff)',
-                    border: '3px solid #667eea',
+                    background: 'linear-gradient(135deg, #ffffff, #cccccc)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 18px',
-                    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)',
+                    boxShadow: '0 8px 24px rgba(255, 255, 255, 0.1)',
                   }}
                 >
-                  <CheckCircle size={38} color="#667eea" />
+                  <CheckCircle size={38} color="#ffffff" />
                 </div>
                 <div
                   style={{
                     fontSize: 20, fontWeight: 700,
-                    color: '#111827', marginBottom: 10,
+                    color: '#ffffff', marginBottom: 10,
                   }}
                 >
                   Almost there!
                 </div>
-                <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, marginBottom: 14 }}>
+                <p style={{ fontSize: 14, color: '#ffffff', lineHeight: 1.6, marginBottom: 14 }}>
                   We've sent a verification code to your email.<br />
                   Please check your inbox and verify your email address.
                 </p>
@@ -1067,7 +1001,7 @@ const Signup = () => {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#667eea',
+                      color: '#ffffff',
                       fontSize: 13,
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -1086,46 +1020,59 @@ const Signup = () => {
               disabled={loading || authLoading || (step === 2 && !captchaToken)}
               style={{
                 width: '100%',
-                padding: '13px 20px',
-                borderRadius: 10,
+                padding: '16px 24px',
+                borderRadius: 12,
                 border: 'none',
                 background: (loading || authLoading || (step === 2 && !captchaToken))
-                  ? '#a5b4fc'
-                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: '#fff',
-                fontSize: 15,
+                  ? '#444444'
+                  : 'linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)',
+                color: '#000000',
+                fontSize: 16,
                 fontWeight: 700,
                 cursor: (loading || authLoading || (step === 2 && !captchaToken)) ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'opacity 0.2s, transform 0.1s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                transition: 'all 0.3s ease',
                 letterSpacing: '0.01em',
+                marginTop: 8,
               }}
-              onMouseEnter={(e) => { if (!loading && !authLoading && !(step === 2 && !captchaToken)) e.target.style.opacity = '0.92'; }}
-              onMouseLeave={(e) => { e.target.style.opacity = '1'; }}
+              onMouseEnter={(e) => { 
+                if (!loading && !authLoading && !(step === 2 && !captchaToken)) {
+                  e.target.style.background = 'linear-gradient(135deg, #f0f0f0 0%, #d0d0d0 100%)';
+                  e.target.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => { 
+                e.target.style.background = (loading || authLoading || (step === 2 && !captchaToken))
+                  ? '#444444'
+                  : 'linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)';
+                e.target.style.transform = 'translateY(0px)';
+              }}
             >
               {loading || authLoading ? (
                 <div
                   style={{
                     width: 20, height: 20, borderRadius: '50%',
-                    border: '2px solid rgba(255,255,255,0.4)',
-                    borderTopColor: '#fff',
+                    border: '2px solid rgba(0,0,0,0.3)',
+                    borderTopColor: '#000',
                     animation: 'spin 0.7s linear infinite',
                   }}
                 />
               ) : (
                 <>
                   {step === 1 ? 'Continue' : step === 2 ? 'Create Account' : 'Go to Dashboard'}
-                  <ArrowRight size={17} />
+                  <ArrowRight size={18} />
                 </>
               )}
             </button>
 
             {/* ── Footer links ── */}
-            <p style={{ textAlign: 'center', fontSize: 14, color: '#6b7280' }}>
+            <p style={{ textAlign: 'center', fontSize: 14, color: '#cccccc', marginTop: 16 }}>
               Already have an account?{' '}
               <Link
                 to="/login"
-                style={{ fontWeight: 700, color: '#667eea', textDecoration: 'none' }}
+                style={{ fontWeight: 700, color: '#ffffff', textDecoration: 'none' }}
+                onMouseEnter={(e) => { e.target.style.color = '#cccccc'; }}
+                onMouseLeave={(e) => { e.target.style.color = '#ffffff'; }}
               >
                 Sign in
               </Link>
@@ -1134,25 +1081,20 @@ const Signup = () => {
             <div
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 6, paddingTop: 4,
+                gap: 8, paddingTop: 8,
               }}
             >
-              <Shield size={11} style={{ color: '#d1d5db' }} />
-              <span style={{ fontSize: 11, color: '#9ca3af' }}>
+              <Shield size={12} style={{ color: '#9ca3af' }} />
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>
                 Your information is secure and encrypted
               </span>
             </div>
 
           </form>
+
         </div>
       </div>
-
-      {/* spin keyframe injected inline */}
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        input::placeholder { color: #9ca3af; }
-      `}</style>
-    </div>
+    </>
   );
 };
 

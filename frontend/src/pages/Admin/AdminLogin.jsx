@@ -71,144 +71,24 @@ const AdminLogin = () => {
 
   return (
     <div
-      className="min-h-screen flex"
+      className="min-h-screen flex items-center justify-center"
       style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#000000',
       }}
     >
-      {/* ── Left decorative panel ── */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
-        {/* floating blobs */}
-        <div
-          style={{
-            position: 'absolute', width: 340, height: 340, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.05)', top: -80, left: -80,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', width: 220, height: 220, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.03)', bottom: 80, right: -40,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', width: 140, height: 140, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.07)', top: '45%', left: '60%',
-          }}
-        />
-
-        {/* brand mark */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div
-              style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: 'rgba(255,255,255,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <Settings className="text-white" size={22} />
-            </div>
-            <span style={{ color: '#fff', fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px' }}>
-              InfluenceX Admin
-            </span>
-          </div>
-        </div>
-
-        {/* hero copy */}
-        <div className="relative z-10">
-          <h1
-            style={{
-              color: '#fff', fontSize: 42, fontWeight: 800,
-              lineHeight: 1.15, letterSpacing: '-1px', marginBottom: 20,
-            }}
-          >
-            Admin Control<br />Center.
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 17, lineHeight: 1.7, maxWidth: 360 }}>
-            Complete administrative control over the InfluenceX platform.
-            Manage users, monitor analytics, and ensure system integrity.
-          </p>
-
-          {/* admin features */}
-          <div className="space-y-4 mt-10">
-            {[
-              { icon: Database, text: 'Database Management' },
-              { icon: BarChart, text: 'Analytics & Reports' },
-              { icon: Shield, text: 'Security & Compliance' },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <div
-                  style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: 'rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <Icon className="text-white" size={16} />
-                </div>
-                <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-                  {text}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* bottom tag */}
-        <div
-          className="relative z-10 flex items-center gap-2"
-          style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}
-        >
-          <Shield size={13} />
-          <span>Secure administrative access</span>
-        </div>
-      </div>
-
-      {/* ── Right form panel ── */}
-      <div
-        className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10"
-        style={{
-          background: '#fff',
-          borderRadius: '0',
-        }}
-      >
-        <div className="w-full" style={{ maxWidth: 420 }}>
-
-          {/* mobile logo */}
-          <div className="flex lg:hidden items-center gap-2 mb-8">
-            <div
-              style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'linear-gradient(135deg,#1e293b,#475569)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <Settings className="text-white" size={18} />
-            </div>
-            <span
-              style={{
-                fontSize: 18, fontWeight: 700,
-                color: '#111827',
-              }}
-            >
-              Admin Panel
-            </span>
-          </div>
-
+      <div className="w-full p-4 sm:p-6 md:p-8" style={{ maxWidth: 480 }}>
+         
           {/* heading */}
           <div className="mb-8">
             <h2
               style={{
-                fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px',
-                color: '#111827', marginBottom: 6,
+                fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px',
+                color: '#ffffff', marginBottom: 8,
               }}
             >
               Admin Sign In
             </h2>
-            <p style={{ color: '#6b7280', fontSize: 15 }}>
+            <p style={{ color: '#cccccc', fontSize: 15, lineHeight: 1.5 }}>
               Enter your admin credentials to access the control panel
             </p>
           </div>
@@ -220,8 +100,8 @@ const AdminLogin = () => {
               <div>
                 <label
                   style={{
-                    display: 'block', fontSize: 13, fontWeight: 600,
-                    color: '#374151', marginBottom: 6,
+                    display: 'block', fontSize: 14, fontWeight: 600,
+                    color: '#ffffff', marginBottom: 8,
                   }}
                 >
                   Admin email address
@@ -232,7 +112,7 @@ const AdminLogin = () => {
                     style={{
                       position: 'absolute', left: 14, top: '50%',
                       transform: 'translateY(-50%)',
-                      color: errors.email ? '#ef4444' : '#9ca3af',
+                      color: errors.email ? '#ff4444' : '#cccccc',
                     }}
                   />
                   <input
@@ -245,22 +125,22 @@ const AdminLogin = () => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '12px 14px 12px 40px',
+                      padding: '14px 16px 14px 42px',
                       borderRadius: 10,
-                      border: `1.5px solid ${errors.email ? '#ef4444' : '#e5e7eb'}`,
-                      background: '#f9fafb',
-                      color: '#111827',
+                      border: `1.5px solid ${errors.email ? '#ff4444' : '#333333'}`,
+                      background: '#1a1a1a',
+                      color: '#ffffff',
                       fontSize: 14,
                       outline: 'none',
                       transition: 'border-color 0.15s',
                       boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = '#1e293b'; e.target.style.background = '#fff'; }}
-                    onBlur={(e) => { e.target.style.borderColor = errors.email ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                    onFocus={(e) => { e.target.style.borderColor = '#666666'; e.target.style.background = '#1a1a1a'; }}
+                    onBlur={(e) => { e.target.style.borderColor = errors.email ? '#ff4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
                   />
                 </div>
                 {errors.email && (
-                  <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.email}</p>
+                  <p style={{ marginTop: 5, fontSize: 12, color: '#ff4444' }}>{errors.email}</p>
                 )}
               </div>
 
@@ -269,8 +149,8 @@ const AdminLogin = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <label
                     style={{
-                      fontSize: 13, fontWeight: 600,
-                      color: '#374151',
+                      fontSize: 14, fontWeight: 600,
+                      color: '#ffffff',
                     }}
                   >
                     Admin password
@@ -283,7 +163,7 @@ const AdminLogin = () => {
                     style={{
                       position: 'absolute', left: 14, top: '50%',
                       transform: 'translateY(-50%)',
-                      color: errors.password ? '#ef4444' : '#9ca3af',
+                      color: errors.password ? '#ff4444' : '#cccccc',
                     }}
                   />
                   <input
@@ -296,18 +176,18 @@ const AdminLogin = () => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '12px 44px 12px 40px',
+                      padding: '14px 46px 14px 42px',
                       borderRadius: 10,
-                      border: `1.5px solid ${errors.password ? '#ef4444' : '#e5e7eb'}`,
-                      background: '#f9fafb',
-                      color: '#111827',
+                      border: `1.5px solid ${errors.password ? '#ff4444' : '#333333'}`,
+                      background: '#1a1a1a',
+                      color: '#ffffff',
                       fontSize: 14,
                       outline: 'none',
                       transition: 'border-color 0.15s',
                       boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = '#1e293b'; e.target.style.background = '#fff'; }}
-                    onBlur={(e) => { e.target.style.borderColor = errors.password ? '#ef4444' : '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                    onFocus={(e) => { e.target.style.borderColor = '#666666'; e.target.style.background = '#1a1a1a'; }}
+                    onBlur={(e) => { e.target.style.borderColor = errors.password ? '#ff4444' : '#333333'; e.target.style.background = '#1a1a1a'; }}
                   />
                   <button
                     type="button"
@@ -316,7 +196,7 @@ const AdminLogin = () => {
                       position: 'absolute', right: 14, top: '50%',
                       transform: 'translateY(-50%)',
                       background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                      color: '#9ca3af',
+                      color: '#cccccc',
                     }}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -324,7 +204,7 @@ const AdminLogin = () => {
                 </div>
 
                 {errors.password && (
-                  <p style={{ marginTop: 5, fontSize: 12, color: '#ef4444' }}>{errors.password}</p>
+                  <p style={{ marginTop: 5, fontSize: 12, color: '#ff4444' }}>{errors.password}</p>
                 )}
               </div>
 
@@ -334,13 +214,13 @@ const AdminLogin = () => {
                 disabled={loading || authLoading}
                 style={{
                   width: '100%',
-                  padding: '13px 20px',
+                  padding: '14px 20px',
                   borderRadius: 10,
-                  border: 'none',
+                  border: '1px solid #333333',
                   background: (loading || authLoading)
-                    ? '#a5b4fc'
-                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: '#fff',
+                    ? '#1a1a1a'
+                    : '#333333',
+                  color: '#ffffff',
                   fontSize: 15,
                   fontWeight: 700,
                   cursor: (loading || authLoading) ? 'not-allowed' : 'pointer',
@@ -348,8 +228,8 @@ const AdminLogin = () => {
                   transition: 'opacity 0.2s, transform 0.1s',
                   letterSpacing: '0.01em',
                 }}
-                onMouseEnter={(e) => { if (!loading && !authLoading) e.target.style.opacity = '0.92'; }}
-                onMouseLeave={(e) => { e.target.style.opacity = '1'; }}
+                onMouseEnter={(e) => { if (!loading && !authLoading) e.target.style.background = '#404040'; }}
+                onMouseLeave={(e) => { e.target.style.background = '#333333'; }}
               >
                 {loading || authLoading ? (
                   <div
@@ -373,11 +253,11 @@ const AdminLogin = () => {
                 <Link
                   to="/login"
                   style={{
-                    fontSize: 12, color: '#9ca3af',
+                    fontSize: 12, color: '#cccccc',
                     textDecoration: 'none', transition: 'color 0.15s',
                   }}
-                  onMouseEnter={(e) => { e.target.style.color = '#6b7280'; }}
-                  onMouseLeave={(e) => { e.target.style.color = '#9ca3af'; }}
+                  onMouseEnter={(e) => { e.target.style.color = '#ffffff'; }}
+                  onMouseLeave={(e) => { e.target.style.color = '#cccccc'; }}
                 >
                   ← Back to User Login
                 </Link>
@@ -389,8 +269,8 @@ const AdminLogin = () => {
                   gap: 6, paddingTop: 4,
                 }}
               >
-                <Shield size={11} style={{ color: '#d1d5db' }} />
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                <Shield size={11} style={{ color: '#cccccc' }} />
+                <span style={{ fontSize: 11, color: '#cccccc' }}>
                   Administrative access is monitored and logged
                 </span>
               </div>
@@ -402,17 +282,17 @@ const AdminLogin = () => {
                 style={{
                   padding: '16px 20px',
                   borderRadius: 10,
-                  border: '1.5px solid #3b82f6',
-                  background: '#eff6ff',
+                  border: '1.5px solid #666666',
+                  background: '#1a1a1a',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <Shield size={15} style={{ color: '#3b82f6' }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1e40af' }}>
+                  <Shield size={15} style={{ color: '#ffffff' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#ffffff' }}>
                     2FA Verification Required
                   </span>
                 </div>
-                <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: '#cccccc', lineHeight: 1.5 }}>
                   Enter the 6-digit code from your authenticator app to complete admin authentication.
                 </p>
               </div>
@@ -420,8 +300,8 @@ const AdminLogin = () => {
               <div>
                 <label
                   style={{
-                    display: 'block', fontSize: 13, fontWeight: 600,
-                    color: '#374151', marginBottom: 6,
+                    display: 'block', fontSize: 14, fontWeight: 600,
+                    color: '#ffffff', marginBottom: 8,
                   }}
                 >
                   Authentication Code
@@ -435,11 +315,11 @@ const AdminLogin = () => {
                   autoFocus
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '14px 16px',
                     borderRadius: 10,
-                    border: '1.5px solid #e5e7eb',
-                    background: '#f9fafb',
-                    color: '#111827',
+                    border: '1.5px solid #333333',
+                    background: '#1a1a1a',
+                    color: '#ffffff',
                     fontSize: 20,
                     fontWeight: 600,
                     textAlign: 'center',
@@ -448,8 +328,8 @@ const AdminLogin = () => {
                     transition: 'border-color 0.15s',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = '#1e293b'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                  onFocus={(e) => { e.target.style.borderColor = '#666666'; e.target.style.background = '#1a1a1a'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#333333'; e.target.style.background = '#1a1a1a'; }}
                 />
               </div>
 
@@ -458,13 +338,13 @@ const AdminLogin = () => {
                 disabled={loading || authLoading || twoFactorCode.length !== 6}
                 style={{
                   width: '100%',
-                  padding: '13px 20px',
+                  padding: '14px 20px',
                   borderRadius: 10,
-                  border: 'none',
+                  border: '1px solid #333333',
                   background: (loading || authLoading || twoFactorCode.length !== 6)
-                    ? '#a5b4fc'
-                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: '#fff',
+                    ? '#1a1a1a'
+                    : '#333333',
+                  color: '#ffffff',
                   fontSize: 15,
                   fontWeight: 700,
                   cursor: (loading || authLoading || twoFactorCode.length !== 6) ? 'not-allowed' : 'pointer',
@@ -472,8 +352,8 @@ const AdminLogin = () => {
                   transition: 'opacity 0.2s, transform 0.1s',
                   letterSpacing: '0.01em',
                 }}
-                onMouseEnter={(e) => { if (!loading && !authLoading && twoFactorCode.length === 6) e.target.style.opacity = '0.92'; }}
-                onMouseLeave={(e) => { e.target.style.opacity = '1'; }}
+                onMouseEnter={(e) => { if (!loading && !authLoading && twoFactorCode.length === 6) e.target.style.background = '#404040'; }}
+                onMouseLeave={(e) => { e.target.style.background = '#333333'; }}
               >
                 {loading || authLoading ? (
                   <div
@@ -502,20 +382,19 @@ const AdminLogin = () => {
                   padding: '10px',
                   background: 'none',
                   border: 'none',
-                  color: '#6b7280',
+                  color: '#cccccc',
                   fontSize: 13,
                   cursor: 'pointer',
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={(e) => { e.target.style.color = '#374151'; }}
-                onMouseLeave={(e) => { e.target.style.color = '#6b7280'; }}
+                onMouseEnter={(e) => { e.target.style.color = '#ffffff'; }}
+                onMouseLeave={(e) => { e.target.style.color = '#cccccc'; }}
               >
                 ← Back to Login
               </button>
             </form>
           )}
         </div>
-      </div>
 
       {/* spin keyframe injected inline */}
       <style>{`

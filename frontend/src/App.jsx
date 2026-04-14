@@ -27,6 +27,8 @@ import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 import VerifyEmail from './pages/Auth/VerifyEmail';
 import Verify2FA from './pages/Auth/Verify2FA';
+import SearchResults from './pages/SearchResults';
+import PublicCreatorProfile from './pages/CreatorProfile';
 import NotFound from './pages/NotFound';
 
 // Brand Pages
@@ -151,6 +153,8 @@ function App() {
                           <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/verify-email" element={<VerifyEmail />} />
                           <Route path="/2fa-verify" element={<Verify2FA />} />
+                          <Route path="/search" element={<SearchResults />} />
+                          <Route path="/creator/:id" element={<PublicCreatorProfile />} />
                           <Route path="/pricing" element={<Pricing />} />
                          <Route path="/admin/login" element={<AdminLogin />} />
 

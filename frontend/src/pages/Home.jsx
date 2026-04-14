@@ -1,1444 +1,1043 @@
-import { Link } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
-import { useSubscription } from '../context/SubscriptionContext';
-import { 
-  CpuChipIcon,
-  ChartBarIcon, 
-  CurrencyDollarIcon, 
-  ShieldCheckIcon,
-  UserGroupIcon,
-  RocketLaunchIcon,
-  CheckBadgeIcon,
-  ArrowTrendingUpIcon,
-  CameraIcon,
-  VideoCameraIcon,
-  MusicalNoteIcon,
-  BuildingOfficeIcon,
-  StarIcon,
-  ChevronRightIcon,
-  EnvelopeIcon,
-  PhoneIcon,
-  MapPinIcon,
-  BanknotesIcon,
-  DocumentTextIcon,
-  MagnifyingGlassIcon
-} from '@heroicons/react/24/outline';
-import { 
-  FaInstagram, 
-  FaYoutube, 
-  FaTiktok,
-  FaTwitter,
-  FaFacebook,
-  FaLinkedin
-} from 'react-icons/fa';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import videoSrc from '../assets/vedio.mp4';
+import image from '../assets/image.png';
+import image1home from '../assets/image1home.jpg';
+import image2home from '../assets/image2home.png';
+import image3home from '../assets/image3home.jpg';
+import image4home from '../assets/image4home.jpg';
+import homevedio1 from '../assets/homevedio1.mp4';
+import homevedio2 from '../assets/homevedio2.mp4';
+import homevedio3 from '../assets/homevedio3.mp4';
+import img1 from '../assets/1.jpg';
+import img2 from '../assets/2.jpg';
+import img3 from '../assets/3.jpg';
+import img4 from '../assets/4.jpg';
+import img5 from '../assets/5.jpg';
+import img6 from '../assets/6.jpg';
+import img7 from '../assets/7.jpg';
+import img8 from '../assets/8.jpg';
+import img9 from '../assets/9.jpg';
+import img10 from '../assets/10.jpg';
+import img11 from '../assets/11.jpg';
+import thirdsection from '../assets/third.jpg';
+import image1 from '../assets/image1.png';
+import image2 from '../assets/image2.png';
+import image3 from '../assets/image3.png';
+import image4 from '../assets/image4.png';
+import logo from '../assets/logomark-animated.webp';
+import bg from '../assets/lastimage.jpg';
 
-const normalizePlanId = (value) => {
-  if (value === null || value === undefined) return '';
-
-  if (typeof value === 'string') {
-    return value.trim().toLowerCase();
+const mediaItems = [
+  {
+    type: 'image',
+    src: image1home,
+    alt: 'Creative professional working',
+    text: 'Your Space Your Vision',
+    subtext: 'build your way'
+  },
+  {
+    type: 'video',
+    src: homevedio1,
+    alt: 'Creative process video',
+    text: 'From You to Your Crew',
+    subtext: 'every idea counts'
+  },
+  {
+    type: 'video',
+    src: homevedio2,
+    alt: 'Motion graphics reel',
+    text: 'Creative Reality Unleashed',
+    subtext: 'redefined'
+  },
+  {
+    type: 'image',
+    src: image3home,
+    alt: 'Digital art creation',
+    text: 'Voice Driven Control',
+    subtext: 'no limits'
+  },
+  {
+    type: 'image',
+    src: image4home,
+    alt: 'Design workspace',
+    text: 'Creators Build Careers',
+    subtext: 'one frame at a time'
+  },
+  {
+    type: 'video',
+    src: homevedio3,
+    alt: 'Final masterpiece',
+    text: 'Podcasts into Stories',
+    subtext: 'start today'
   }
+];
 
-  if (typeof value === 'object') {
-    if (typeof value.planId === 'string') return value.planId.trim().toLowerCase();
-    if (typeof value.id === 'string') return value.id.trim().toLowerCase();
-    if (typeof value._id === 'string') return value._id.trim().toLowerCase();
-  }
+const CreatorShowcase = () => {
+ const showcaseImages = [
+  { src: img1, name: "Emily Carter" },    
+  { src: img2, name: "Kevin Woo" },
+  { src: img3, name: "Olivia Brooks" },    
+  { src: img4, name: "Tim Chantarangsu" },
+  { src: img5, name: "Sophia Miller" }, 
+  { src: img6, name: "Daniel Scott" },
+  { src: img7, name: "Ava Johnson" },     
+  { src: img8, name: "Lucas Bennett" },
+  { src: img9, name: "Ethan Parker" },
+  { src: img10, name: "Mia Thompson" },    
+  { src: img11, name: "Ryan Collins" }
 
-  return String(value).trim().toLowerCase();
+];
+
+  return (
+    <section className="relative w-full min-h-screen bg-[#B6C9DF] py-20 overflow-hidden flex flex-col justify-between">
+      
+      {/* Top Section: Creativity Powered */}
+      <div className="pl-6 md:pl-16 lg:pl-24 pt-10">
+        <h2 className="text-[#6B4F3B] text-3xl md:text-6xl lg:text-7xl font-light leading-none tracking-tighter uppercase">
+          creativity <br />
+          <span className="ml-12 md:ml-24">powered</span>
+        </h2>
+      </div>
+
+      {/* Auto-Scrolling Carousel Section */}
+      <div className="relative w-full py-12">
+        <div className="flex animate-slowScroll gap-8 px-4 w-max">
+          {[...showcaseImages, ...showcaseImages].map((img, index) => (
+            <div 
+              key={index} 
+              className={`flex-shrink-0 w-[70vw] md:w-[28vw] lg:w-[22vw] transition-transform duration-500
+                ${index % 2 === 0 ? 'mt-0' : 'mt-16 md:mt-32'}
+              `}
+            >
+              <div className="relative group overflow-hidden">
+                <img 
+                  src={img.src} 
+                  alt="Creator" 
+                  className="w-full aspect-[3/4] object-cover"
+                />
+                <div className="absolute bottom-4 left-4 text-white font-medium text-sm md:text-lg">
+                  {img.name} →
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Section: Text and Fandom */}
+      <div className="flex flex-col md:flex-row justify-between items-end px-6 md:px-16 lg:px-24 pb-10">
+        <div className="max-w-md mb-12 md:mb-0">
+          <p className="text-[#6B4F3B] text-lg md:text-xl font-medium leading-tight">
+            Influence is the best place to build community with your biggest fans, 
+            share exclusive work, and turn your passion into a lasting creative business.
+          </p>
+        </div>
+        
+        <div className="text-right">
+          <h2 className="text-[#6B4F3B] text-3xl md:text-6xl lg:text-7xl font-light leading-none uppercase">
+            by <br />
+            <span className="tracking-tighter">fandom</span>
+          </h2>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes slowScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-slowScroll {
+          animation: slowScroll 40s linear infinite;
+        }
+        .animate-slowScroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+    </section>
+  );
 };
+const QuoteSection = () => {
+  return (
+    <section className="relative w-full h-screen overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img 
+          src={thirdsection} 
+          alt="KAMAUU" 
+          className="w-full h-full object-cover"
+        />
+        {/* Subtle overlay */}
+        <div className="absolute inset-0 bg-black/10" />
+      </div>
 
-const BRAND_PRICING_TIERS = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: '$49',
-    period: '/month',
-    description: 'Perfect for small brands testing influencer marketing',
-    features: [
-      'Up to 3 active campaigns',
-      'Search 1000+ creators',
-      'Basic analytics',
-      'Email support',
-      'Standard contracts'
-    ],
-    cta: 'Start Free Trial',
-    popular: false,
-    gradient: 'from-gray-600 to-gray-800'
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: '$149',
-    period: '/month',
-    description: 'Ideal for growing brands with regular campaigns',
-    features: [
-      'Unlimited campaigns',
-      'Advanced AI matching',
-      'Real-time analytics',
-      'Priority support',
-      'Custom contracts',
-      'API access'
-    ],
-    cta: 'Get Started',
-    popular: true,
-    gradient: 'from-[#667eea] to-[#764ba2]'
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    description: 'For agencies and large brands with custom needs',
-    features: [
-      'Unlimited everything',
-      'Dedicated account manager',
-      'Custom integrations',
-      'SLA guarantee',
-      'Bulk creator invites',
-      'Advanced reporting'
-    ],
-    cta: 'Contact Sales',
-    popular: false,
-    gradient: 'from-purple-600 to-pink-600'
-  }
-];
+      {/* Content Container - pb-4 (very bottom) aur max-w-3xl for smaller text width */}
+      <div className="relative h-full flex flex-col justify-end px-6 md:px-16 lg:px-24 pb-6 md:pb-10">
+        <div className="w-full max-w-6xl">
+          
+          {/* Quote Text - Size reduced to text-lg/text-2xl */}
+          <h2 className="text-white text-lg md:text-xl lg:text-2xl font-normal leading-tight mb-2 max-w-2xl">
+            Influence provides a space for artists to sustain ourselves 
+            by connecting us directly to our own communities.
+          </h2>
+          
+          {/* Name - Pushed to right, size adjusted */}
+          <div className="flex justify-end">
+            <span className="text-white text-4xl md:text-6xl lg:text-7xl font-light tracking-tighter uppercase leading-none">
+              KAMAUU
+            </span>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+  );
+};
+const CreativeControl = () => {
+  return (
+    <section className="relative w-full min-h-screen md:min-h-[140vh] bg-[#B2D1FF] overflow-hidden font-sans px-6 py-20 md:p-0">
+      
+      {/* --- Images Container (Desktop: Absolute | Mobile: Flex/Grid) --- */}
+      {/* Mobile par images ko text se upar ya neeche dikhane ke liye hum hidden/block logic use kar sakte hain ya transform badal sakte hain */}
+      
+      {/* Image 1: Visual Odyssey */}
+      <div className="hidden md:block absolute top-[60px] right-[30%] w-[230px] z-20 bg-white rounded-lg shadow-sm overflow-hidden">
+        <img src={image1} alt="Visual Odyssey" className="w-full h-auto" />
+      </div>
 
-const CREATOR_PRICING_TIERS = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: '$0',
-    period: '/month',
-    description: 'Perfect for creators getting started',
-    features: [
-      'Completed deals cap: 2',
-      'Basic discovery visibility',
-      'Core deal collaboration tools',
-      'Standard support'
-    ],
-    cta: 'Get Started',
-    popular: false,
-    gradient: 'from-gray-500 to-gray-700'
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: '$29',
-    period: '/month',
-    description: 'For creators building paid-collab momentum',
-    features: [
-      'Completed deals cap: 10',
-      'Higher visibility for brand invites',
-      'Expanded collaboration capacity',
-      'Performance tracking insights'
-    ],
-    cta: 'Upgrade',
-    popular: false,
-    gradient: 'from-cyan-600 to-blue-700'
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: '$79',
-    period: '/month',
-    description: 'For creators focused on predictable growth',
-    features: [
-      'Completed deals cap: 30',
-      'Creator Growth OS access',
-      'Priority support',
-      'Advanced performance intelligence'
-    ],
-    cta: 'Go Pro',
-    popular: true,
-    gradient: 'from-[#667eea] to-[#764ba2]'
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    description: 'For top creators and teams running at scale',
-    features: [
-      'Completed deals cap: Infinite',
-      'AI Counter Dealing access',
-      'Enterprise workflow controls',
-      'Dedicated success support'
-    ],
-    cta: 'Contact Sales',
-    popular: false,
-    gradient: 'from-purple-600 to-pink-600'
-  }
-];
+      {/* Image 2: VIP Pass */}
+      <div className="hidden md:block absolute top-[380px] left-[20px] w-[260px] z-20 bg-white rounded-lg shadow-sm overflow-hidden">
+        <img src={image3} alt="VIP Pass" className="w-full h-auto" />
+      </div>
 
-export default function Home() {
-  const { user, isAuthenticated } = useAuth();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const { currentSubscription } = useSubscription();
-  const [scrolled, setScrolled] = useState(false);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
+      {/* Image 3: Hip-Hop Journalist */}
+      <div className="hidden md:block absolute top-[450px] right-[-10px] w-[280px] z-20 bg-white rounded-lg shadow-sm overflow-hidden">
+        <img src={image2} alt="Hip-Hop" className="w-full h-auto" />
+      </div>
 
-  const userType = String(user?.userType || user?.role || '').toLowerCase();
-  const isBrandUser = isAuthenticated && userType === 'brand';
-  const isCreatorUser = isAuthenticated && userType === 'creator';
-  const isPricingUser = isBrandUser || isCreatorUser;
+      {/* Image 4: Chelsea */}
+      <div className="hidden md:block absolute top-[40px] left-[-10px] w-[280px] z-20 bg-white rounded-lg shadow-sm overflow-hidden">
+        <img src={image4} alt="Chelsea" className="w-full h-[250px] object-cover" />
+      </div>
 
-  const pricingTiers = useMemo(() => {
-    if (isCreatorUser) return CREATOR_PRICING_TIERS;
-    return BRAND_PRICING_TIERS;
-  }, [isCreatorUser]);
+      {/* --- Mobile Only Images (Text ke upar ya niche stack karne ke liye) --- */}
+      <div className="flex md:hidden justify-center gap-4 mb-10 overflow-x-auto pb-4">
+         <img src={image1} className="w-[120px] h-auto rounded-lg shadow-sm flex-shrink-0" alt="v1" />
+         <img src={image4} className="w-[120px] h-auto rounded-lg shadow-sm flex-shrink-0" alt="v4" />
+      </div>
 
-  const currentPlanId = useMemo(() => {
-    if (!isPricingUser || !currentSubscription) return '';
+      {/* --- Main Text Content --- */}
+      <div className="flex flex-col items-center md:mt-40 md:pt-20 relative z-30">
+        
+        {/* Large Heading */}
+        <h1 className="text-[45px] sm:text-[60px] md:text-[100px] font-normal tracking-tight text-center leading-[1] md:leading-[0.9] text-black">
+          Complete <br className="hidden md:block" /> creative <br /> control
+        </h1>
 
-    const planIdCandidates = [
-      currentSubscription.planDetails?.planId,
-      currentSubscription.planDetails?.id,
-      currentSubscription.planId?.planId,
-      currentSubscription.planId,
-      currentSubscription.planDetails?._id,
-      currentSubscription.planId?._id,
-      currentSubscription.plan
-    ];
+        {/* Paragraph & Button Section */}
+        <div className="mt-10 md:mt-40 max-w-[550px] w-full text-center md:text-left self-center md:ml-[-100px]">
+          <p className="text-[17px] md:text-[20px] leading-[1.4] md:leading-[1.2] text-black font-normal mb-8 md:mb-10">
+            Patreon is your space to create what excites you most, rough or polished,
+            big or small. Hundreds of thousands of creators use Patreon to share
+            videos, podcasts, writing, art, music, recipes, and more with their
+            most passionate fans.
+          </p>
+          
+          <NavLink 
+            to="/signup" 
+            className="bg-black text-white mb-3 px-8 py-4 rounded-full text-[15px] font-medium hover:bg-zinc-800 transition-colors w-full md:w-auto inline-block text-center"
+          >
+            Create on your terms
+          </NavLink>
+        </div>
 
-    for (const candidate of planIdCandidates) {
-      const normalized = normalizePlanId(candidate);
-      if (normalized) {
-        return normalized;
-      }
+        {/* Mobile Only: Baqi ki 2 images text ke niche */}
+        <div className="flex md:hidden justify-center gap-4 mt-12">
+           <img src={image2} className="w-[140px] h-auto rounded-lg shadow-sm" alt="v2" />
+           <img src={image3} className="w-[140px] h-auto rounded-lg shadow-sm" alt="v3" />
+        </div>
+      </div>
+
+    </section>
+  );
+};
+const Vediosection = () => {
+  return (
+    <div className="relative min-h-screen bg-[#9bc1ff] font-sans overflow-hidden">
+      {/* Hero Content */}
+      <div className="container mx-auto px-6 md:px-12 pt-16 pb-24 grid lg:grid-cols-2 gap-12 items-center">
+        
+        {/* Left Side: Text */}
+        <div className="z-10 order-2 lg:order-1">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl leading-[0.9] font-light tracking-tight mb-8">
+            Creators Fans <br />
+            Nothing in <br />
+            between.
+          </h1>
+          
+          <div className="max-w-md space-y-6">
+            <p className="text-sm md:text-medium font-medium leading-relaxed">
+              Patreon gives you a direct line of access to your fan community, 
+              with no ads or gatekeepers in the way.
+            </p>
+            <p className="text-sm md:text-medium font-medium leading-relaxed">
+              Through real-time group chats, comments, DMs, and even directly over email, 
+              you can connect more deeply and directly with your community here than anywhere else.
+            </p>
+            
+            <NavLink 
+  to="/signup" 
+  className="bg-black text-white px-5 py-3 rounded-full text-sm font-bold hover:scale-105 transition-transform mt-4 inline-block text-center"
+>
+  Build real community
+</NavLink>
+          </div>
+        </div>
+
+        {/* Right Side: Video/Chat UI UI Mockup */}
+        <div className="relative order-1 lg:order-2 flex justify-center lg:justify-end">
+          <div className="relative w-full max-w-[380px] aspect-[9/19] bg-white rounded-[3rem] shadow-2xl border-[8px] border-white overflow-hidden">
+            {/* Video Background or Content */}
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              className="absolute inset-0 w-full h-full object-cover"
+            >
+              <source src={videoSrc} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+
+            {/* Chat Overlay Effect */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+            
+            {/* Minimal Chat UI Mockup (Simulating the screenshot) */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-lg">
+              <div className="flex gap-3 items-center">
+                <div className="w-8 h-8 rounded-full bg-blue-400" />
+                <div className="flex-1">
+                  <div className="h-2 w-20 bg-gray-300 rounded mb-1" />
+                  <div className="h-3 w-full bg-gray-200 rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Floating Element Decor */}
+          <div className="absolute -top-10 -right-5 w-24 h-24 bg-yellow-300 rounded-full blur-3xl opacity-50 -z-10" />
+        </div>
+      </div>
+    </div>
+  );
+};
+const Secondlast = () => {
+  return (
+    <section className="bg-[#7fa9e6] min-h-screen font-sans selection:bg-black selection:text-white">
+      <div className="max-w-7xl mx-auto px-6 py-12 md:py-24">
+        
+        {/* Main Heading Section */}
+     <div className="mb-16 md:mb-24 flex justify-center items-start text-center">
+  <h1 className="text-[10vw] md:text-[7vw] leading-[0.95] tracking-tight font-medium text-black">
+    Turning passions into <br className="hidden md:block" /> 
+    <span className="italic">businesses</span>
+  </h1>
+</div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          
+          {/* Left Side */}
+         <div className="lg:col-span-5 flex justify-center lg:justify-end">
+  <div className="relative w-full max-w-[280px] lg:mr-6">
+    <img 
+      src={image} 
+      alt="Patreon Insights Mockup" 
+      className="w-full h-auto rounded-[2.5rem] shadow-2xl"
+    />
+  </div>
+</div>
+
+          {/* Right Side */}
+          <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-10 md:pt-10">
+            
+            {/* Feature 1 */}
+            <div className="space-y-5">
+              <h3 className="text-xl md:text-2xl font-medium text-black">
+                More ways to earn
+              </h3>
+              <p className="text-base md:text-lg leading-relaxed text-black/80">
+                On Patreon, you can build a lasting business outside of ads, with memberships, shops, and digital products.
+              </p>
+              <NavLink 
+                to="/signup" 
+                className="bg-black text-white px-7 py-3 rounded-full font-medium text-base hover:scale-105 transition-transform active:scale-95 inline-block text-center"
+              >
+                Set up shop
+              </NavLink>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="space-y-5">
+              <h3 className="text-xl md:text-2xl font-medium text-black">
+                Unlock growth
+              </h3>
+              <p className="text-base md:text-lg leading-relaxed text-black/80">
+                Get analytics, manage your audience, and grow with creator tools and community support.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+const Lastsection = () => {
+  return (
+    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={bg}
+          alt="Background"
+          className="w-full h-full object-cover object-center"
+        />
+        {/* Dark Overlay to match the vibe if needed */}
+        <div className="absolute inset-0 bg-black/10"></div>
+      </div>
+
+      {/* Main Card */}
+   <div className="relative z-10 w-[75%] max-w-[320px] bg-white rounded-[32px] p-6 md:p-7 shadow-xl flex flex-col items-center text-center min-h-[420px]">
+  
+  {/* Logo */}
+  <div className="mb-5">
+    <img 
+      src={logo}
+      alt="Logo" 
+      className="w-12 h-12 md:w-14 md:h-14 object-contain"
+    />
+  </div>
+
+  {/* Heading */}
+  <h1 className="text-[24px] md:text-[28px] font-bold text-[#242424] leading-tight mb-7">
+    Your world to create
+  </h1>
+
+  {/* Button */}
+  <NavLink 
+    to="/signup" 
+    className="w-full bg-black text-white font-semibold py-3 px-5 rounded-full text-base hover:bg-gray-800 transition-colors mb-5 inline-block text-center"
+  >
+    Get started
+  </NavLink>
+
+  {/* Login */}
+  <p className="text-sm text-gray-600 mb-8">
+    Already have an account?{' '}
+    <NavLink to="/login" className="underline font-medium hover:text-black">
+      Log in
+    </NavLink>
+  </p>
+
+  {/* Store badges */}
+  <div className="flex gap-3 justify-center mt-auto">
+    <img 
+      src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+      className="h-8"
+      alt=""
+    />
+    <img 
+      src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+      className="h-8"
+      alt=""
+    />
+  </div>
+</div>
+    </section>
+  );
+};
+const Home = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const slideTimeout = useRef(null);
+  const videoRefs = useRef({});
+  const isVideoPlayingRef = useRef(false);
+  const searchTimeout = useRef(null);
+  const navigate = useNavigate();
+
+  const totalSlides = mediaItems.length;
+
+  // Search functionality
+  const handleSearch = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
     }
 
-    const currentPlanName = String(currentSubscription.planDetails?.name || '').trim().toLowerCase();
-    if (!currentPlanName) return '';
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/search/creators?q=${encodeURIComponent(query)}&limit=5`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setSearchResults(data.creators || []);
+        setShowDropdown(true);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    const matchedTier = pricingTiers.find((tier) => String(tier.name || '').trim().toLowerCase() === currentPlanName);
-    return matchedTier?.id || '';
-  }, [currentSubscription, isPricingUser, pricingTiers]);
+  // Debounced search
+  const handleSearchChange = useCallback((e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
 
-  const currentPlanIndex = useMemo(() => {
-    if (!currentPlanId) return -1;
-    return pricingTiers.findIndex((tier) => normalizePlanId(tier.id) === normalizePlanId(currentPlanId));
-  }, [currentPlanId, pricingTiers]);
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
 
-  const subscriptionPath = isBrandUser
-    ? '/brand/subscription'
-    : isCreatorUser
-      ? '/creator/subscription'
-      : '/signup';
+    searchTimeout.current = setTimeout(() => {
+      handleSearch(query);
+    }, 300);
+  }, [handleSearch]);
 
-  const hasKnownCurrentPlan = currentPlanIndex >= 0;
+  // Handle search input focus
+  const handleSearchFocus = useCallback(() => {
+    if (searchQuery.length >= 2 && searchResults.length > 0) {
+      setShowDropdown(true);
+    }
+  }, [searchQuery, searchResults]);
 
-  const getDashboardPath = () => {
-    const userType = String(user?.userType || user?.role || '').toLowerCase();
-    if (userType === 'brand') return '/brand/dashboard';
-    if (userType === 'creator') return '/creator/dashboard';
-    if (userType === 'admin' || userType === 'super_admin') return '/admin/dashboard';
-    return '/';
-  };
+  // Handle search input blur
+  const handleSearchBlur = useCallback(() => {
+    setTimeout(() => setShowDropdown(false), 200);
+  }, []);
 
-  const dashboardPath = getDashboardPath();
+  // Handle creator click
+  const handleCreatorClick = useCallback((creatorId) => {
+    navigate(`/creator/${creatorId}`);
+    setShowDropdown(false);
+    setSearchQuery('');
+  }, [navigate]);
 
+  // Handle "See all results" click
+  const handleSeeAllResults = useCallback(() => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowDropdown(false);
+      setSearchQuery('');
+    }
+  }, [searchQuery, navigate]);
+
+  // Handle search submit (Enter key)
+  const handleSearchSubmit = useCallback((e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowDropdown(false);
+    }
+  }, [searchQuery, navigate]);
+
+  // Handle scroll for navbar transparency
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-rotate testimonials
+  // Close mobile menu on window resize (if screen becomes desktop)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const stats = [
-    { label: 'Active Creators', value: '10K+', icon: UserGroupIcon, suffix: 'creators' },
-    { label: 'Brands', value: '2.5K+', icon: BuildingOfficeIcon, suffix: 'companies' },
-    { label: 'Successful Deals', value: '15K+', icon: RocketLaunchIcon, suffix: 'campaigns' },
-    { label: 'Payouts Processed', value: '$5M+', icon: CurrencyDollarIcon, suffix: 'paid' }
-  ];
-
-  const features = [
-    {
-      icon: CpuChipIcon,
-      title: 'Smart Matching Algorithm',
-      description: 'AI-powered matching finds the perfect micro-creators based on audience demographics, engagement patterns, and content style.',
-      gradient: 'from-blue-600 to-[#667eea]',
-      benefits: ['95% match accuracy', 'Real-time updates', 'Audience insights']
-    },
-    {
-      icon: ChartBarIcon,
-      title: 'Verified Analytics',
-      description: 'Real-time verification of follower counts, engagement rates, and audience demographics. No fake followers, guaranteed.',
-      gradient: 'from-purple-600 to-pink-600',
-      benefits: ['Fake follower detection', 'Engryption rate analysis', 'Demographic insights']
-    },
-    {
-      icon: CurrencyDollarIcon,
-      title: 'Secure Escrow Payments',
-      description: 'Funds held in escrow until campaign completion. Automatic payouts with multiple withdrawal options worldwide.',
-      gradient: 'from-green-600 to-teal-600',
-      benefits: ['100% protection', 'Instant withdrawals', 'Multiple currencies']
-    },
-    {
-      icon: ShieldCheckIcon,
-      title: 'Smart Contracts',
-      description: 'Automated digital contracts with e-signatures, deliverable tracking, and revision management built into the platform.',
-      gradient: 'from-orange-600 to-red-600',
-      benefits: ['Legal compliance', 'Automated revisions', 'Digital signatures']
-    }
-  ];
-
-  const steps = [
-    {
-      number: '01',
-      title: 'Create Account',
-      description: 'Sign up as a brand or creator in under 2 minutes with email or social login',
-      icon: UserGroupIcon,
-      color: 'from-blue-600 to-[#667eea]'
-    },
-    {
-      number: '02',
-      title: 'Verify Identity',
-      description: 'Verify your email, phone, and social media accounts to build trust',
-      icon: CheckBadgeIcon,
-      color: 'from-purple-600 to-pink-600'
-    },
-    {
-      number: '03',
-      title: 'Find Matches',
-      description: 'AI-powered algorithm suggests perfect collaboration opportunities',
-      icon: MagnifyingGlassIcon,
-      color: 'from-green-600 to-teal-600'
-    },
-    {
-      number: '04',
-      title: 'Collaborate',
-      description: 'Create campaigns, deliver content, and track performance in real-time',
-      icon: RocketLaunchIcon,
-      color: 'from-orange-600 to-red-600'
-    },
-    {
-      number: '05',
-      title: 'Get Paid',
-      description: 'Secure escrow payments released automatically upon approval',
-      icon: CurrencyDollarIcon,
-      color: 'from-[#667eea] to-[#764ba2]'
-    }
-  ];
-
-  const testimonials = [
-    {
-      name: 'Sarah Johnson',
-      role: 'Marketing Director',
-      company: 'Glow Cosmetics',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg',
-      content: 'InfluenceX transformed our influencer marketing strategy. We found authentic creators who actually resonate with our brand. ROI increased by 300% in just 3 months.',
-      rating: 5
-    },
-    {
-      name: 'Mike Chen',
-      role: 'Fitness Creator',
-      company: '10k followers',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg',
-      content: 'As a micro-creator, InfluenceX helped me land my first brand deals. The platform is intuitive, payments are secure, and I love the analytics dashboard.',
-      rating: 5
-    },
-    {
-      name: 'Emily Rodriguez',
-      role: 'Founder',
-      company: 'Urban Threads',
-      image: 'https://randomuser.me/api/portraits/women/63.jpg',
-      content: 'The smart matching algorithm saved us countless hours. We found creators whose audience perfectly matches our target demographic. Highly recommended!',
-      rating: 5
-    }
-  ];
-
-  const platforms = [
-    { icon: FaInstagram, name: 'Instagram', color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
-    { icon: FaYoutube, name: 'YouTube', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { icon: FaTiktok, name: 'TikTok', color: 'text-black dark:text-white', bg: 'bg-gray-100 dark:bg-gray-800' },
-    { icon: FaTwitter, name: 'Twitter', color: 'text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { icon: FaFacebook, name: 'Facebook', color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { icon: FaLinkedin, name: 'LinkedIn', color: 'text-blue-700', bg: 'bg-blue-100 dark:bg-blue-900/30' }
-  ];
-
-  const getPricingAction = (tier, index) => {
-    if (!isPricingUser) {
+  // Improved media styles - ensures full coverage without black bars or cutoff
+  const getMediaStyles = (type) => {
+    if (type === 'video') {
       return {
-        label: tier.cta,
-        to: '/signup',
-        disabled: false
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '100vw',
+        height: '100vh',
+        transform: 'translate(-50%, -50%)',
+        objectFit: 'cover',
+        '@media (max-width: 768px)': {
+          width: '100vw',
+          height: '100vh',
+          objectFit: 'cover'
+        }
+      };
+    } else {
+      return {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '100vw',
+        height: '100vh',
+        transform: 'translate(-50%, -50%)',
+        objectFit: 'cover',
+        objectPosition: 'center center'
       };
     }
-
-    if (!hasKnownCurrentPlan) {
-      return {
-        label: 'Subscribe',
-        to: `${subscriptionPath}?plan=${tier.id}`,
-        disabled: false
-      };
-    }
-
-    const normalizedTierId = normalizePlanId(tier.id);
-    if (normalizedTierId === normalizePlanId(currentPlanId)) {
-      return {
-        label: 'Manage Billing',
-        to: subscriptionPath,
-        disabled: false
-      };
-    }
-
-    if (index < currentPlanIndex) {
-      return {
-        label: 'Current Plan Locked',
-        to: '#',
-        disabled: true
-      };
-    }
-
-    return {
-      label: 'Change Plan',
-      to: `${subscriptionPath}?plan=${tier.id}`,
-      disabled: false
-    };
   };
 
-  const faqs = [
-    {
-      question: 'How do you verify influencer metrics?',
-      answer: 'We use real-time API connections to Instagram, YouTube, and TikTok to verify follower counts, engagement rates, and audience demographics. Our algorithm detects fake followers and engagement fraud.'
-    },
-    {
-      question: 'How does the escrow payment system work?',
-      answer: 'Brands fund the campaign amount into escrow. Funds are released to creators only after both parties approve the deliverables. This ensures secure transactions for both sides.'
-    },
-    {
-      question: 'What fees does InfluenceX charge?',
-      answer: 'We charge a 10% platform fee on successful campaigns. Premium subscriptions start at $49/month with additional features and lower transaction fees.'
-    },
-    {
-      question: 'Can I cancel my subscription anytime?',
-      answer: 'Yes, you can cancel your subscription at any time. No long-term contracts or hidden fees. Your campaigns will continue until completion.'
+  const playVideo = useCallback((videoElement) => {
+    if (videoElement && videoElement.paused) {
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.log('Video autoplay prevented:', e);
+        });
+      }
     }
-  ];
+  }, []);
+
+  const pauseVideo = useCallback((videoElement) => {
+    if (videoElement && !videoElement.paused) {
+      videoElement.pause();
+    }
+  }, []);
+
+  const goToSlide = useCallback((index) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    
+    // Clear timeouts
+    if (slideTimeout.current) clearTimeout(slideTimeout.current);
+    
+    let newIndex = index;
+    if (newIndex < 0) newIndex = totalSlides - 1;
+    if (newIndex >= totalSlides) newIndex = 0;
+    
+    // Pause all videos except the new one will be handled after transition
+    Object.values(videoRefs.current).forEach((video, idx) => {
+      if (video && idx !== newIndex) {
+        pauseVideo(video);
+      }
+    });
+    
+    setCurrentIndex(newIndex);
+    
+    // Handle video playback after transition
+    setTimeout(() => {
+      const currentItem = mediaItems[newIndex];
+      if (currentItem.type === 'video') {
+        const currentVideo = videoRefs.current[newIndex];
+        if (currentVideo) {
+          currentVideo.currentTime = 0;
+          playVideo(currentVideo);
+          isVideoPlayingRef.current = true;
+        }
+      } else {
+        isVideoPlayingRef.current = false;
+      }
+      setIsTransitioning(false);
+    }, 700); // Match transition duration
+  }, [isTransitioning, totalSlides, pauseVideo, playVideo]);
+
+  const nextSlide = useCallback(() => {
+    if (isTransitioning) return;
+    goToSlide(currentIndex + 1);
+  }, [currentIndex, goToSlide, isTransitioning]);
+
+  const prevSlide = useCallback(() => {
+    if (isTransitioning) return;
+    goToSlide(currentIndex - 1);
+  }, [currentIndex, goToSlide, isTransitioning]);
+
+  // Handle video end event
+  const handleVideoEnded = useCallback((index) => {
+    if (index === currentIndex && !isTransitioning) {
+      nextSlide();
+    }
+  }, [currentIndex, nextSlide, isTransitioning]);
+
+  // Auto slide timer
+  useEffect(() => {
+    if (slideTimeout.current) clearTimeout(slideTimeout.current);
+    
+    const currentItem = mediaItems[currentIndex];
+    let timing;
+    
+    if (currentItem.type === 'video') {
+      timing = 10000; // 10 seconds for videos
+    } else {
+      timing = 6000; // 6 seconds for images
+    }
+    
+    slideTimeout.current = setTimeout(() => {
+      if (!isTransitioning) {
+        nextSlide();
+      }
+    }, timing);
+    
+    return () => {
+      if (slideTimeout.current) clearTimeout(slideTimeout.current);
+    };
+  }, [currentIndex, nextSlide, isTransitioning]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (slideTimeout.current) clearTimeout(slideTimeout.current);
+      Object.values(videoRefs.current).forEach(video => {
+        if (video) {
+          pauseVideo(video);
+        }
+      });
+    };
+  }, [pauseVideo]);
+
+  const handleMouseEnter = () => {
+    if (slideTimeout.current) clearTimeout(slideTimeout.current);
+  };
+  
+  const handleMouseLeave = () => {
+    const currentItem = mediaItems[currentIndex];
+    let timing = currentItem.type === 'video' ? 10000 : 6000;
+    
+    slideTimeout.current = setTimeout(() => {
+      if (!isTransitioning) {
+        nextSlide();
+      }
+    }, timing);
+  };
+
+  const currentItem = mediaItems[currentIndex];
+  const textLines = currentItem.text.split(' ');
+  const firstWord = textLines[0];
+  const remainingText = textLines.slice(1).join(' ');
 
   return (
-    <div className="min-h-screen" style={{
-      background: isDark 
-        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
-        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled 
-          ? 'backdrop-blur-xl shadow-lg py-3' 
-          : 'backdrop-blur-md py-5'
-      }`}
-      style={{
-        background: scrolled 
-          ? isDark 
-            ? 'rgba(55, 65, 81, 0.95)'  // Light gray for dark mode
-            : 'rgba(243, 244, 246, 0.95)' // Light gray for light mode
-          : 'transparent',
-        borderBottom: scrolled ? '1px solid rgba(0, 0, 0, 0.1)' : 'none'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center transform group-hover:rotate-6 transition-all duration-300 backdrop-blur-md"
-                style={{
-                  background: scrolled 
-                    ? isDark 
-                      ? 'rgba(255, 255, 255, 0.15)'
-                      : 'rgba(102, 126, 234, 0.1)'
-                    : isDark 
-                      ? 'rgba(255, 255, 255, 0.15)'
-                      : 'rgba(255, 255, 255, 0.2)',
-                  border: scrolled 
-                    ? isDark 
-                      ? '1px solid rgba(255, 255, 255, 0.2)'
-                      : '1px solid rgba(102, 126, 234, 0.2)'
-                    : '1px solid rgba(255, 255, 255, 0.2)'
-                }}
-              >
-                <span className={`font-bold text-xl ${
-                  scrolled 
-                    ? isDark ? 'text-white' : 'text-[#667eea]'
-                    : 'text-white'
-                }`} style={{ textShadow: scrolled ? 'none' : '0 2px 4px rgba(0,0,0,0.3)' }}>IX</span>
-              </div>
-              <span className={`text-2xl font-bold ${
-                scrolled 
-                  ? isDark ? 'text-white' : 'text-gray-900'
-                  : 'text-white'
-              }`} style={{ textShadow: scrolled ? 'none' : '0 2px 4px rgba(0,0,0,0.3)' }}>
-                InfluenceX
-              </span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className={`transition-colors font-medium ${
-                scrolled 
-                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-                  : 'text-white/90 hover:text-white'
-              }`}>Features</a>
-              <a href="#how-it-works" className={`transition-colors font-medium ${
-                scrolled 
-                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-                  : 'text-white/90 hover:text-white'
-              }`}>How it Works</a>
-              <a href="#pricing" className={`transition-colors font-medium ${
-                scrolled 
-                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-                  : 'text-white/90 hover:text-white'
-              }`}>Pricing</a>
-              <a href="#testimonials" className={`transition-colors font-medium ${
-                scrolled 
-                  ? isDark ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'
-                  : 'text-white/90 hover:text-white'
-              }`}>Success Stories</a>
-            </div>
-
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
-              {isAuthenticated ? (
-                <Link
-                  to={dashboardPath}
-                  className="px-6 py-3 rounded-xl font-medium hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2 backdrop-blur-md"
-                  style={{
-                    background: scrolled 
-                      ? isDark 
-                        ? 'rgba(255, 255, 255, 0.2)'
-                        : 'rgba(102, 126, 234, 0.1)'
-                      : 'rgba(255, 255, 255, 0.2)',
-                    border: scrolled 
-                      ? isDark 
-                        ? '1px solid rgba(255, 255, 255, 0.3)'
-                        : '1px solid rgba(102, 126, 234, 0.3)'
-                      : '1px solid rgba(255, 255, 255, 0.3)',
-                    color: scrolled 
-                      ? isDark ? '#fff' : '#667eea'
-                      : '#fff'
-                  }}
-                >
-                  <ShieldCheckIcon className="w-4 h-4" />
-                  Dashboard
-                </Link>
+    <>
+      {/* FIRST SECTION: Hero Carousel (YOUR ORIGINAL CODE - UNCHANGED) */}
+      <section 
+        className="relative w-full h-screen overflow-hidden bg-black"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Background Media Carousel */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          {mediaItems.map((item, idx) => (
+            <div
+              key={idx}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
+                idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              {item.type === 'image' ? (
+                <img 
+                  src={item.src}
+                  alt={item.alt}
+                  style={getMediaStyles('image')}
+                  className="select-none"
+                  draggable="false"
+                />
               ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="hidden sm:inline-block font-medium transition-colors px-4 py-2 rounded-lg hover:bg-white/10"
-                    style={{
-                      color: scrolled 
-                        ? isDark ? '#fff' : '#667eea'
-                        : '#fff'
-                    }}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="px-6 py-3 rounded-xl font-medium hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
-                    style={{
-                      background: scrolled 
-                        ? isDark 
-                          ? 'rgba(255, 255, 255, 0.95)'
-                          : 'rgba(102, 126, 234, 0.95)'
-                        : 'rgba(255, 255, 255, 0.95)',
-                      color: scrolled 
-                        ? isDark ? '#667eea' : '#fff'
-                        : '#667eea',
-                      boxShadow: scrolled 
-                        ? '0 8px 32px rgba(0, 0, 0, 0.1)'
-                        : '0 8px 32px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <RocketLaunchIcon className="w-4 h-4" />
-                    Get Started
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-16 overflow-hidden" style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-      }}>
-        {/* Floating decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div
-            style={{
-              position: 'absolute', width: 400, height: 400, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.08)', top: -100, left: -100,
-              filter: 'blur(60px)'
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute', width: 300, height: 300, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.06)', bottom: 100, right: -50,
-              filter: 'blur(50px)'
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute', width: 200, height: 200, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)', top: '40%', left: '60%',
-              filter: 'blur(40px)'
-            }}
-          />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            {/* Trust badge */}
-            <div className="inline-flex items-center px-6 py-3 rounded-full mb-10 backdrop-blur-md"
-              style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-3"></div>
-              <span className="font-semibold text-sm text-white">
-                Trusted by 2,500+ brands & creators worldwide
-              </span>
-            </div>
-
-            {/* Main headline */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-              <span className="block text-white mb-2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-                Connect Brands with
-              </span>
-              <span className="block bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                Authentic Micro-Creators
-              </span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-base sm:text-lg max-w-3xl mx-auto mb-8 leading-relaxed text-white/90" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-              The first trusted marketplace for micro-influencers (1k-100k followers) and brands. 
-              Data-driven matching, secure payments, and real performance analytics in one powerful platform.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-12">
-              {isAuthenticated ? (
-                <Link
-                  to={dashboardPath}
-                  className="group relative px-6 py-3 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden flex items-center justify-center gap-2"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    color: '#667eea',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
+                <video
+                  ref={el => {
+                    if (el) videoRefs.current[idx] = el;
                   }}
-                >
-                  <ShieldCheckIcon className="w-5 h-5" />
-                  Open Dashboard
-                  <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/signup?type=brand"
-                    className="group relative px-6 py-3 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden flex items-center justify-center gap-2"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      color: '#667eea',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <MagnifyingGlassIcon className="w-5 h-5" />
-                    Find Creators 
-                    <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link
-                    to="/signup?type=creator"
-                    className="px-6 py-3 rounded-xl font-semibold text-lg border-2 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-md"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: '#fff',
-                      borderColor: 'rgba(255, 255, 255, 0.3)'
-                    }}
-                  >
-                    <ArrowTrendingUpIcon className="w-6 h-6" />
-                    Start Earning Today
-                  </Link>
-                </>
-              )}
-            </div>
-
-            {/* Platform icons */}
-            <div className="flex items-center justify-center space-x-6 mb-12">
-              {platforms.map((platform, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group relative"
-                >
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 backdrop-blur-md"
-                    style={{
-                      background: 'rgba(150, 150, 250, 0.2)',
-                      border: '1px solid rgba(150, 150, 250, 0.3)',
-                      boxShadow: '0 2px 8px rgba(150, 150, 250, 0.1)'
-                    }}
-                  >
-                    <platform.icon className="w-5 h-5 text-white" />
-                  </div>
-                  
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="text-center group"
-                >
-                  <div className="relative inline-block mb-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform"
-                      style={{
-                        background: 'rgba(150, 150, 250, 0.2)',
-                        border: '1px solid rgba(150, 150, 250, 0.3)'
-                      }}
-                    >
-                      <stat.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                  </div>
-                  <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                    {stat.value}
-                  </div>
-                  <div className="text-sm font-medium text-white/90 mb-1">{stat.label}</div>
-                  <div className="text-xs text-white/70">{stat.suffix}</div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-16" style={{
-        background: isDark 
-          ? 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
-          : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,250,251,0.95) 100%)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(102, 126, 234, 0.1)',
-                  color: isDark ? '#fff' : '#667eea',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(102, 126, 234, 0.2)'
-                }}
-              >
-                Features
-              </span>
-              <h2 className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-6 ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
-                Everything you need to succeed
-              </h2>
-              <p className={`text-base max-w-2xl mx-auto ${
-                isDark ? 'text-white/80' : 'text-gray-600'
-              }`}>
-                Powerful tools designed for both brands and creators to collaborate seamlessly
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Features grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group relative rounded-2xl p-6 hover:shadow-xl transition-all duration-500 backdrop-blur-md"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(255, 255, 255, 0.8)',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.1)'
-                    : '1px solid rgba(0, 0, 0, 0.05)',
-                  transform: 'translateY(0)',
-                  boxShadow: isDark 
-                    ? '0 10px 30px rgba(0, 0, 0, 0.2)'
-                    : '0 10px 30px rgba(0, 0, 0, 0.1)'
-                }}
-                whileHover={{ 
-                  y: -10,
-                  boxShadow: isDark 
-                    ? '0 20px 40px rgba(0, 0, 0, 0.3)'
-                    : '0 20px 40px rgba(0, 0, 0, 0.15)'
-                }}
-              >
-                {/* Icon */}
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500"
-                  style={{
-                    background: 'rgba(150, 150, 250, 0.2)',
-                    boxShadow: '0 2px 8px rgba(150, 150, 250, 0.1)'
+                  src={item.src}
+                  style={getMediaStyles('video')}
+                  muted
+                  playsInline
+                  preload="auto"
+                  onEnded={() => handleVideoEnded(idx)}
+                  onPlay={() => {
+                    if (idx === currentIndex) isVideoPlayingRef.current = true;
                   }}
-                >
-                  <feature.icon className="w-6 h-6 text-white" />
-                </div>
-                
-                {/* Content */}
-                <h3 className={`text-lg font-bold mb-3 ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>{feature.title}</h3>
-                <p className={`text-sm leading-relaxed mb-4 ${
-                  isDark ? 'text-white/70' : 'text-gray-600'
-                }`}>{feature.description}</p>
-                
-                {/* Benefits */}
-                <ul className="space-y-2">
-                  {feature.benefits.map((benefit, i) => (
-                    <li key={i} className={`flex items-center text-sm ${
-                      isDark ? 'text-white/60' : 'text-gray-500'
-                    }`}>
-                      <CheckBadgeIcon className="w-5 h-5 mr-2 flex-shrink-0" style={{ color: '#3b82f6' }} />
-                      {benefit}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section id="how-it-works" className="py-16" style={{
-        background: isDark 
-          ? 'linear-gradient(135deg, #0f3460 0%, #16213e 100%)'
-          : 'linear-gradient(135deg, rgba(249,250,251,0.95) 0%, rgba(255,255,255,0.95) 100%)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(102, 126, 234, 0.1)',
-                  color: isDark ? '#fff' : '#667eea',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(102, 126, 234, 0.2)'
-                }}
-              >
-                Process
-              </span>
-              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
-                How InfluenceX Works
-              </h2>
-              <p className={`text-base max-w-2xl mx-auto ${
-                isDark ? 'text-white/80' : 'text-gray-600'
-              }`}>
-                From signup to successful collaboration in 5 simple steps
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Steps */}
-          <div className="relative">
-            {/* Steps grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              {steps.map((step, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="relative text-center group"
-                >
-                  {/* Step icon */}
-                  <div className={`relative w-16 h-16 mx-auto mb-4 bg-gradient-to-r ${step.color} rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                    <step.icon className="w-6 h-6 text-white" />
-                  </div>
-                  
-                  {/* Content */}
-                  <h3 className={`text-base font-bold mb-2 ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>{step.title}</h3>
-                  <p className={`text-xs leading-relaxed ${
-                    isDark ? 'text-white/70' : 'text-gray-600'
-                  }`}>{step.description}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* Demo video placeholder */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-16 relative rounded-2xl overflow-hidden shadow-2xl"
-          >
-            <div className="aspect-w-16 aspect-h-9 bg-gradient-to-r from-[#667eea] to-[#764ba2]">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-white">
-                  <div className={`w-20 h-20 mx-auto rounded-full flex items-center mb-4 cursor-pointer transition-colors ${
-                    isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-white/20 hover:bg-white/30'
-                  }`}>
-                    <div className="w-0 h-0 border-t-8 border-t-transparent border-l-16 border-l-white border-b-8 border-b-transparent ml-2"></div>
-                  </div>
-                  <p className="text-lg font-semibold">Watch how InfluenceX works (2 min)</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-16" style={{
-        background: isDark 
-          ? 'linear-gradient(135deg, #0f3460 0%, #16213e 100%)'
-          : 'linear-gradient(135deg, rgba(249,250,251,0.95) 0%, rgba(255,255,255,0.95) 100%)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(102, 126, 234, 0.1)',
-                  color: isDark ? '#fff' : '#667eea',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(102, 126, 234, 0.2)'
-                }}
-              >
-                Success Stories
-              </span>
-              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
-                Trusted by brands & creators
-              </h2>
-              <p className={`text-base max-w-2xl mx-auto ${
-                isDark ? 'text-white/80' : 'text-gray-600'
-              }`}>
-                Join thousands of successful collaborations on InfluenceX
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Testimonials carousel */}
-          <div className="relative max-w-5xl mx-auto">
-            <motion.div
-              key={activeTestimonial}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.5 }}
-              className="rounded-2xl p-6 md:p-8 backdrop-blur-md"
-              style={{
-                background: isDark 
-                  ? 'rgba(255, 255, 255, 0.05)'
-                  : 'rgba(255, 255, 255, 0.8)',
-                border: isDark 
-                  ? '1px solid rgba(255, 255, 255, 0.1)'
-                  : '1px solid rgba(0, 0, 0, 0.05)',
-                boxShadow: isDark 
-                  ? '0 20px 40px rgba(0, 0, 0, 0.2)'
-                  : '0 20px 40px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              <div className="flex flex-col md:flex-row items-center gap-10">
-                {/* Avatar */}
-                <div className="relative">
-                  <div className="relative">
-                    <img
-                      src={testimonials[activeTestimonial].image}
-                      alt={testimonials[activeTestimonial].name}
-                      className="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover shadow-xl"
-                    />
-                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-t from-black/20 to-transparent"></div>
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-3 border-white shadow-lg animate-pulse"></div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 text-center md:text-left">
-                  {/* Rating */}
-                  <div className="flex items-center justify-center md:justify-start mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon key={i} className="w-6 h-6 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-
-                  {/* Quote */}
-                  <p className={`text-base md:text-lg italic mb-6 font-medium ${
-                    isDark ? 'text-white/90' : 'text-gray-700'
-                  }`} style={{ lineHeight: '1.6' }}>
-                    "{testimonials[activeTestimonial].content}"
-                  </p>
-
-                  {/* Author */}
-                  <div>
-                    <h4 className={`text-lg font-bold mb-2 ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}>{testimonials[activeTestimonial].name}</h4>
-                    <p className="text-sm font-semibold" style={{ color: '#667eea' }}>{testimonials[activeTestimonial].role}</p>
-                    <p className={`text-sm mt-1 ${
-                      isDark ? 'text-white/60' : 'text-gray-500'
-                    }`}>{testimonials[activeTestimonial].company}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Dots */}
-            <div className="flex items-center justify-center mt-12 space-x-3">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveTestimonial(index)}
-                  className="transition-all duration-300 rounded-full"
-                  style={{
-                    width: index === activeTestimonial ? '32px' : '12px',
-                    height: '12px',
-                    background: index === activeTestimonial 
-                      ? '#667eea' 
-                      : isDark 
-                        ? 'rgba(255, 255, 255, 0.3)'
-                        : 'rgba(0, 0, 0, 0.2)',
-                    transform: index === activeTestimonial ? 'scale(1.1)' : 'scale(1)'
+                  onPause={() => {
+                    if (idx === currentIndex) isVideoPlayingRef.current = false;
                   }}
                 />
-              ))}
+              )}
+              {/* Gradient overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
+            </div>
+          ))}
+        </div>
+
+        {/* Force video to play when it becomes current */}
+        {mediaItems.map((item, idx) => (
+          idx === currentIndex && item.type === 'video' && (
+            <div key={`video-trigger-${idx}`} style={{ display: 'none' }}>
+              {(() => {
+                const video = videoRefs.current[idx];
+                if (video && video.paused) {
+                  setTimeout(() => playVideo(video), 100);
+                }
+                return null;
+              })()}
+            </div>
+          )
+        ))}
+
+        {/* ========== FULLY RESPONSIVE NAVBAR ========== */}
+        <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? 'bg-black/80 backdrop-blur-md' : 'bg-transparent'
+        }`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 md:h-20">
+              
+              {/* Left side - Logo/Brand - responsive text size */}
+              <div className="flex-shrink-0">
+                <span className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white hover:text-gray-200 transition cursor-pointer">
+                  INFLUENCEX
+                </span>
+              </div>
+
+              {/* Center - Navigation Links (Desktop only) */}
+              <div className="hidden md:flex items-center justify-center space-x-6 lg:space-x-8 flex-1 mx-8">
+                <a href="#" className="text-white/90 hover:text-white text-base font-medium transition whitespace-nowrap">Creators</a>
+                <a href="#" className="text-white/90 hover:text-white text-base font-medium transition whitespace-nowrap">Features</a>
+                <a href="#" className="text-white/90 hover:text-white text-base font-medium transition whitespace-nowrap">Pricing</a>
+                <a href="#" className="text-white/90 hover:text-white text-base font-medium transition whitespace-nowrap">Resources</a>
+                <a href="#" className="text-white/90 hover:text-white border border-white/50 rounded-full px-4 py-1.5 text-base font-medium transition whitespace-nowrap">Updates</a>
+              </div>
+
+              {/* Right side - Search, Login, Get Started */}
+              <div className="hidden md:flex items-center gap-2 md:gap-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <form onSubmit={handleSearchSubmit}>
+                    <input
+                      type="text"
+                      placeholder="Find creator"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onFocus={handleSearchFocus}
+                      onBlur={handleSearchBlur}
+                      className="w-28 md:w-40 px-3 py-1.5 md:px-3 md:py-2 bg-transparent border border-white rounded-full text-white placeholder:text-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-transparent transition-all"
+                    />
+                    <svg 
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50 pointer-events-none"
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </form>
+                  
+                  {/* Search Dropdown */}
+                  {showDropdown && (
+                    <div className="absolute top-full mt-2 right-0 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+                      {isLoading ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                          <p className="mt-2 text-sm">Searching...</p>
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <>
+                          <div className="max-h-96 overflow-y-auto">
+                            {searchResults.map((creator) => (
+                              <div
+                                key={creator._id}
+                                onClick={() => handleCreatorClick(creator._id)}
+                                className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              >
+                                <img
+                                  src={creator.profilePicture || '/default-avatar.png'}
+                                  alt={creator.displayName}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-gray-900 truncate">{creator.displayName}</h4>
+                                  <p className="text-sm text-gray-500 truncate">@{creator.handle}</p>
+                                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                                    <span>{(creator.totalFollowers || 0).toLocaleString()} followers</span>
+                                    {creator.niches && creator.niches.length > 0 && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{creator.niches.slice(0, 2).join(', ')}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* See all results - only show if more than 5 results exist */}
+                          {searchResults.length >= 5 && (
+                            <div
+                              onClick={handleSeeAllResults}
+                              className="p-3 bg-gray-50 hover:bg-gray-100 cursor-pointer text-center border-t border-gray-200"
+                            >
+                              <p className="text-sm font-medium text-blue-600 hover:text-blue-700">
+                                See all results
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      ) : searchQuery.length >= 2 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <p className="text-sm">No creators found</p>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Login Button */}
+                <NavLink 
+                  to="/login" 
+                  className="text-white/90 hover:text-white text-sm md:text-base font-medium transition px-3 py-1.5 rounded-full border border-white hover:bg-white/10 inline-block text-center"
+                >
+                  Log in
+                </NavLink>
+                
+                {/* Get Started Button */}
+                <NavLink 
+                  to="/signup" 
+                  className="text-black bg-white backdrop-blur-sm text-sm md:text-base font-semibold px-3 md:px-4 py-1.5 md:py-2 rounded-full transition shadow-lg border border-white/20 inline-block text-center"
+                >
+                  Get Started
+                </NavLink>
+              </div>
+
+              {/* Mobile menu button + Icons Row - FULLY RESPONSIVE */}
+              <div className="flex items-center gap-2 md:hidden">
+                {/* Mobile Menu Toggle Button */}
+                <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="text-white p-2 focus:outline-none"
+                  aria-label="Toggle mobile menu"
+                >
+                  {mobileMenuOpen ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Trust badges */}
-          <div className="mt-20 flex flex-wrap items-center justify-center gap-12">
-            {['TechCrunch', 'Forbes', 'Business Insider', 'Inc 5000'].map((badge, index) => (
-              <div key={index} className={`font-semibold text-xl backdrop-blur-md px-6 py-3 rounded-2xl ${
-                isDark ? 'text-white/60' : 'text-gray-500'
-              }`}
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(0, 0, 0, 0.03)',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.1)'
-                    : '1px solid rgba(0, 0, 0, 0.05)'
-                }}
-              >
-                {badge}
+          {/* Mobile Menu Dropdown - FULLY RESPONSIVE */}
+          <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+            mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}>
+            <div className="px-4 pt-2 pb-4 space-y-3 bg-black/90 backdrop-blur-md border-t border-white/10">
+              <a href="#" className="block text-white/90 hover:text-white text-base font-medium py-2 transition">Creators</a>
+              <a href="#" className="block text-white/90 hover:text-white text-base font-medium py-2 transition">Features</a>
+              <a href="#" className="block text-white/90 hover:text-white text-base font-medium py-2 transition">Pricing</a>
+              <a href="#" className="block text-white/90 hover:text-white text-base font-medium py-2 transition">Resources</a>
+              <a href="#" className="inline-block text-white/90 hover:text-white border border-white/50 rounded-full px-4 py-1.5 text-base font-medium transition">Updates</a>
+              
+              {/* Mobile Auth Buttons in Menu */}
+              <div className="pt-3 border-t border-white/20 space-y-2">
+                <NavLink 
+                  to="/login" 
+                  className="w-full text-white/90 hover:text-white text-sm font-medium transition px-4 py-2 rounded-full border border-white hover:bg-white/10 inline-block text-center"
+                >
+                  Log in
+                </NavLink>
+                <NavLink 
+                  to="/signup" 
+                  className="w-full text-black bg-white backdrop-blur-sm text-sm font-semibold px-4 py-2 rounded-full transition shadow-lg border border-white/20 inline-block text-center"
+                >
+                  Get Started
+                </NavLink>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </nav>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-16" style={{
-        background: isDark 
-          ? 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
-          : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,250,251,0.95) 100%)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(102, 126, 234, 0.1)',
-                  color: isDark ? '#fff' : '#667eea',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(102, 126, 234, 0.2)'
-                }}
-              >
-                Pricing
-              </span>
-              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
-                Simple, transparent pricing
-              </h2>
-              <p className={`text-base max-w-2xl mx-auto ${
-                isDark ? 'text-white/80' : 'text-gray-600'
-              }`}>
-                Choose the perfect plan for your business. All plans include a 14-day free trial.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Pricing cards */}
-          <div className={`grid grid-cols-1 ${isCreatorUser ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'} gap-8`}>
-            {pricingTiers.map((tier, index) => (
-              (() => {
-                const action = getPricingAction(tier, index);
-                return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="relative rounded-2xl p-6 transition-all duration-500 backdrop-blur-md"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(255, 255, 255, 0.8)',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.1)'
-                    : '1px solid rgba(0, 0, 0, 0.05)',
-                  transform: tier.popular ? 'translateY(-8px)' : 'translateY(0)',
-                  boxShadow: tier.popular
-                    ? isDark 
-                      ? '0 30px 60px rgba(102, 126, 234, 0.2)'
-                      : '0 30px 60px rgba(102, 126, 234, 0.15)'
-                    : isDark 
-                      ? '0 10px 30px rgba(0, 0, 0, 0.2)'
-                      : '0 10px 30px rgba(0, 0, 0, 0.1)'
-                }}
-                whileHover={{ 
-                  y: tier.popular ? -12 : -8,
-                  boxShadow: tier.popular
-                    ? isDark 
-                      ? '0 40px 80px rgba(102, 126, 234, 0.3)'
-                      : '0 40px 80px rgba(102, 126, 234, 0.2)'
-                    : isDark 
-                      ? '0 20px 40px rgba(0, 0, 0, 0.3)'
-                      : '0 20px 40px rgba(0, 0, 0, 0.15)'
-                }}
-              >
-                {tier.popular && (
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <span className="inline-block px-6 py-2 rounded-full text-sm font-bold backdrop-blur-md"
-                      style={{
-                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                        color: '#fff',
-                        boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)'
-                      }}
-                    >
-                      Most Popular
+        {/* Text Content */}
+        <div className="absolute inset-0 z-20 flex items-start justify-start px-6 md:px-16 lg:px-24 pt-40 sm:pt-48 md:pt-56 lg:pt-64" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <div className="w-full max-w-[95vw]">
+            <div key={currentIndex} className="animate-slideDown">
+              <h1 className="flex flex-col text-white uppercase leading-[1.1]">
+                {firstWord && (
+                  <span className="block text-[9vw] md:text-[6vw] lg:text-[7.5rem] font-normal tracking-[0.15em] opacity-100">
+                    {firstWord}
+                  </span>
+                )}
+                {remainingText && (
+                  <div className="flex mt-2 md:mt-4">
+                    <span className="inline-block ml-[10vw] md:ml-32 lg:ml-48 text-[7vw] md:text-[4vw] lg:text-[5rem] font-normal tracking-[0.1em] opacity-90 whitespace-nowrap">
+                      {remainingText}
                     </span>
                   </div>
                 )}
-
-                {/* Header */}
-                <div className="text-center mb-6">
-                  <h3 className={`text-lg font-bold mb-3 ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>{tier.name}</h3>
-                  <div className="flex items-center justify-center mb-3">
-                    <span className={`text-3xl font-bold ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}>{tier.price}</span>
-                    <span className={`ml-1 text-sm ${
-                      isDark ? 'text-white/60' : 'text-gray-500'
-                    }`}>{tier.period}</span>
-                  </div>
-                  <p className={`text-xs ${
-                    isDark ? 'text-white/70' : 'text-gray-600'
-                  }`}>{tier.description}</p>
-                </div>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-6">
-                  {tier.features.map((feature, i) => (
-                    <li key={i} className={`flex items-start ${
-                      isDark ? 'text-white/80' : 'text-gray-700'
-                    }`}>
-                      <CheckBadgeIcon className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" style={{ color: '#3b82f6' }} />
-                      <span className="text-xs leading-relaxed">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                {action.disabled ? (
-                  <span
-                    className="block w-full py-3 px-4 text-center rounded-xl font-semibold backdrop-blur-md cursor-not-allowed"
-                    style={{
-                      background: isDark 
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.05)',
-                      color: isDark ? 'text-white/40' : 'text-gray-400',
-                      border: isDark 
-                        ? '1px solid rgba(255, 255, 255, 0.1)'
-                        : '1px solid rgba(0, 0, 0, 0.05)'
-                    }}
-                  >
-                    {action.label}
-                  </span>
-                ) : (
-                  <Link
-                    to={action.to}
-                    className={`block w-full py-3 px-4 text-center rounded-xl font-semibold transition-all duration-300 hover:scale-105 ${
-                      tier.popular
-                        ? ''
-                        : ''
-                    }`}
-                    style={{
-                      background: tier.popular
-                        ? 'linear-gradient(135deg, #667eea, #764ba2)'
-                        : isDark 
-                          ? 'rgba(255, 255, 255, 0.1)'
-                          : 'rgba(255, 255, 255, 0.9)',
-                      color: tier.popular
-                        ? '#fff'
-                        : isDark 
-                          ? '#fff'
-                          : '#667eea',
-                      border: tier.popular
-                        ? 'none'
-                        : isDark 
-                          ? '1px solid rgba(255, 255, 255, 0.2)'
-                          : '1px solid rgba(102, 126, 234, 0.2)',
-                      boxShadow: tier.popular
-                        ? '0 8px 24px rgba(102, 126, 234, 0.3)'
-                        : 'none'
-                    }}
-                  >
-                    {action.label}
-                  </Link>
-                )}
-              </motion.div>
-                );
-              })()
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16" style={{
-        background: isDark 
-          ? 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
-          : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,250,251,0.95) 100%)'
-      }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md mb-4"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(102, 126, 234, 0.1)',
-                  color: isDark ? '#fff' : '#667eea',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(102, 126, 234, 0.2)'
-                }}
-              >
-                FAQ
-              </span>
-              <h2 className={`text-2xl md:text-4xl font-bold mb-6 ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`} style={{ textShadow: isDark ? '0 2px 4px rgba(0,0,0,0.3)' : 'none' }}>
-                Frequently asked questions
-              </h2>
-              <p className={`text-base max-w-2xl mx-auto ${
-                isDark ? 'text-white/80' : 'text-gray-600'
-              }`}>
-                Got questions? We've got answers.
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base text-white/70 font-light ml-[10vw] md:ml-32 lg:ml-48 mt-6 tracking-[0.5em] uppercase">
+                {currentItem.subtext}
               </p>
-            </motion.div>
-          </div>
-
-          {/* FAQ items */}
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="rounded-xl p-6 transition-all duration-300 backdrop-blur-md"
-                style={{
-                  background: isDark 
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(255, 255, 255, 0.8)',
-                  border: isDark 
-                    ? '1px solid rgba(255, 255, 255, 0.1)'
-                    : '1px solid rgba(0, 0, 0, 0.05)',
-                  boxShadow: isDark 
-                    ? '0 10px 30px rgba(0, 0, 0, 0.2)'
-                    : '0 10px 30px rgba(0, 0, 0, 0.1)'
-                }}
-                whileHover={{ 
-                  y: -4,
-                  boxShadow: isDark 
-                    ? '0 20px 40px rgba(0, 0, 0, 0.3)'
-                    : '0 20px 40px rgba(0, 0, 0, 0.15)'
-                }}
-              >
-                <h3 className={`text-lg font-bold mb-3 ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>{faq.question}</h3>
-                <p className={`text-sm leading-relaxed ${
-                  isDark ? 'text-white/70' : 'text-gray-600'
-                }`}>{faq.answer}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 relative overflow-hidden" style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
-      }}>
-        {/* Background pattern */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-64 h-64 rounded-full filter blur-3xl"
-            style={{
-              background: 'rgba(255,255,255,0.1)'
-            }}
-          ></div>
-          <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full filter blur-3xl"
-            style={{
-              background: 'rgba(255,255,255,0.1)'
-            }}
-          ></div>
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-              Ready to grow your influence?
-            </h2>
-            <p className="text-base text-white/90 mb-8 max-w-2xl mx-auto" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-              Join the fastest growing influencer marketing platform. Sign up today and start your first campaign.
-            </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to={isBrandUser ? '/brand/search' : isCreatorUser ? '/creator/available-deals' : '/signup?type=brand'}
-                className="px-6 py-3 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  color: '#667eea',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
-                }}
-              >
-                {isCreatorUser ? 'Find Deals' : 'Find Creators'}
-                <ChevronRightIcon className="w-6 h-6" />
-              </Link>
-              {!isBrandUser && !isCreatorUser && (
-                <Link
-                  to="/signup?type=creator"
-                  className="px-6 py-3 rounded-xl font-semibold text-lg border-2 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-md"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#fff',
-                    borderColor: 'rgba(255, 255, 255, 0.3)'
-                  }}
-                >
-                  Start Earning
-                  <ArrowTrendingUpIcon className="w-6 h-6" />
-                </Link>
-              )}
             </div>
-
-            {/* Trust indicator */}
-            <p className="text-white/90 uppercase text-xs mt-8 font-medium">
-              For influencers: No credit card required • Cancel anytime
-            </p>
-          </motion.div>
+          </div>
         </div>
+
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 md:p-4 transition-all duration-300 group"
+          aria-label="Previous slide"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            strokeWidth={2} 
+            stroke="currentColor" 
+            className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-12 lg:h-12 text-white group-hover:scale-110 transition-transform"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        
+        <button
+          onClick={nextSlide}
+          className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 md:p-4 transition-all duration-300 group"
+          aria-label="Next slide"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            strokeWidth={2} 
+            stroke="currentColor" 
+            className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-12 lg:h-12 text-white group-hover:scale-110 transition-transform"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
       </section>
-
-   
-
-      {/* Custom animations */}
-      <style>{`
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
-    </div>
+      <CreatorShowcase />
+      <QuoteSection/>
+      <CreativeControl/>
+      <Vediosection/>
+      <Secondlast/>
+      <Lastsection/>
+    </>
   );
-}
+};
+
+export default Home;
