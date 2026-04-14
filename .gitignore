@@ -1,4 +1,6 @@
 logs/
 .tmp_*/
 *.jpg
+!frontend/src/assets/*.jpg
+!frontend/src/assets/**/*.jpg
 *.docx
